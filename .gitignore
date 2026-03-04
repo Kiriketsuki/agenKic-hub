@@ -2,3 +2,5 @@ aurrigo-act-weekly/
 aurrigo-ads-weekly/
 aurrigo-daily-standup/
 meeting-prepper/
+.claude/
+*.stackdump
