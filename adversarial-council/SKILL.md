@@ -276,6 +276,28 @@ prompt: |
        d. Write the recommendation file to the current working directory.
        e. SendMessage to the team lead: "Council complete. Recommendation saved to: [filename]"
 
+  ## Fix Triage Protocol (STRICTLY ENFORCED)
+  When producing the recommendation, categorise every suggested fix using this
+  priority order -- do NOT skip levels:
+
+  1. **In-PR fix** (default): Can this be addressed by a small code change
+     in the current PR? If yes, list it as an in-PR fix. This is the preferred
+     outcome for the vast majority of council findings.
+  2. **PR description update**: Does the PR's stated scope or intent need to
+     be expanded, corrected, or clarified? List it as a PR description amendment.
+  3. **New GitHub Issue -- future feature only** (last resort): Only propose a
+     new issue if the fix is genuinely out of scope for the current PR AND
+     represents a future feature or enhancement. Flag it explicitly so the team
+     lead can ask the human to confirm before creating it.
+
+  Never propose creating a new issue for something that can be fixed in the
+  current PR with a small change. Never propose creating a Task issue when a
+  Feature issue suffices -- remember: a Task is composed of multiple Features;
+  a Feature can stand alone.
+
+  When a new issue IS warranted, check the target repo for a `.github/ISSUE_TEMPLATE/`
+  directory or `.github/workflows/` and note the appropriate template to use.
+
   ## Recommendation File
   Filename: [YYYY-MM-DD-HHmmss]-council-[MOTION-SLUG].md
   Location: current working directory
@@ -308,6 +330,23 @@ prompt: |
 
   ### Conditions (if CONDITIONAL)
   - [Condition]
+
+  ### Suggested Fixes
+  Categorised by triage priority. Do not propose a higher tier if a lower one suffices.
+
+  #### In-PR Fixes (implement now)
+  - [Fix description] -- [which file/area, why it can be done in this PR]
+
+  #### PR Description Amendments (update scope/intent)
+  - [What to add/change in the PR description]
+
+  #### New Issues (future features only -- confirm with human before creating)
+  > NOTE: Only list items here that are genuinely out-of-scope future work.
+  > The team lead MUST ask the human: "Is [X] meant to be a future feature,
+  > or should we try to address it in this PR?" before filing any issue.
+  > Use Feature issues unless the work spans multiple features, in which case use Task.
+  > Check `.github/ISSUE_TEMPLATE/` in the target repo for the correct template.
+  - [Issue title] -- [why it cannot be an in-PR fix] -- [Feature / Task]
   ---
 
   Do NOT message the team lead until the recommendation file is written and saved.
@@ -361,20 +400,48 @@ are informational -- the team lead does not need to respond to them.
 When the arbiter reports "Council complete. Recommendation saved to: [filename]":
 
 1. Read the recommendation file.
-2. Present to the user:
+2. For any items listed under "New Issues (future features only)", ask the user
+   before presenting the full summary:
+   ```
+   The council flagged [N] potential future-feature issue(s):
+   [List each issue title]
+
+   Are any of these meant to be addressed in the current PR instead,
+   or should they be filed as future issues? (answer before we proceed)
+   ```
+   Adjust the fix plan based on the user's answer -- move confirmed future
+   features back into the "New Issues" bucket; move anything the user wants
+   addressed now into "In-PR Fixes".
+3. Present the full recommendation to the user:
 
 ```
 Arbiter recommends: [FOR / AGAINST / CONDITIONAL]
 [2-3 sentence reasoning from the recommendation file]
 
+In-PR Fixes ([N]):
+  1. [Fix 1]
+  2. [Fix 2]
+  ...
+
+PR Description Amendments ([N]):
+  - [Amendment 1]
+  ...
+
+New Issues to file ([N] -- future features confirmed by you):
+  - [Issue title] ([Feature / Task])
+  ...
+
 Full debate saved to: [filename]
 
-Accept and proceed? [y/N/modify]
+Proceed? [y/N/modify]
 ```
 
 Responses:
-- `y` -- act on the recommendation. Proceed with whatever the user
-  originally intended to do.
+- `y` -- enter plan mode immediately. Present the full implementation plan
+  covering all in-PR fixes, the updated PR description text, and (if any)
+  steps to create new issues using the correct `.github/ISSUE_TEMPLATE/`
+  template. Do NOT start executing -- stay in plan mode until the user
+  approves the plan.
 - `N` -- note the result, take no further action. Inform the user:
   "Council result noted. No action taken."
 - `modify` -- ask the user how they want to amend the motion.
