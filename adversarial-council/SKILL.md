@@ -429,26 +429,44 @@ are informational -- the team lead does not need to respond to them.
 
 ---
 
-### Step 5 -- Proceed Gate
+### Step 5 -- Findings Presentation & Proceed Gate
 
 When the arbiter reports "Council complete. Recommendation saved to: [filename]":
 
-1. Read the recommendation file.
-2. For any items listed under "New Issues (future features only)", ask the user
-   before presenting the full summary:
+1. **Immediately shut down the team** before presenting findings to the user:
    ```
-   The council flagged [N] potential future-feature issue(s):
-   [List each issue title]
+   SendMessage type: shutdown_request
+   recipient: [each agent name -- advocates, critics, arbiter]
+   content: "Council concluded. Thank you."
+   ```
+   Do NOT wait for shutdown acknowledgements at this point -- fire-and-forget.
+   Proceed immediately to step 2.
 
-   Are any of these meant to be addressed in the current PR instead,
-   or should they be filed as future issues? (answer before we proceed)
+2. Read the recommendation file.
+
+3. Present the **full findings** immediately. Output the entire recommendation
+   file content verbatim, then append the structured summary and bug table below it.
+
+4. Render a bug/issue table covering ALL code-level findings (bugs, defects,
+   vulnerabilities, and in-PR improvements). One row per finding.
+   Use this exact markdown table format -- populate every column:
+
    ```
-   Adjust the fix plan based on the user's answer -- move confirmed future
-   features back into the "New Issues" bucket; move anything the user wants
-   addressed now into "In-PR Fixes".
-3. Present the full recommendation to the user:
+   | # | Severity | File | Line | Finding | Suggested Fix |
+   |---|----------|------|------|---------|---------------|
+   | 1 | Bug      | src/auth/handler.py | 142 | Null check missing before dereferencing `user` | Add `if user is None: return 401` guard |
+   | 2 | Improvement | lib/utils.ts | 88 | Magic number 86400 used without constant | Extract to `const SECONDS_PER_DAY = 86400` |
+   ```
+
+   Severity values: `Bug`, `Security`, `Improvement`, `Style`.
+   If a finding has no exact line number, use `—` in that column.
+   If there are no code-level findings, omit the table and note "No code-level findings identified."
+
+5. Present the proceed gate. If there are any "New Issues" items, include the
+   clarifying question inline at the bottom -- do NOT pause before showing findings:
 
 ```
+---
 Arbiter recommends: [FOR / AGAINST / CONDITIONAL]
 [2-3 sentence reasoning from the recommendation file]
 
@@ -461,14 +479,19 @@ PR Description Amendments ([N]):
   - [Amendment 1]
   ...
 
-New Issues to file ([N] -- future features confirmed by you):
-  - [Issue title] ([Feature / Task])
+New Issues flagged ([N] -- future features, need your call):
+  - [Issue title] ([Feature / Task]) -- file as future issue, or address in this PR?
   ...
 
 Full debate saved to: [filename]
 
 Proceed? [y/N/modify]
+(If new issues listed above: answer "file" or "in-PR" for each before proceeding)
 ```
+
+Adjust the fix plan based on the user's answer -- move confirmed future
+features back into the "New Issues" bucket; move anything the user wants
+addressed now into "In-PR Fixes".
 
 Responses:
 - `y` -- enter plan mode immediately. Present the full implementation plan
@@ -479,8 +502,8 @@ Responses:
 - `N` -- note the result, take no further action. Inform the user:
   "Council result noted. No action taken."
 - `modify` -- ask the user how they want to amend the motion.
-  Once clarified, return to Step 1 with the updated motion and same N and roles.
-  Reuse the existing team (do not TeamDelete yet).
+  Once clarified, call TeamDelete on the current team, then return to Step 1
+  with the updated motion and same N and roles. A fresh team will be created.
 
 ---
 
@@ -489,16 +512,8 @@ Responses:
 After the proceed gate resolves (whether `y`, `N`, or after a `modify`
 reconvene completes):
 
-1. Send shutdown requests to all remaining team members:
-   ```
-   SendMessage type: shutdown_request
-   recipient: [each agent name]
-   content: "Council concluded. Thank you."
-   ```
-2. Wait for all shutdown responses to arrive.
-3. Call TeamDelete to remove the team and task list.
+1. Agents were already sent shutdown requests in Step 5 (fire-and-forget).
+   No need to re-send -- skip straight to TeamDelete.
+2. Call TeamDelete to remove the team and task list.
 
-If any agent rejects shutdown (still processing), wait 10 seconds and
-retry once. If still rejected after retry, call TeamDelete anyway and
-inform the user: "Note: one or more agents may still be running briefly
-in the background -- they will terminate shortly."
+Inform the user: "Team disbanded." if TeamDelete succeeds.
