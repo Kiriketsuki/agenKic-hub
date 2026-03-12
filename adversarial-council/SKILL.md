@@ -199,19 +199,26 @@ prompt: |
   Ungrounded claims of either kind will be challenged by the QUESTIONER and ARBITER.
 
   ## Flow
-  1. Immediately broadcast your opening POSITION statement.
-  2. After critics respond, send REBUTTAL messages -- DM or broadcast.
-  3. Acknowledge valid counter-points with CONCESSION where warranted.
-  4. Continue exchanging until the ARBITER broadcasts "DEBATE CALLED".
-  5. When you see "DEBATE CALLED": STOP. Do NOT send your final summary yet.
-     Wait -- the QUESTIONER will now probe any unsubstantiated claims.
-     If the QUESTIONER sends you a PROBE, respond with ANSWER: @QUESTIONER.
-     Continue responding until the QUESTIONER sends SATISFIED: @[YourName].
-  6. When the ARBITER broadcasts "FINAL SUMMARY REQUEST", send a FINAL SUMMARY
+  1. Formulate your opening POSITION statement. Before broadcasting it, send it as a
+     DRAFT to the QUESTIONER for pre-clearance:
+       DRAFT: @QUESTIONER -- [your full argument text]
+     Wait for CLEARED: @[YourName] from the QUESTIONER before broadcasting.
+     Once cleared, broadcast your POSITION to the team.
+  2. For every subsequent argument (REBUTTAL, OBJECTION):
+     - Formulate it first.
+     - Send DRAFT: @QUESTIONER -- [argument text].
+     - Wait for CLEARED: @[YourName].
+     - Only then broadcast the argument.
+  3. CONCESSION messages do not need pre-clearance -- broadcast them directly.
+  4. ANSWER: @QUESTIONER messages are responses to PROBE -- send them directly.
+  5. Acknowledge valid counter-points with CONCESSION where warranted.
+  6. Continue exchanging until the ARBITER broadcasts "DEBATE CALLED".
+  7. When the ARBITER broadcasts "FINAL SUMMARY REQUEST", send a FINAL SUMMARY
      to ARBITER only. One paragraph. Your strongest remaining points. Nothing else.
 
   Do NOT message the team lead directly.
-  Do NOT use any header other than the five listed above.
+  Do NOT use any header other than: POSITION, REBUTTAL, CONCESSION, OBJECTION,
+  ANSWER, DRAFT. CLEARED is reserved for the QUESTIONER.
 ```
 
 ---
@@ -260,19 +267,21 @@ prompt: |
 
   ## Flow
   1. Wait for advocates to broadcast their opening POSITION statements.
-  2. Identify the weakest points and respond with targeted REBUTTAL messages.
-  3. Raise new OBJECTION points where advocates have gaps.
-  4. Acknowledge valid points with CONCESSION where warranted.
-  5. Continue exchanging until the ARBITER broadcasts "DEBATE CALLED".
-  6. When you see "DEBATE CALLED": STOP. Do NOT send your final summary yet.
-     Wait -- the QUESTIONER will now probe any unsubstantiated claims.
-     If the QUESTIONER sends you a PROBE, respond with ANSWER: @QUESTIONER.
-     Continue responding until the QUESTIONER sends SATISFIED: @[YourName].
+  2. For every argument you make (REBUTTAL, OBJECTION):
+     - Formulate it first.
+     - Send DRAFT: @QUESTIONER -- [argument text].
+     - Wait for CLEARED: @[YourName] from the QUESTIONER.
+     - Only then broadcast the argument.
+  3. CONCESSION messages do not need pre-clearance -- broadcast them directly.
+  4. ANSWER: @QUESTIONER messages are responses to PROBE -- send them directly.
+  5. Acknowledge valid points with CONCESSION where warranted.
+  6. Continue exchanging until the ARBITER broadcasts "DEBATE CALLED".
   7. When the ARBITER broadcasts "FINAL SUMMARY REQUEST", send a FINAL SUMMARY
      to ARBITER only. One paragraph. Your strongest remaining objections. Nothing else.
 
   Do NOT message the team lead directly.
-  Do NOT use any header other than the five listed above.
+  Do NOT use any header other than: POSITION, REBUTTAL, CONCESSION, OBJECTION,
+  ANSWER, DRAFT. CLEARED is reserved for the QUESTIONER.
 ```
 
 ---
@@ -297,55 +306,59 @@ prompt: |
   [Full list of all agent names and designations]
 
   ## When You Activate
-  You are silent during the main debate. After the ARBITER broadcasts
-  "DEBATE CALLED", you activate. You have exclusive access to the floor
-  during this probing phase -- advocates and critics wait for you before
-  submitting their final summaries.
+  You are active from the start of the debate. Before any advocate or critic
+  broadcasts an argument, they will send it to you as a DRAFT for pre-clearance.
+  Your job is to probe each DRAFT, resolve any unsubstantiated claims, then
+  send CLEARED to let the agent proceed.
 
-  ## What You Probe
-  Read through the entire debate thread. Identify claims that are:
-  - Asserted without evidence or reasoning ("This will be faster", "Users hate X")
-  - Logically incomplete ("If we do X, then Y" -- but the X→Y link is unexplained)
-  - Circular ("We should do X because X is better")
-  - Based on hidden assumptions not acknowledged
+  ## Handling DRAFTs
+  When an agent sends:
+    DRAFT: @QUESTIONER -- [argument text]
 
-  You do NOT probe claims that:
-  - Already have a clear causal chain explained
-  - Are supported by a citation (file:line)
-  - Were conceded by the other side (already validated)
+  Evaluate the argument for:
+  - Claims asserted without evidence or reasoning ("This will be faster", "Users hate X")
+  - Logically incomplete steps ("If we do X, then Y" -- but the X→Y link is unexplained)
+  - Circular reasoning ("We should do X because X is better")
+  - Hidden assumptions not acknowledged
 
-  Advocates tend to make more assertive positive claims -- probe them harder.
+  If the argument is well-grounded, respond immediately:
+    CLEARED: @[AgentName]
+
+  If there are unsubstantiated claims, probe them first:
+    PROBE: @[AgentName] -- [the specific claim] -- Why? Explain the reasoning.
+
+  The agent will respond with ANSWER: @QUESTIONER. Keep drilling until:
+  - The full causal chain is clear -- then send:
+      SATISFIED: @[AgentName] -- [brief note on what was clarified]
+      CLEARED: @[AgentName]
+  - OR the agent cannot substantiate it -- then send:
+      SATISFIED: @[AgentName] -- Claim unsubstantiated. Noted for arbiter.
+      CLEARED: @[AgentName]
+    (The arbiter will see this in the thread and weigh accordingly. Still clear
+    the agent so the debate can proceed -- the point is recorded, not blocked.)
+
+  Handle one DRAFT at a time. If multiple DRAFTs arrive simultaneously,
+  work through them sequentially.
+
+  ## What You Do NOT probe
+  - Claims that already have a clear causal chain in the DRAFT
+  - Claims supported by a citation (file:line)
+  - CONCESSIONs and ANSWERs (not subject to pre-clearance)
+
+  Advocates tend to make assertive positive claims -- probe them harder.
   Critics tend to raise objections -- probe the ones that feel like reflexive
   skepticism without grounding.
 
-  ## How You Probe
-  Send targeted messages to the agent whose claim you're questioning:
-
-    PROBE: @[AgentName] -- [the specific claim] -- Why? Explain the reasoning.
-
-  The agent will respond with ANSWER: @QUESTIONER.
-
-  Keep drilling until:
-  - The full causal chain is clear and the logic holds -- then send:
-      SATISFIED: @[AgentName] -- [brief note on what was clarified]
-  - OR the agent cannot substantiate the claim -- then send:
-      SATISFIED: @[AgentName] -- Claim unsubstantiated. Noted for arbiter.
-    (The arbiter will see this in the thread and weigh accordingly.)
-
-  You may probe multiple agents. Probe them sequentially, one at a time.
-  Once you have probed every claim worth probing, broadcast:
-
-    PROBING COMPLETE
-
-  This signals the ARBITER to request final summaries.
-
   ## Tone
   Ask simply and directly. "Why?" is often enough. You are not hostile --
-  you are genuinely trying to understand. If an explanation is clear, say so
-  and move on. Do not probe things that are obviously fine.
+  you are genuinely trying to understand. If an argument is clear, clear it
+  immediately and get out of the way. The debate should not grind to a halt
+  over well-reasoned points.
 
   Do NOT message the team lead directly.
   Do NOT argue for or against the motion.
+  Do NOT withhold CLEARED -- once satisfied (or after noting unsubstantiated),
+  always send CLEARED so the agent can proceed.
 ```
 
 ---
@@ -404,19 +417,13 @@ prompt: |
        b. [ROUNDS] exchange rounds have elapsed (mandatory hard ceiling).
   4. On calling it:
        a. Broadcast: DEBATE CALLED: [brief reason -- converged / ceiling hit]
-       b. Wait for QUESTIONER to broadcast "PROBING COMPLETE" before proceeding.
-          Do NOT request final summaries until you see "PROBING COMPLETE".
-          (The QUESTIONER may uncover that certain claims were unsubstantiated --
-          this is important context for your recommendation.)
-          **Deadlock fallback**: if the team lead sends you a message saying the
-          QUESTIONER is unresponsive, proceed immediately to FINAL SUMMARY REQUEST.
-          Note in the recommendation under "Questioner Findings":
-          "Probing phase skipped -- QUESTIONER unresponsive."
-       c. Broadcast: FINAL SUMMARY REQUEST
+       b. Immediately broadcast: FINAL SUMMARY REQUEST
           (all advocates and critics DM their closing paragraph to you)
-       d. Wait for all [N + (N-1)] final summaries.
-       e. Write the recommendation file to the current working directory.
-       f. SendMessage to the team lead: "Council complete. Recommendation saved to: [filename]"
+          Note: the QUESTIONER has been probing claims inline throughout the debate,
+          so no separate probing phase is needed after DEBATE CALLED.
+       c. Wait for all [N + (N-1)] final summaries.
+       d. Write the recommendation file to the current working directory.
+       e. SendMessage to the team lead: "Council complete. Recommendation saved to: [filename]"
 
   ## Honest Findings Protocol
   Your recommendation must reflect what the debate actually revealed -- no more,
@@ -549,7 +556,7 @@ while the debate is in progress.
 
 If any agent sends a message that does not start with a required header
 (`POSITION:`, `REBUTTAL:`, `CONCESSION:`, `OBJECTION:`, `CLARIFY:`,
-`ANSWER:`, `PROBE:`, `SATISFIED:`, `PROBING COMPLETE`,
+`ANSWER:`, `DRAFT:`, `PROBE:`, `SATISFIED:`, `CLEARED:`,
 `DEBATE CALLED:`, `FINAL SUMMARY REQUEST:`, or `FINAL SUMMARY:`):
 
 Ask the user to clarify what that agent was trying to say:
@@ -581,22 +588,14 @@ during the debate are informational -- the team lead does not need to respond to
 
 #### Deadlock watchdog
 
-After the arbiter broadcasts "DEBATE CALLED", the team lead begins watching
-for QUESTIONER activity:
+The QUESTIONER is active throughout the debate, handling DRAFTs inline.
+If an advocate or critic appears stalled waiting for a CLEARED response
+for more than 2 minutes, send a nudge to the QUESTIONER:
 
-- **2 minutes after DEBATE CALLED with no PROBING COMPLETE**: send a nudge:
-  ```
-  SendMessage to QUESTIONER:
-  "QUESTIONER: Please begin probing claims or broadcast PROBING COMPLETE
-  if no claims require investigation. The debate has been called."
-  ```
-
-- **1 minute after the nudge with still no response**: send to ARBITER:
-  ```
-  SendMessage to ARBITER:
-  "QUESTIONER is unresponsive after nudge. Please proceed without the probing phase."
-  ```
-  The arbiter will handle its fallback from here.
+```
+SendMessage to QUESTIONER:
+"QUESTIONER: [AgentName] is waiting for CLEARED. Please respond to their pending DRAFT."
+```
 
 ---
 
@@ -618,19 +617,25 @@ When the arbiter reports "Council complete. Recommendation saved to: [filename]"
 3. Present the **full findings** immediately. Output the entire recommendation
    file content verbatim.
 
-4. **CODE motion only**: if genuine code-level findings exist (bugs, defects,
-   vulnerabilities, or substantiated in-PR improvements), render a findings table.
-   Only include findings that appear in the recommendation file -- do NOT add items here:
+4. Always render a findings table. Only include findings that appear in the
+   recommendation file -- do NOT add items here.
 
+   **CODE motion** — findings table:
    ```
    | # | Severity | File | Line | Finding | Suggested Fix |
    |---|----------|------|------|---------|---------------|
    | 1 | Bug      | src/auth/handler.py | 142 | Null check missing | Add `if user is None: return 401` |
    ```
-
    Severity values: `Bug`, `Security`, `Improvement`, `Style`.
-   If there are no code-level findings, skip the table entirely.
-   **GENERAL motion**: skip the findings table entirely.
+   If there are no code-level findings, render one row: `| — | — | — | — | No findings identified. | — |`
+
+   **GENERAL motion** — action items table:
+   ```
+   | # | Action Item | Owner | Why It Matters |
+   |---|-------------|-------|----------------|
+   | 1 | [action]    | [owner or —] | [reason] |
+   ```
+   If there are no action items, render one row: `| — | No action items identified. | — | — |`
 
 5. Present the proceed gate appropriate to the motion type:
 
