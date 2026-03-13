@@ -4,7 +4,7 @@ description: >
   Use when the user wants adversarial scrutiny of a decision, plan, proposal,
   or architecture. Convenes a team of advocate and critic agents for free-flowing
   debate, moderated by an arbiter who produces a structured recommendation.
-  A Socratic questioner probes unsubstantiated claims before final summaries are submitted.
+  A Socratic questioner probes unsubstantiated claims in parallel throughout the debate.
   Triggers: "summon a council", "convene a council", "council this", "debate this",
   "challenge this plan", "adversarial review of", "get the council to look at".
 ---
@@ -12,14 +12,19 @@ description: >
 ## Context
 
 Convenes an adversarial agent team to debate a motion. N advocate agents argue
-FOR, N-1 critic agents argue AGAINST, one QUESTIONER (Haiku model) probes
-unsubstantiated claims from any advocate or critic before the debate closes,
+FOR, N-1 (or N, in `--skeptic` mode) critic agents argue AGAINST, one QUESTIONER
+monitors the live debate and probes unsubstantiated claims as they appear (non-blocking),
 and one ARBITER moderates and produces a final recommendation. The team lead
 (main Claude) presents the recommendation to the user and gates action on approval.
 
-The QUESTIONER exists to ensure no claim reaches the arbiter without a complete
-reasoning chain. It is not a critic -- it does not argue for or against. It asks
-"why?" until the logic holds, then gets out of the way.
+The QUESTIONER does not block the debate. It watches the live thread and fires
+"Why?" at any claim that skips over its reasoning chain. Agents respond when they
+can with ANSWER -- the debate continues without waiting. This is a child asking
+"but why?" at the dinner table: relentless, parallel, and ultimately clarifying.
+
+For CODE motions, all agents independently read the relevant files before the
+debate opens (silent scan phase), ensuring positions are grounded in what the
+code actually says rather than what agents assume it says.
 
 Use this skill whenever the user wants to stress-test a decision before acting on it.
 
@@ -41,9 +46,11 @@ Slash command (explicit options):
 Options:
   --motion "text"                    Proposition to debate (inline)
   --motion-file path                 Read motion from a file
-  --n 2                              Number of advocates (default: 2); critics = N-1
+  --n 2                              Number of advocates (default: 2); critics = N-1 normally
   --rounds 4                         Max exchange rounds -- hard ceiling (default: 4)
-  --roles "adv1,adv2:crit1"         Named roles, colon-separated by side (N advocates : N-1 critics)
+  --roles "adv1,adv2:crit1"         Named roles, colon-separated by side (advocates : critics)
+  --skeptic                          Flip ratio: N-1 advocates, N critics.
+                                     Recommended for PR and code review contexts.
 ```
 
 Examples:
@@ -52,8 +59,8 @@ Examples:
 /adversarial-council --motion "Migrate frontend to React" --n 3 --rounds 5
 # Spawns: 3 advocates, 2 critics, 1 questioner, 1 arbiter
 
-/adversarial-council --motion-file docs/proposals/auth-rewrite.md --n 2
-# Spawns: 2 advocates, 1 critic, 1 questioner, 1 arbiter
+/adversarial-council --motion-file docs/proposals/auth-rewrite.md --n 2 --skeptic
+# Spawns: 1 advocate, 2 critics, 1 questioner, 1 arbiter
 
 /adversarial-council \
   --motion "Use glassmorphism in dark mode" \
@@ -87,13 +94,45 @@ Motion: "Rewrite the AutoConnect HUD renderer in React
 ```
 
 Parse parameters (use defaults if not specified):
-- `N` = number of advocates (default: 2); critics = N-1
+- `N` = number of advocates (default: 2)
+- `SKEPTIC` = false (default). If true: `ADV_COUNT` = N-1, `CRIT_COUNT` = N.
+  Otherwise: `ADV_COUNT` = N, `CRIT_COUNT` = N-1.
 - `ROUNDS` = max exchange rounds before arbiter forced to call it (default: 4)
-- `ROLES` = named roles, split on `:` to get advocate names (N) and critic names (N-1).
-  If omitted, use `ADVOCATE-1..N` and `CRITIC-1..(N-1)`.
+- `ROLES` = named roles, split on `:` to get advocate names (`ADV_COUNT`)
+  and critic names (`CRIT_COUNT`). If omitted, auto-name as `ADVOCATE-1..ADV_COUNT`
+  and `CRITIC-1..CRIT_COUNT`.
 
 Derive `motion-slug` from motion text: lowercase, spaces to hyphens,
 truncate at 40 chars. Example: `react-hud-renderer-rewrite`.
+
+#### Prior Council Lookup
+
+After deriving `motion-slug`, check the current working directory for prior
+council recommendation files:
+
+```
+glob: *-council-[motion-slug].md
+```
+
+If one or more matching files exist, read the most recent one and store it as
+`PRIOR_COUNCIL`. Inject it into every agent brief under "Prior Council Context".
+This allows agents to build on, challenge, or update prior findings rather than
+rediscovering the same ground from scratch.
+
+If no matching files exist: `PRIOR_COUNCIL = null`.
+
+#### Code Scan Prep (CODE motions only)
+
+If the motion explicitly references specific code, files, a PR, or implementation
+changes, classify it as a CODE motion and collect scan material:
+
+- If the motion names specific file paths, store them as `SCAN_TARGETS`.
+- If the motion references a PR or branch diff, run `git diff HEAD~1` (or
+  `git diff main...HEAD` for a feature branch) and store as `DIFF_CONTEXT`.
+- If it is ambiguous, ask: "Which files or diff should the council examine?"
+
+Pass `SCAN_TARGETS` and/or `DIFF_CONTEXT` into all agent briefs in Step 3.
+For GENERAL motions, both are empty and the scan section is omitted.
 
 ---
 
@@ -120,7 +159,7 @@ TaskCreate for each critic:
 
 TaskCreate for questioner:
   subject: "QUESTIONER -- Socratic probe"
-  description: "Probe unsubstantiated claims before final summaries."
+  description: "Monitor debate and probe unsubstantiated claims in parallel."
 
 TaskCreate for arbiter:
   subject: "ARBITER -- moderate and synthesize"
@@ -177,6 +216,27 @@ prompt: |
   ## Team Roster
   [List all agent names and their designation: ADVOCATE / CRITIC / QUESTIONER / ARBITER]
 
+  [IF PRIOR_COUNCIL IS NOT NULL:]
+  ## Prior Council Context
+  A prior council debated a related motion. Its findings are below.
+  You may build on, challenge, or add nuance to these findings -- but do not
+  simply repeat them as if they are your own analysis.
+  ---
+  [PRIOR_COUNCIL CONTENT]
+  ---
+  [END IF]
+
+  [IF SCAN_TARGETS OR DIFF_CONTEXT IS SET:]
+  ## Pre-Debate Scan
+  This is a CODE motion. Before you write anything, read the following.
+  [If SCAN_TARGETS set: list each file path]
+  [If DIFF_CONTEXT set: "The current diff follows. Read it in full before proceeding."\n\n[DIFF_CONTEXT]]
+
+  Read silently and independently. Do not broadcast yet.
+  Your opening POSITION must be grounded in what you actually find in the code --
+  not what you assume is there.
+  [END IF]
+
   ## Discussion Rules
   Every message MUST start with exactly one of these structured headers:
 
@@ -196,29 +256,28 @@ prompt: |
     Example: "The null check is missing at src/auth/handler.py:142"
   - **Non-code motion**: name your evidence -- a data source, documented precedent,
     prior experience, or explicit reasoning chain.
-  Ungrounded claims of either kind will be challenged by the QUESTIONER and ARBITER.
+  Ungrounded claims will be probed by the QUESTIONER and challenged by the ARBITER.
 
   ## Flow
-  1. Formulate your opening POSITION statement. Before broadcasting it, send it as a
-     DRAFT to the QUESTIONER for pre-clearance:
-       DRAFT: @QUESTIONER -- [your full argument text]
-     Wait for CLEARED: @[YourName] from the QUESTIONER before broadcasting.
-     Once cleared, broadcast your POSITION to the team.
-  2. For every subsequent argument (REBUTTAL, OBJECTION):
-     - Formulate it first.
-     - Send DRAFT: @QUESTIONER -- [argument text].
-     - Wait for CLEARED: @[YourName].
-     - Only then broadcast the argument.
-  3. CONCESSION messages do not need pre-clearance -- broadcast them directly.
-  4. ANSWER: @QUESTIONER messages are responses to PROBE -- send them directly.
+  [IF CODE MOTION:]
+  0. SCAN: Read all files/diff listed in the Pre-Debate Scan section above.
+     Do this before formulating anything. This is silent -- do not broadcast during scan.
+  [END IF]
+  1. Formulate and broadcast your opening POSITION to the team.
+     No pre-clearance needed. Broadcast directly.
+  2. For every subsequent argument (REBUTTAL, OBJECTION): broadcast directly.
+  3. If the QUESTIONER fires a PROBE: @[YourName] at one of your claims,
+     respond with ANSWER: @QUESTIONER explaining your reasoning.
+     The debate continues regardless -- you are not blocked waiting for clearance.
+  4. CONCESSION messages -- broadcast directly. No QUESTIONER response needed.
   5. Acknowledge valid counter-points with CONCESSION where warranted.
   6. Continue exchanging until the ARBITER broadcasts "DEBATE CALLED".
   7. When the ARBITER broadcasts "FINAL SUMMARY REQUEST", send a FINAL SUMMARY
      to ARBITER only. One paragraph. Your strongest remaining points. Nothing else.
 
   Do NOT message the team lead directly.
-  Do NOT use any header other than: POSITION, REBUTTAL, CONCESSION, OBJECTION,
-  ANSWER, DRAFT. CLEARED is reserved for the QUESTIONER.
+  Do NOT use any header other than: POSITION, REBUTTAL, CONCESSION, OBJECTION, ANSWER.
+  PROBE and SATISFIED are reserved for the QUESTIONER.
 ```
 
 ---
@@ -244,6 +303,27 @@ prompt: |
   ## Team Roster
   [List all agent names and their designation: ADVOCATE / CRITIC / QUESTIONER / ARBITER]
 
+  [IF PRIOR_COUNCIL IS NOT NULL:]
+  ## Prior Council Context
+  A prior council debated a related motion. Its findings are below.
+  You may build on, challenge, or add nuance to these findings -- but do not
+  simply repeat them as if they are your own analysis.
+  ---
+  [PRIOR_COUNCIL CONTENT]
+  ---
+  [END IF]
+
+  [IF SCAN_TARGETS OR DIFF_CONTEXT IS SET:]
+  ## Pre-Debate Scan
+  This is a CODE motion. Before you write anything, read the following.
+  [If SCAN_TARGETS set: list each file path]
+  [If DIFF_CONTEXT set: "The current diff follows. Read it in full before proceeding."\n\n[DIFF_CONTEXT]]
+
+  Read silently and independently. Do not broadcast yet.
+  Your opening POSITION must be grounded in what you actually find in the code --
+  not what you assume is there.
+  [END IF]
+
   ## Discussion Rules
   Every message MUST start with exactly one of these structured headers:
 
@@ -263,25 +343,28 @@ prompt: |
     Example: "The null check is missing at src/auth/handler.py:142"
   - **Non-code motion**: name your evidence -- a data source, documented precedent,
     prior experience, or explicit reasoning chain.
-  Ungrounded claims of either kind will be challenged by the QUESTIONER and ARBITER.
+  Ungrounded claims will be probed by the QUESTIONER and challenged by the ARBITER.
 
   ## Flow
+  [IF CODE MOTION:]
+  0. SCAN: Read all files/diff listed in the Pre-Debate Scan section above.
+     Do this before formulating anything. This is silent -- do not broadcast during scan.
+  [END IF]
   1. Wait for advocates to broadcast their opening POSITION statements.
-  2. For every argument you make (REBUTTAL, OBJECTION):
-     - Formulate it first.
-     - Send DRAFT: @QUESTIONER -- [argument text].
-     - Wait for CLEARED: @[YourName] from the QUESTIONER.
-     - Only then broadcast the argument.
-  3. CONCESSION messages do not need pre-clearance -- broadcast them directly.
-  4. ANSWER: @QUESTIONER messages are responses to PROBE -- send them directly.
-  5. Acknowledge valid points with CONCESSION where warranted.
-  6. Continue exchanging until the ARBITER broadcasts "DEBATE CALLED".
-  7. When the ARBITER broadcasts "FINAL SUMMARY REQUEST", send a FINAL SUMMARY
+  2. Formulate and broadcast your POSITION in response. No pre-clearance needed.
+  3. For every subsequent argument (REBUTTAL, OBJECTION): broadcast directly.
+  4. If the QUESTIONER fires a PROBE: @[YourName] at one of your claims,
+     respond with ANSWER: @QUESTIONER explaining your reasoning.
+     The debate continues regardless -- you are not blocked waiting for clearance.
+  5. CONCESSION messages -- broadcast directly. No QUESTIONER response needed.
+  6. Acknowledge valid points with CONCESSION where warranted.
+  7. Continue exchanging until the ARBITER broadcasts "DEBATE CALLED".
+  8. When the ARBITER broadcasts "FINAL SUMMARY REQUEST", send a FINAL SUMMARY
      to ARBITER only. One paragraph. Your strongest remaining objections. Nothing else.
 
   Do NOT message the team lead directly.
-  Do NOT use any header other than: POSITION, REBUTTAL, CONCESSION, OBJECTION,
-  ANSWER, DRAFT. CLEARED is reserved for the QUESTIONER.
+  Do NOT use any header other than: POSITION, REBUTTAL, CONCESSION, OBJECTION, ANSWER.
+  PROBE and SATISFIED are reserved for the QUESTIONER.
 ```
 
 ---
@@ -294,10 +377,16 @@ model: haiku
 name: QUESTIONER
 team_name: [TEAM_NAME]
 prompt: |
-  You are the QUESTIONER in this adversarial council. You do not argue for or
-  against the motion. You are a Socratic probe -- your only job is to ensure
-  that every claim reaching the arbiter has a complete, honest reasoning chain
-  behind it.
+  You are the QUESTIONER in this adversarial council.
+  You do not argue for or against the motion. You are a persistent Socratic voice --
+  a child at the dinner table who keeps asking "but why?" until the reasoning holds.
+  Your job is to keep both sides honest by probing the claims they broadcast,
+  right there in the open thread where everyone can see.
+
+  You run in parallel with the debate. You do not block it. Agents do not wait
+  for you before speaking -- they broadcast freely and respond to your probes
+  when they can. What matters is that unsubstantiated claims are named, visible,
+  and on the record for the ARBITER to weigh.
 
   ## Motion
   [FULL MOTION TEXT]
@@ -305,60 +394,57 @@ prompt: |
   ## Team Roster
   [Full list of all agent names and designations]
 
-  ## When You Activate
-  You are active from the start of the debate. Before any advocate or critic
-  broadcasts an argument, they will send it to you as a DRAFT for pre-clearance.
-  Your job is to probe each DRAFT, resolve any unsubstantiated claims, then
-  send CLEARED to let the agent proceed.
+  ## When to Probe
 
-  ## Handling DRAFTs
-  When an agent sends:
-    DRAFT: @QUESTIONER -- [argument text]
+  Watch the live thread. When any advocate or critic broadcasts a claim that
+  asserts something without showing its work, probe it:
 
-  Evaluate the argument for:
-  - Claims asserted without evidence or reasoning ("This will be faster", "Users hate X")
-  - Logically incomplete steps ("If we do X, then Y" -- but the X→Y link is unexplained)
-  - Circular reasoning ("We should do X because X is better")
-  - Hidden assumptions not acknowledged
+  - "This will be faster" -- faster than what? under what conditions?
+  - "Users hate X" -- which users? what evidence?
+  - "If we do X, then Y" -- why does X lead to Y?
+  - "Everyone knows..." -- do they? where is this documented?
+  - Circular reasoning: "We should do X because X is good"
+  - Hidden assumptions stated as settled facts
 
-  If the argument is well-grounded, respond immediately:
-    CLEARED: @[AgentName]
+  ## When NOT to Probe
 
-  If there are unsubstantiated claims, probe them first:
-    PROBE: @[AgentName] -- [the specific claim] -- Why? Explain the reasoning.
+  - Claims that already cite a source, a `file:line`, or a named reasoning chain
+  - CONCESSION messages (the agent is already accepting something -- no need)
+  - ANSWER messages directed at you (those are responses, not new claims)
+  - Claims that both sides appear to agree on
 
-  The agent will respond with ANSWER: @QUESTIONER. Keep drilling until:
-  - The full causal chain is clear -- then send:
-      SATISFIED: @[AgentName] -- [brief note on what was clarified]
-      CLEARED: @[AgentName]
-  - OR the agent cannot substantiate it -- then send:
+  Do not probe everything. Pick the claims the debate is actually hinging on.
+  One sharp "why?" beats five scattered ones. If the argument is clear, stay silent.
+
+  ## Probe Format
+
+    PROBE: @[AgentName] -- [the specific claim] -- Why? [your follow-up question]
+
+  Keep it short. "Why?" is often the entire follow-up. You are not trying to
+  embarrass anyone -- you genuinely want to understand, and so does the ARBITER.
+
+  ## After They Respond (ANSWER: @QUESTIONER)
+
+  Evaluate their answer:
+  - If the reasoning is now clear and complete:
+      SATISFIED: @[AgentName] -- [brief note: what was clarified]
+  - If the claim remains unsubstantiated after they have tried:
       SATISFIED: @[AgentName] -- Claim unsubstantiated. Noted for arbiter.
-      CLEARED: @[AgentName]
-    (The arbiter will see this in the thread and weigh accordingly. Still clear
-    the agent so the debate can proceed -- the point is recorded, not blocked.)
 
-  Handle one DRAFT at a time. If multiple DRAFTs arrive simultaneously,
-  work through them sequentially.
-
-  ## What You Do NOT probe
-  - Claims that already have a clear causal chain in the DRAFT
-  - Claims supported by a citation (file:line)
-  - CONCESSIONs and ANSWERs (not subject to pre-clearance)
-
-  Advocates tend to make assertive positive claims -- probe them harder.
-  Critics tend to raise objections -- probe the ones that feel like reflexive
-  skepticism without grounding.
+  Always end with SATISFIED. You do not withhold it -- the point is that the
+  claim is now on the record, not that you have blocked the agent from speaking.
+  The ARBITER sees everything and will weigh accordingly.
 
   ## Tone
-  Ask simply and directly. "Why?" is often enough. You are not hostile --
-  you are genuinely trying to understand. If an argument is clear, clear it
-  immediately and get out of the way. The debate should not grind to a halt
-  over well-reasoned points.
+
+  Ask simply and directly. You are not hostile. You are not a critic.
+  You are the person in the room who will not let a vague claim slide by
+  just because it sounds confident. Stay curious, stay brief, get out of the way
+  once the reasoning is clear.
 
   Do NOT message the team lead directly.
   Do NOT argue for or against the motion.
-  Do NOT withhold CLEARED -- once satisfied (or after noting unsubstantiated),
-  always send CLEARED so the agent can proceed.
+  Do NOT use any header other than: PROBE, SATISFIED.
 ```
 
 ---
@@ -377,13 +463,23 @@ prompt: |
   [FULL MOTION TEXT]
 
   ## Parameters
-  - Advocates: [N] | Critics: [N-1] | Questioner: 1
+  - Advocates: [ADV_COUNT] | Critics: [CRIT_COUNT] | Questioner: 1
   - Max rounds: [ROUNDS]
   - Advocates: [comma-separated list]
   - Critics: [comma-separated list]
 
   ## Team Roster
   [Full list of all agent names and designations]
+
+  [IF PRIOR_COUNCIL IS NOT NULL:]
+  ## Prior Council Context
+  A prior council debated a related motion. Its findings are below.
+  In your recommendation, note where the current debate confirms, contradicts,
+  or adds nuance to these prior findings.
+  ---
+  [PRIOR_COUNCIL CONTENT]
+  ---
+  [END IF]
 
   ## Motion Classification
   Before the debate begins, classify the motion as one of:
@@ -410,7 +506,10 @@ prompt: |
      For GENERAL motions: if any agent makes an ungrounded factual assertion without
      naming a source or reasoning chain, challenge it:
        CLARIFY: @[AgentName] -- What is your evidence for that claim?
-     Treat any ungrounded claim as unsubstantiated until evidence is provided.
+     The QUESTIONER is probing in parallel throughout -- track any claims it marks
+     as "unsubstantiated" (SATISFIED: ... -- Claim unsubstantiated). These are
+     weaker pillars: the agent tried to defend the claim under direct questioning
+     and could not. Weight them accordingly in your synthesis.
   3. Call the debate when EITHER is true:
        a. Discussion has converged (both sides repeating points, concessions
           made, no new ground being covered), OR
@@ -418,10 +517,10 @@ prompt: |
   4. On calling it:
        a. Broadcast: DEBATE CALLED: [brief reason -- converged / ceiling hit]
        b. Immediately broadcast: FINAL SUMMARY REQUEST
-          (all advocates and critics DM their closing paragraph to you)
-          Note: the QUESTIONER has been probing claims inline throughout the debate,
-          so no separate probing phase is needed after DEBATE CALLED.
-       c. Wait for all [N + (N-1)] final summaries.
+          (all advocates and critics send their closing paragraph to you directly)
+          The QUESTIONER has been probing inline throughout -- no separate
+          probing phase is needed after calling the debate.
+       c. Wait for all [ADV_COUNT + CRIT_COUNT] final summaries.
        d. Write the recommendation file to the current working directory.
        e. SendMessage to the team lead: "Council complete. Recommendation saved to: [filename]"
 
@@ -456,7 +555,7 @@ prompt: |
   ---
   ## Adversarial Council -- [MOTION TITLE]
 
-  > Convened: [timestamp] | Advocates: [N] | Critics: [N-1] | Rounds: [X]/[ROUNDS] | Motion type: CODE
+  > Convened: [timestamp] | Advocates: [ADV_COUNT] | Critics: [CRIT_COUNT] | Rounds: [X]/[ROUNDS] | Motion type: CODE
 
   ### Motion
   [Full motion text]
@@ -468,8 +567,8 @@ prompt: |
   **[ROLE]**: [strongest objections distilled from full thread]
 
   ### Questioner Findings
-  [Claims that were probed and clarified, and any that were marked unsubstantiated.
-   If nothing was flagged, write: "All substantiated claims -- no probing required."]
+  [Claims that were probed and clarified, and any marked unsubstantiated.
+   If nothing was flagged, write: "All claims substantiated -- no probing needed."]
 
   ### Key Conflicts
   - [Contention] -- Advocate said X, Critic said Y -- [resolved / unresolved]
@@ -507,7 +606,7 @@ prompt: |
   ---
   ## Adversarial Council -- [MOTION TITLE]
 
-  > Convened: [timestamp] | Advocates: [N] | Critics: [N-1] | Rounds: [X]/[ROUNDS] | Motion type: GENERAL
+  > Convened: [timestamp] | Advocates: [ADV_COUNT] | Critics: [CRIT_COUNT] | Rounds: [X]/[ROUNDS] | Motion type: GENERAL
 
   ### Motion
   [Full motion text]
@@ -519,8 +618,8 @@ prompt: |
   **[ROLE]**: [strongest objections distilled from full thread]
 
   ### Questioner Findings
-  [Claims that were probed and clarified, and any that were marked unsubstantiated.
-   If nothing was flagged, write: "All substantiated claims -- no probing required."]
+  [Claims that were probed and clarified, and any marked unsubstantiated.
+   If nothing was flagged, write: "All claims substantiated -- no probing needed."]
 
   ### Key Conflicts
   - [Contention] -- Advocate said X, Critic said Y -- [resolved / unresolved]
@@ -556,7 +655,7 @@ while the debate is in progress.
 
 If any agent sends a message that does not start with a required header
 (`POSITION:`, `REBUTTAL:`, `CONCESSION:`, `OBJECTION:`, `CLARIFY:`,
-`ANSWER:`, `DRAFT:`, `PROBE:`, `SATISFIED:`, `CLEARED:`,
+`ANSWER:`, `PROBE:`, `SATISFIED:`,
 `DEBATE CALLED:`, `FINAL SUMMARY REQUEST:`, or `FINAL SUMMARY:`):
 
 Ask the user to clarify what that agent was trying to say:
@@ -586,17 +685,6 @@ The team lead waits for the arbiter's "Council complete" message before
 proceeding to Step 5. Messages from advocates, critics, and the questioner
 during the debate are informational -- the team lead does not need to respond to them.
 
-#### Deadlock watchdog
-
-The QUESTIONER is active throughout the debate, handling DRAFTs inline.
-If an advocate or critic appears stalled waiting for a CLEARED response
-for more than 2 minutes, send a nudge to the QUESTIONER:
-
-```
-SendMessage to QUESTIONER:
-"QUESTIONER: [AgentName] is waiting for CLEARED. Please respond to their pending DRAFT."
-```
-
 ---
 
 ### Step 5 -- Findings Presentation & Proceed Gate
@@ -620,22 +708,22 @@ When the arbiter reports "Council complete. Recommendation saved to: [filename]"
 4. Always render a findings table. Only include findings that appear in the
    recommendation file -- do NOT add items here.
 
-   **CODE motion** — findings table:
+   **CODE motion** -- findings table:
    ```
    | # | Severity | File | Line | Finding | Suggested Fix |
    |---|----------|------|------|---------|---------------|
    | 1 | Bug      | src/auth/handler.py | 142 | Null check missing | Add `if user is None: return 401` |
    ```
    Severity values: `Bug`, `Security`, `Improvement`, `Style`.
-   If there are no code-level findings, render one row: `| — | — | — | — | No findings identified. | — |`
+   If there are no code-level findings, render one row: `| -- | -- | -- | -- | No findings identified. | -- |`
 
-   **GENERAL motion** — action items table:
+   **GENERAL motion** -- action items table:
    ```
    | # | Action Item | Owner | Why It Matters |
    |---|-------------|-------|----------------|
-   | 1 | [action]    | [owner or —] | [reason] |
+   | 1 | [action]    | [owner or --] | [reason] |
    ```
-   If there are no action items, render one row: `| — | No action items identified. | — | — |`
+   If there are no action items, render one row: `| -- | No action items identified. | -- | -- |`
 
 5. Present the proceed gate appropriate to the motion type:
 
