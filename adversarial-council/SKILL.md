@@ -544,6 +544,30 @@ prompt: |
   4. **New GitHub Issue -- future feature/enhancement only** (last resort): Only if
      genuinely out of current scope. Flag for human confirmation before creating.
 
+  ## Citation Format (CODE motions)
+  Every finding in Suggested Fixes for CODE motions MUST include one or more `CITE:`
+  lines immediately after the fix description line:
+
+  For file-verifiable claims (a specific location in a file):
+  ```
+  CITE: `path/to/file.ext` L:LINE_NUMBER
+  ```
+
+  For runtime, environment, or external claims that cannot be verified in a file:
+  ```
+  CITE: RUNTIME -- [brief description of what cannot be statically verified]
+  ```
+
+  Example:
+  ```
+  - Null check missing in token validator -- `src/auth/handler.py:142` -- can cause NullPointerException
+    CITE: `src/auth/handler.py` L:142
+  ```
+
+  These `CITE:` lines allow the codebase verifier (Step 5.2.5) to ground-truth check
+  every finding after the debate. Omitting them tags the finding as "verification skipped".
+  For GENERAL motions, citation format is not required.
+
   ## Recommendation File
   Filename: [YYYY-MM-DD-HHmmss]-council-[MOTION-SLUG].md
   Location: current working directory
@@ -702,20 +726,95 @@ When the arbiter reports "Council complete. Recommendation saved to: [filename]"
 
 2. Read the recommendation file.
 
+2.5. **[CODE motions only] Codebase Verification**: Skip this step entirely for
+   GENERAL motions and if the recommendation file contains "No issues identified."
+   in the Suggested Fixes section.
+
+   **5.2.5.1 -- Extract Citations**: Parse the recommendation file for `CITE:` lines.
+   Collect all citations into a list paired with their parent finding.
+
+   Fallback regex (for non-compliant recommendations): scan the Suggested Fixes
+   sections for patterns:
+   - Backtick path + `line`/`L:` + number: `` `path/file.ext` L:LINE `` or `` `path/file.ext`:LINE ``
+   - Colon format: `path/file.ext:LINE` (bare, no backticks)
+
+   If no parseable citations are found after all fallback attempts, tag all findings
+   "verification skipped" and proceed directly to step 3.
+
+   **5.2.5.2 -- Spawn Verifier Agent**: Spawn a single standalone verifier agent
+   (NOT a team member -- the team is already shut down). Use `model: sonnet`
+   (semantic comparison is required, not just file existence checks).
+
+   Provide the verifier with each finding and its citations. For each citation:
+   1. Attempt to read the cited file (Read tool).
+      - File does not exist → verdict: `PHANTOM`
+   2. If file exists, read an 11-line window centered on the cited line
+      (lines LINE-5 to LINE+5, clamped to file bounds).
+      - Line number is out of file range → verdict: `PHANTOM`
+      - Code at the cited location matches the claim → verdict: `VERIFIED`
+      - Code exists but does not match the claim → verdict: `UNVERIFIED`
+   3. `CITE: RUNTIME` lines → verdict: `RUNTIME` (not file-verifiable, retain as-is)
+
+   Verifier returns a structured verdict list:
+   ```
+   Finding 1: [description]
+     CITE: `src/auth/handler.py` L:142 → VERIFIED
+   Finding 2: [description]
+     CITE: `src/utils/empty.py` L:5 → PHANTOM
+   Finding 3: [description]
+     CITE: RUNTIME -- env var check → RUNTIME
+   ```
+
+   **5.2.5.3 -- Process Verdicts**:
+
+   | Verdict | Action |
+   |:---|:---|
+   | All CITE lines VERIFIED | Keep finding as-is |
+   | Any CITE line PHANTOM | **Purge finding** -- remove from recommendation entirely |
+   | Any CITE line UNVERIFIED (file exists, claim mismatches) | **Tag finding** -- append "[UNVERIFIED -- manual review recommended]", retain |
+   | CITE: RUNTIME | **Tag finding** -- append "[NOT FILE-VERIFIABLE -- runtime/external]", retain |
+   | Mixed VERIFIED + UNVERIFIED | Tag with UNVERIFIED note, do not purge |
+
+   Only PHANTOM triggers purging (deterministic: cited file/line does not exist).
+   UNVERIFIED findings (file exists but claim doesn't match) are retained for human review.
+
+   **5.2.5.4 -- Amend Recommendation File**: Rewrite the recommendation file in place.
+   - Remove purged findings from all Suggested Fixes sub-sections
+   - Append tag notes to UNVERIFIED and RUNTIME findings inline
+   - Append a new `### Verification Results` section at the end of the file:
+
+   ```
+   ### Verification Results
+   | # | Finding | Citations | Verdict | Action |
+   |---|---------|-----------|---------|--------|
+   | 1 | [finding desc] | `file:line` | VERIFIED | Retained |
+   | 2 | [finding desc] | `file:line` | PHANTOM | Purged |
+   | 3 | [finding desc] | RUNTIME | RUNTIME | Tagged, retained |
+
+   Verification: [X] verified, [Y] phantom (purged), [Z] unverified (retained for review)
+   ```
+
+   **5.2.5.5 -- Short-Circuit Conditions**:
+   - All findings VERIFIED → append minimal note: "All findings verified against codebase."
+   - All findings PHANTOM → replace Suggested Fixes content with:
+     "All findings purged by verification -- no cited files/lines exist in codebase."
+
 3. Present the **full findings** immediately. Output the entire recommendation
-   file content verbatim.
+   file content verbatim (post-verification, amended version).
 
 4. Always render a findings table. Only include findings that appear in the
    recommendation file -- do NOT add items here.
 
    **CODE motion** -- findings table:
    ```
-   | # | Severity | File | Line | Finding | Suggested Fix |
-   |---|----------|------|------|---------|---------------|
-   | 1 | Bug      | src/auth/handler.py | 142 | Null check missing | Add `if user is None: return 401` |
+   | # | Severity | File | Line | Finding | Suggested Fix | Status |
+   |---|----------|------|------|---------|---------------|--------|
+   | 1 | Bug      | src/auth/handler.py | 142 | Null check missing | Add `if user is None: return 401` | Verified |
    ```
    Severity values: `Bug`, `Security`, `Improvement`, `Style`.
-   If there are no code-level findings, render one row: `| -- | -- | -- | -- | No findings identified. | -- |`
+   Status values: `Verified`, `Unverified`, `Runtime`, `Skipped` (verification skipped -- no citations found).
+   Purged findings are omitted from this table entirely (documented in Verification Results section only).
+   If there are no code-level findings, render one row: `| -- | -- | -- | -- | No findings identified. | -- | -- |`
 
    **GENERAL motion** -- action items table:
    ```
@@ -746,6 +845,8 @@ New Issues flagged ([N] -- future features, need your call):
   - [Issue title] ([Feature / Task]) -- file as future issue, or address in this PR?
   ...
 
+Verification: [X] verified, [Y] phantom (purged), [Z] unverified (retained for review)
+[If Y > 0: Note: [Y] finding(s) cited files/lines that do not exist in the codebase and were purged.]
 Full debate saved to: [filename]
 
 Proceed? [y/N/modify]
@@ -760,6 +861,7 @@ Arbiter recommends: [FOR / AGAINST / CONDITIONAL]
 [2-3 sentence reasoning]
 
 No fixes identified.
+Verification: [X] verified, [Y] phantom (purged), [Z] unverified (retained for review)
 Full debate saved to: [filename]
 
 Proceed? [y/N/modify]
