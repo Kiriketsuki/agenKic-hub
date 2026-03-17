@@ -1,0 +1,16 @@
+---
+description: Generate a stunning magazine-quality slide deck as a self-contained HTML page
+---
+Load the visual-explainer skill, then generate a slide deck for: $@
+
+Follow the visual-explainer skill workflow. Read the reference template at `./templates/slide-deck.html` before generating.
+
+**Slide output is always opt-in.** Only generate slides when this command is invoked or the user explicitly asks for a slide deck.
+
+**Aesthetic:** Pick a distinctive direction from the 4 slide presets in slide-patterns.md (Midnight Editorial, Warm Signal, Terminal Mono, Swiss Clean) or riff on the existing 8 aesthetic directions adapted for slides. Vary from previous decks. Commit to one direction and carry it through every slide.
+
+**Narrative structure:** Slides have a temporal dimension — compose a story arc, not a list of sections. Start with impact (title), build context (overview), deep dive (content, diagrams, data), resolve (summary/next steps). Plan the slide sequence and assign a composition (centered, left-heavy, split, full-bleed) to each slide before writing HTML.
+
+**Compositional variety:** Consecutive slides must vary their spatial approach. Alternate between centered, left-heavy, right-heavy, split, edge-aligned, and full-bleed. Three centered slides in a row means push one off-axis.
+
+If `--publish` is specified, write to `./docs/visual-explainer/slides/`. Otherwise write to `/tmp/visual-explainer/`. Open the result in the browser and tell the user the file path.
