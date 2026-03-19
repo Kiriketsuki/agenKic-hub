@@ -121,6 +121,25 @@ rediscovering the same ground from scratch.
 
 If no matching files exist: `PRIOR_COUNCIL = null`.
 
+#### Fix Registry Lookup
+
+After the prior council lookup, check for the fix registry:
+
+```
+file: council-fix-registry.md
+```
+
+If found, read it and collect all entries where the `Resolved By` column is `--`
+(unresolved regressions introduced by prior council fixes).
+
+Store as `REGRESSION_HISTORY` -- a list of regressions that prior fixes introduced
+but no subsequent council has yet addressed. Each entry carries:
+- The council file that introduced the regression
+- The fix that caused it (file:line)
+- The regression symptom and its location
+
+If the registry does not exist, or no unresolved entries exist: `REGRESSION_HISTORY = null`.
+
 #### Code Scan Prep (CODE motions only)
 
 If the motion explicitly references specific code, files, a PR, or implementation
@@ -226,6 +245,16 @@ prompt: |
   ---
   [END IF]
 
+  [IF REGRESSION_HISTORY IS NOT NULL:]
+  ## Regressions from Prior Fixes
+  Prior council fixes introduced the following unresolved bugs. During your scan,
+  check whether any current issues in scope trace back to these regressions.
+  If so, name the lineage explicitly in your POSITION (e.g. "This bug was introduced
+  by the fix in [council file]").
+  ---
+  [REGRESSION_HISTORY ENTRIES -- one per unresolved regression]
+  [END IF]
+
   [IF SCAN_TARGETS OR DIFF_CONTEXT IS SET:]
   ## Pre-Debate Scan
   This is a CODE motion. Before you write anything, read the following.
@@ -311,6 +340,16 @@ prompt: |
   ---
   [PRIOR_COUNCIL CONTENT]
   ---
+  [END IF]
+
+  [IF REGRESSION_HISTORY IS NOT NULL:]
+  ## Regressions from Prior Fixes
+  Prior council fixes introduced the following unresolved bugs. During your scan,
+  check whether any current issues in scope trace back to these regressions.
+  If so, name the lineage explicitly in your POSITION (e.g. "This bug was introduced
+  by the fix in [council file]").
+  ---
+  [REGRESSION_HISTORY ENTRIES -- one per unresolved regression]
   [END IF]
 
   [IF SCAN_TARGETS OR DIFF_CONTEXT IS SET:]
@@ -481,6 +520,16 @@ prompt: |
   ---
   [END IF]
 
+  [IF REGRESSION_HISTORY IS NOT NULL:]
+  ## Regressions from Prior Fixes
+  The following bugs were introduced by fixes applied in prior councils and
+  remain unresolved. After the debate, check whether any current findings
+  resolve one of these regressions -- if so, record it in the Regression
+  Lineage section and mark the entry as resolved in council-fix-registry.md.
+  ---
+  [REGRESSION_HISTORY ENTRIES -- one per unresolved regression]
+  [END IF]
+
   ## Motion Classification
   Before the debate begins, classify the motion as one of:
   - **CODE**: the motion explicitly involves specific code, files, PRs, libraries,
@@ -599,6 +648,21 @@ prompt: |
 
   ### Concessions
   - [AGENT] conceded [X] to [AGENT]
+
+  ### Regression Lineage
+  [Only present if any current findings trace back to a prior council fix, or if any
+   prior regressions in REGRESSION_HISTORY were resolved by this council's findings.
+   If neither applies, write: "No regression lineage -- no prior fix involvement."]
+
+  #### Regressions Introduced by This Council's Fixes
+  [Populated by the autofix pipeline after fixes are applied -- leave as "--" at debate time.
+   The pipeline will back-fill this after Phase 3 test results are known.]
+  - Fix: [fix description] -- [file:line] -- Introduced regression: [symptom] at [file:line] -- Registry: LOGGED
+
+  #### Prior Regressions Resolved by This Council
+  [Only if REGRESSION_HISTORY was provided and current findings close a prior regression entry.
+   If none, omit this sub-section.]
+  - [regression symptom from registry] -- introduced by [council file] -- RESOLVED by [current finding]
 
   ### Arbiter Recommendation
   **[FOR / AGAINST / CONDITIONAL]**
