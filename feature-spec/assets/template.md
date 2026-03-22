@@ -1,6 +1,5 @@
 # Feature: [Name]
 
-<!-- SpecKit /specify layer: what and why -->
 ## Overview
 
 **User Story**: As a [role], I want [capability] so that [business outcome].
@@ -11,7 +10,12 @@
 
 ---
 
-<!-- SpecKit /clarify layer: resolve ambiguities before planning -->
+## Success Condition
+
+> One sentence: "This feature is complete when [verifiable done-state]."
+
+---
+
 ## Open Questions
 
 | # | Question | Raised By | Resolved |
@@ -20,7 +24,6 @@
 
 ---
 
-<!-- MoSCoW from Ralph spec.md -->
 ## Scope
 
 ### Must-Have
@@ -34,7 +37,6 @@
 
 ---
 
-<!-- SpecKit /plan layer: technical decomposition -->
 ## Technical Plan
 
 **Affected Components**: [services, modules, files]
@@ -54,7 +56,6 @@
 
 ---
 
-<!-- Gherkin /specify layer: executable acceptance criteria -->
 ## Acceptance Scenarios
 
 ```gherkin
@@ -93,7 +94,6 @@ Feature: [Name]
 
 ---
 
-<!-- SpecKit /tasks layer: implementation breakdown -->
 ## Task Breakdown
 
 | ID   | Task | Priority | Dependencies | Status  |
@@ -104,7 +104,6 @@ Feature: [Name]
 
 ---
 
-<!-- SpecKit /analyze layer: exit gate -->
 ## Exit Criteria
 
 - [ ] All Must-Have scenarios pass in CI
@@ -116,6 +115,5 @@ Feature: [Name]
 
 ## References
 
-- Constitution: `constitution.md`
-- Related specs: `specs/NNN-*`
-- Tickets: [link]
+- Related specs: [link or N/A]
+- Tickets: [link or N/A]

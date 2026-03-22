@@ -261,6 +261,13 @@ prompt: |
   [If SCAN_TARGETS set: list each file path]
   [If DIFF_CONTEXT set: "The current diff follows. Read it in full before proceeding."\n\n[DIFF_CONTEXT]]
 
+  ### Preferred Exploration Order (saves tokens -- follow this order)
+  1. `gitnexus_query({query: "concept"})` -- find relevant execution flows before reading files
+  2. `gitnexus_context({name: "symbolName"})` -- targeted: callers, callees, flows for one symbol
+  3. Read tool -- only for specific line ranges when gitnexus is insufficient
+  For vault markdown content (not source code): use `ov_search` / `ov_read`.
+  Only read a full file when the motion targets the entire file and gitnexus cannot scope it.
+
   Read silently and independently. Do not broadcast yet.
   Your opening POSITION must be grounded in what you actually find in the code --
   not what you assume is there.
@@ -272,12 +279,25 @@ prompt: |
     POSITION: (opening statement -- broadcast to full team)
     REBUTTAL: @[AgentName] (direct response to a specific agent's point)
     CONCESSION: (point you accept from the other side)
-    OBJECTION: (new challenge raised mid-discussion)
+    OBJECTION: (new challenge about the motion raised mid-discussion)
     ANSWER: @QUESTIONER (response to a PROBE from the questioner)
 
   Free prose is allowed after the header line.
   Do not repeat points you have already conceded.
   Stay in character at all times.
+
+  ## Scope Discipline
+  Your arguments, OBJECTIONs, and findings must be directly about the motion.
+  Do not surface unrelated code quality issues, style concerns, performance observations,
+  or feature ideas you encounter during your scan. If you discover something genuinely
+  dangerous -- a security vulnerability, data loss risk, or compliance blocker -- you
+  may raise it as a CRITICAL DISCOVERY using this exact format:
+
+    CRITICAL DISCOVERY: [Security / Data Loss / Compliance] -- [description] -- [citation]
+
+  Use this header only for: SQL injection, auth bypass, exposed credentials, SSRF,
+  missing rollback, unguarded cascade delete, GDPR violation, license incompatibility,
+  or equivalent severity. Everything else stays out of your output.
 
   ## Evidence Requirement (STRICTLY ENFORCED)
   Every claim you make must be grounded. How you ground it depends on the motion:
@@ -289,7 +309,8 @@ prompt: |
 
   ## Flow
   [IF CODE MOTION:]
-  0. SCAN: Read all files/diff listed in the Pre-Debate Scan section above.
+  0. SCAN: Explore all files/diff listed in the Pre-Debate Scan section above.
+     Use gitnexus_query/gitnexus_context first; fall back to Read for specific line ranges.
      Do this before formulating anything. This is silent -- do not broadcast during scan.
   [END IF]
   1. Formulate and broadcast your opening POSITION to the team.
@@ -305,7 +326,7 @@ prompt: |
      to ARBITER only. One paragraph. Your strongest remaining points. Nothing else.
 
   Do NOT message the team lead directly.
-  Do NOT use any header other than: POSITION, REBUTTAL, CONCESSION, OBJECTION, ANSWER.
+  Do NOT use any header other than: POSITION, REBUTTAL, CONCESSION, OBJECTION, ANSWER, CRITICAL DISCOVERY.
   PROBE and SATISFIED are reserved for the QUESTIONER.
 ```
 
@@ -358,6 +379,13 @@ prompt: |
   [If SCAN_TARGETS set: list each file path]
   [If DIFF_CONTEXT set: "The current diff follows. Read it in full before proceeding."\n\n[DIFF_CONTEXT]]
 
+  ### Preferred Exploration Order (saves tokens -- follow this order)
+  1. `gitnexus_query({query: "concept"})` -- find relevant execution flows before reading files
+  2. `gitnexus_context({name: "symbolName"})` -- targeted: callers, callees, flows for one symbol
+  3. Read tool -- only for specific line ranges when gitnexus is insufficient
+  For vault markdown content (not source code): use `ov_search` / `ov_read`.
+  Only read a full file when the motion targets the entire file and gitnexus cannot scope it.
+
   Read silently and independently. Do not broadcast yet.
   Your opening POSITION must be grounded in what you actually find in the code --
   not what you assume is there.
@@ -369,12 +397,25 @@ prompt: |
     POSITION: (opening statement -- broadcast to full team)
     REBUTTAL: @[AgentName] (direct response to a specific agent's point)
     CONCESSION: (point you accept from the other side)
-    OBJECTION: (new challenge raised mid-discussion)
+    OBJECTION: (new challenge about the motion raised mid-discussion)
     ANSWER: @QUESTIONER (response to a PROBE from the questioner)
 
   Free prose is allowed after the header line.
   Do not repeat points you have already conceded.
   Stay in character at all times.
+
+  ## Scope Discipline
+  Your arguments, OBJECTIONs, and findings must be directly about the motion.
+  Do not surface unrelated code quality issues, style concerns, performance observations,
+  or feature ideas you encounter during your scan. If you discover something genuinely
+  dangerous -- a security vulnerability, data loss risk, or compliance blocker -- you
+  may raise it as a CRITICAL DISCOVERY using this exact format:
+
+    CRITICAL DISCOVERY: [Security / Data Loss / Compliance] -- [description] -- [citation]
+
+  Use this header only for: SQL injection, auth bypass, exposed credentials, SSRF,
+  missing rollback, unguarded cascade delete, GDPR violation, license incompatibility,
+  or equivalent severity. Everything else stays out of your output.
 
   ## Evidence Requirement (STRICTLY ENFORCED)
   Every claim you make must be grounded. How you ground it depends on the motion:
@@ -386,7 +427,8 @@ prompt: |
 
   ## Flow
   [IF CODE MOTION:]
-  0. SCAN: Read all files/diff listed in the Pre-Debate Scan section above.
+  0. SCAN: Explore all files/diff listed in the Pre-Debate Scan section above.
+     Use gitnexus_query/gitnexus_context first; fall back to Read for specific line ranges.
      Do this before formulating anything. This is silent -- do not broadcast during scan.
   [END IF]
   1. Wait for advocates to broadcast their opening POSITION statements.
@@ -402,7 +444,7 @@ prompt: |
      to ARBITER only. One paragraph. Your strongest remaining objections. Nothing else.
 
   Do NOT message the team lead directly.
-  Do NOT use any header other than: POSITION, REBUTTAL, CONCESSION, OBJECTION, ANSWER.
+  Do NOT use any header other than: POSITION, REBUTTAL, CONCESSION, OBJECTION, ANSWER, CRITICAL DISCOVERY.
   PROBE and SATISFIED are reserved for the QUESTIONER.
 ```
 
@@ -444,6 +486,8 @@ prompt: |
   - "Everyone knows..." -- do they? where is this documented?
   - Circular reasoning: "We should do X because X is good"
   - Hidden assumptions stated as settled facts
+  - OBJECTIONs that appear unrelated to the motion: ask "Is this about the motion?"
+    If the agent cannot connect it to the motion, mark: "Out of scope. Noted for arbiter."
 
   ## When NOT to Probe
 
@@ -451,6 +495,7 @@ prompt: |
   - CONCESSION messages (the agent is already accepting something -- no need)
   - ANSWER messages directed at you (those are responses, not new claims)
   - Claims that both sides appear to agree on
+  - CRITICAL DISCOVERY messages -- those go directly to the arbiter
 
   Do not probe everything. Pick the claims the debate is actually hinging on.
   One sharp "why?" beats five scattered ones. If the argument is clear, stay silent.
@@ -590,8 +635,21 @@ prompt: |
   1. **Bug / defect (any scope)**: Fix it unconditionally. Never punt bugs to new issues.
   2. **In-PR fix -- scoped improvement**: Addressable in current PR with small change.
   3. **PR description update**: Scope changed; note what to add/amend.
-  4. **New GitHub Issue -- future feature/enhancement only** (last resort): Only if
-     genuinely out of current scope. Flag for human confirmation before creating.
+  4. **Critical Discovery -- informational only, not a fix target**: If an agent raised a
+     CRITICAL DISCOVERY during the debate, note it in the recommendation. Category tag must
+     be Security, Data Loss, or Compliance -- anything else is dropped. Critical Discoveries
+     are never added to Suggested Fixes. They are presented to the user as informational.
+
+  ## Scope Audit
+  Before compiling Suggested Fixes, apply this audit to every finding:
+  1. **Relevance test**: Is this finding directly about the motion? If it is about a
+     different feature, file, or concern noticed during the scan, it fails.
+  2. **Pre-existence test**: Would this concern exist even without this motion? If yes,
+     it was a pre-existing issue unrelated to the motion, and it fails.
+  Findings that fail either test are dropped from the recommendation.
+  Exception: a finding with a valid CRITICAL DISCOVERY tag (Security / Data Loss / Compliance)
+  survives the audit and is noted in the Critical Discoveries section.
+  QUESTIONER "Out of scope" marks auto-fail the relevance test.
 
   ## Citation Format (CODE motions)
   Every finding in Suggested Fixes for CODE motions MUST include one or more `CITE:`
@@ -684,9 +742,9 @@ prompt: |
   #### PR Description Amendments (update scope/intent)
   - [What to add/change in the PR description]
 
-  #### New Issues (future features/enhancements only -- confirm with human before creating)
-  > NEVER list bugs here. Confirm with team lead before filing.
-  - [Issue title] -- [why future enhancement] -- [Feature / Task]
+  #### Critical Discoveries (informational -- not fix targets)
+  [Only present if a Critical Discovery passed the scope audit. If none, omit this section.]
+  - [Security / Data Loss / Compliance]: [description] -- [citation]
   ---
 
   ### FORMAT B -- GENERAL motion
@@ -723,9 +781,14 @@ prompt: |
   - [Condition]
 
   ### Action Items
-  [Only if specific follow-on steps were identified in the debate. Freeform.
-   If none, write: "No action items identified."]
+  [Only if the debate produced specific follow-on steps directly entailed by the motion's
+   outcome. Each action item must pass the scope audit: relevant to the motion and not a
+   pre-existing concern. If none, write: "No action items identified."]
   - [Action item] -- [owner if discussed] -- [why this matters]
+
+  ### Critical Discoveries (informational -- not fix targets)
+  [Only present if a Critical Discovery passed the scope audit. If none, omit this section.]
+  - [Security / Data Loss / Compliance]: [description] -- [citation]
   ---
 
   Do NOT message the team lead until the recommendation file is written and saved.
@@ -743,7 +806,7 @@ while the debate is in progress.
 
 If any agent sends a message that does not start with a required header
 (`POSITION:`, `REBUTTAL:`, `CONCESSION:`, `OBJECTION:`, `CLARIFY:`,
-`ANSWER:`, `PROBE:`, `SATISFIED:`,
+`ANSWER:`, `PROBE:`, `SATISFIED:`, `CRITICAL DISCOVERY:`,
 `DEBATE CALLED:`, `FINAL SUMMARY REQUEST:`, or `FINAL SUMMARY:`):
 
 Ask the user to clarify what that agent was trying to say:
@@ -810,9 +873,12 @@ When the arbiter reports "Council complete. Recommendation saved to: [filename]"
    (semantic comparison is required, not just file existence checks).
 
    Provide the verifier with each finding and its citations. For each citation:
-   1. Attempt to read the cited file (Read tool).
+   1. If the citation names a symbol: prefer `gitnexus_context({name: symbolName})` to
+      confirm the symbol exists and verify the claim (more token-efficient than file reads).
+      Fall back to Read if gitnexus is unavailable or the citation is line-specific only.
+   2. Attempt to read the cited file (Read tool) when needed:
       - File does not exist → verdict: `PHANTOM`
-   2. If file exists, read an 11-line window centered on the cited line
+   3. If file exists, read an 11-line window centered on the cited line
       (lines LINE-5 to LINE+5, clamped to file bounds).
       - Line number is out of file range → verdict: `PHANTOM`
       - Code at the cited location matches the claim → verdict: `VERIFIED`
@@ -905,8 +971,9 @@ PR Description Amendments ([N]):
   - [Amendment 1]
   ...
 
-New Issues flagged ([N] -- future features, need your call):
-  - [Issue title] ([Feature / Task]) -- file as future issue, or address in this PR?
+[If Critical Discoveries exist:]
+Critical Discoveries ([N] -- informational, not blocking):
+  - [Category]: [description]
   ...
 
 Verification: [X] verified, [Y] phantom (purged), [Z] unverified (retained for review)
@@ -914,10 +981,9 @@ Verification: [X] verified, [Y] phantom (purged), [Z] unverified (retained for r
 Full debate saved to: [filename]
 
 Proceed? [y/N/modify]
-(If new issues listed above: answer "file" or "in-PR" for each before proceeding)
 ```
 
-If there are no fixes, amendments, or new issues, the CODE gate simplifies to:
+If there are no fixes or amendments, the CODE gate simplifies to:
 
 ```
 ---
@@ -933,10 +999,9 @@ Proceed? [y/N/modify]
 
 Responses (CODE):
 - `y` -- enter plan mode immediately. Present the full implementation plan
-  covering all in-PR fixes, the updated PR description text, and (if any)
-  steps to create new issues using the correct `.github/ISSUE_TEMPLATE/`
-  template. Do NOT start executing -- stay in plan mode until the user
-  approves the plan.
+  covering all in-PR fixes and the updated PR description text.
+  Do NOT start executing -- stay in plan mode until the user approves the plan.
+  Critical Discoveries (if any) are informational -- they are not part of the plan.
 - `N` -- note the result, take no further action. Inform the user:
   "Council result noted. No action taken."
 - `modify` -- ask the user how they want to amend the motion.
@@ -955,6 +1020,11 @@ Arbiter recommends: [FOR / AGAINST / CONDITIONAL]
 [If action items exist:]
 Action Items ([N]):
   - [Action item]
+  ...
+
+[If Critical Discoveries exist:]
+Critical Discoveries ([N] -- informational, not blocking):
+  - [Category]: [description]
   ...
 
 Full debate saved to: [filename]
