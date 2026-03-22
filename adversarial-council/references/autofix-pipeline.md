@@ -7,6 +7,7 @@ Invoked when the user responds `y` to a CODE motion gate. Executes autonomously 
 ## Phase 1 — Validate Findings
 
 Read the recommendation file written by the ARBITER.
+Skip the Critical Discoveries section -- those are informational notes, not fix targets.
 
 For each finding in the Suggested Fixes section:
 1. Read the cited `file:line`
