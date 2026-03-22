@@ -46,13 +46,23 @@ Once confirmed, derive the kebab-case output filename: `[feature-name]-spec.md`.
 
 ---
 
-#### 2.2 Open Questions
+#### 2.2 Success Condition
+
+Ask: "In one sentence — when is this feature done? What's the verifiable state that means it shipped?"
+
+This should be a completion-state sentence: "This feature is complete when [X]." It anchors every later decision — scope disputes, task prioritisation, exit criteria all refer back to this sentence. If the user's answer is vague ("when it works"), push for something testable ("when a user can do X and Y is true in the system").
+
+If the user already stated something concrete in the overview, propose it and confirm rather than re-asking.
+
+---
+
+#### 2.3 Open Questions
 
 Ask once: "Any known unknowns or blockers before we plan?" If the user has none, leave the table's placeholder row and move on. Don't labour this section.
 
 ---
 
-#### 2.3 Scope (MoSCoW)
+#### 2.4 Scope (MoSCoW)
 
 Ask for must-haves first. Each must-have needs a brief acceptance condition (what does "done" look like for that behaviour?).
 
@@ -60,7 +70,7 @@ Then ask together: "Anything lower priority — nice to have but not blocking la
 
 ---
 
-#### 2.4 Technical Plan
+#### 2.5 Technical Plan
 
 This is where CWD context pays off. Before asking anything:
 
@@ -73,7 +83,7 @@ Present your inferences as a draft block and ask the user to confirm or correct.
 
 ---
 
-#### 2.5 Acceptance Scenarios
+#### 2.6 Acceptance Scenarios
 
 Propose Gherkin scenarios that map directly to the must-have scope items. Structure:
 
@@ -85,16 +95,16 @@ Show the draft scenarios, ask for corrections or additions.
 
 ---
 
-#### 2.6 Task Breakdown
+#### 2.7 Task Breakdown
 
-Derive implementation tasks from the acceptance scenarios and technical plan. Show a proposed table (T1, T1.1, T2 …) with priority and dependencies. Ask:
+Derive implementation tasks from the acceptance scenarios and technical plan. Show a proposed table (T1, T1.1, T2 ...) with priority and dependencies. Ask:
 
 - "Does this ordering look right?"
 - "Anything missing, or anything here that's actually out of scope?"
 
 ---
 
-#### 2.7 Exit Criteria
+#### 2.8 Exit Criteria
 
 Pre-fill the standard items:
 
@@ -106,7 +116,7 @@ Ask: "Any domain-specific exit gates?" (e.g., performance benchmark, compliance 
 
 ---
 
-#### 2.8 References
+#### 2.9 References
 
 Ask: "Any related specs, tickets, or docs I should link?" If none, omit the placeholder rows entirely.
 
@@ -135,7 +145,7 @@ Update the GitHub PR description for PR #[number] in the current repo.
 Replace the existing body with the following content (derived from the completed spec):
 
 ## Summary
-[3–5 bullet points drawn from Must-Have scope items — what this PR will deliver]
+[3-5 bullet points drawn from Must-Have scope items — what this PR will deliver]
 
 ## Spec
 See `[feature-name]-spec.md` in the branch root for full acceptance criteria, technical plan, and task breakdown.
