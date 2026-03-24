@@ -155,6 +155,56 @@ For GENERAL motions, both are empty and the scan section is omitted.
 
 ---
 
+### Step 1.5 -- Model Selection
+
+Classify the motion's complexity to assign model tiers for each agent role.
+This avoids burning opus tokens on simple motions where sonnet would suffice,
+while ensuring complex or high-stakes motions get the reasoning depth they need.
+
+#### Complexity classification
+
+Evaluate the motion against these signals:
+
+| Signal | Low | High |
+|:---|:---|:---|
+| Ambiguity | Clear proposition, well-scoped | Vague, conflicting requirements, many unknowns |
+| Stakes | Reversible, local impact | Irreversible, system-wide, production, compliance |
+| Scope | Single file or narrow concept | Multi-file, cross-cutting, architectural |
+| Domain density | Familiar patterns, standard code | Unfamiliar codebase, novel architecture, security-critical |
+
+Score: count how many signals are High.
+- 0-1 High signals → `COMPLEXITY = low`
+- 2 High signals → `COMPLEXITY = medium`
+- 3-4 High signals → `COMPLEXITY = high`
+
+#### Model assignment
+
+| Role | Low | Medium | High |
+|:---|:---|:---|:---|
+| Advocates | sonnet | sonnet | opus |
+| Critics | sonnet | sonnet | opus |
+| Arbiter | sonnet | opus | opus |
+| Questioner | haiku | haiku | haiku |
+| Verifier (Step 5) | sonnet | sonnet | sonnet |
+
+The arbiter upgrades to opus one tier earlier than debate agents because
+synthesis and judgment benefit more from deeper reasoning than positional arguing.
+The questioner stays on haiku regardless -- probing is mechanical and benefits
+from speed over depth. The verifier stays on sonnet -- it does semantic comparison,
+not deep reasoning.
+
+Store the assignments as `MODEL_ADVOCATE`, `MODEL_CRITIC`, `MODEL_ARBITER`,
+`MODEL_QUESTIONER`, `MODEL_VERIFIER` for use in Steps 3 and 5.
+
+Report the classification to the user before proceeding:
+
+```
+Motion complexity: [low/medium/high]
+Models: advocates=[model], critics=[model], arbiter=[model], questioner=haiku
+```
+
+---
+
 ### Step 2 -- Team Setup
 
 Create the council team:
@@ -193,7 +243,11 @@ Store team name and task IDs for cleanup in Step 6.
 
 Spawn all agents simultaneously via the Agent tool. All use
 `subagent_type: general-purpose` and `team_name: [team from Step 2]`.
-The QUESTIONER uses `model: haiku`.
+Each agent uses the model assigned in Step 1.5:
+- Advocates: `model: [MODEL_ADVOCATE]`
+- Critics: `model: [MODEL_CRITIC]`
+- Arbiter: `model: [MODEL_ARBITER]`
+- Questioner: `model: [MODEL_QUESTIONER]` (always haiku)
 
 #### Role focus map
 
@@ -220,6 +274,7 @@ Instantiate once per advocate. Replace all `[PLACEHOLDERS]` before dispatching.
 
 ```
 subagent_type: general-purpose
+model: [MODEL_ADVOCATE]
 name: [ROLE]
 team_name: [TEAM_NAME]
 prompt: |
@@ -338,6 +393,7 @@ Instantiate once per critic. Replace all `[PLACEHOLDERS]` before dispatching.
 
 ```
 subagent_type: general-purpose
+model: [MODEL_CRITIC]
 name: [ROLE]
 team_name: [TEAM_NAME]
 prompt: |
@@ -454,7 +510,7 @@ prompt: |
 
 ```
 subagent_type: general-purpose
-model: haiku
+model: [MODEL_QUESTIONER]
 name: QUESTIONER
 team_name: [TEAM_NAME]
 prompt: |
@@ -537,6 +593,7 @@ prompt: |
 
 ```
 subagent_type: general-purpose
+model: [MODEL_ARBITER]
 name: ARBITER
 team_name: [TEAM_NAME]
 prompt: |
@@ -869,8 +926,10 @@ When the arbiter reports "Council complete. Recommendation saved to: [filename]"
    "verification skipped" and proceed directly to step 3.
 
    **5.2.5.2 -- Spawn Verifier Agent**: Spawn a single standalone verifier agent
-   (NOT a team member -- the team is already shut down). Use `model: sonnet`
-   (semantic comparison is required, not just file existence checks).
+   (NOT a team member -- the team is already shut down). Use `subagent_type: diagnosis`
+   and `model: [MODEL_VERIFIER]` (from Step 1.5 -- always sonnet). The `diagnosis` agent
+   type is read-only and optimized for code investigation, which is exactly what
+   verification requires.
 
    Provide the verifier with each finding and its citations. For each citation:
    1. If the citation names a symbol: prefer `gitnexus_context({name: symbolName})` to
