@@ -691,7 +691,7 @@
 graph LR
   Client["Client"] --> Edge["Edge Worker"]
   Edge --> Auth["Auth Cache"]
-  Edge --> RL["Rate Limiter<br/>Durable Object"]
+  Edge --> RL["Rate Limiter (Durable Object)"]
   Edge --> Router["Route Resolver"]
   Router --> API["API Service"]
   Router --> Static["Static Assets"]
