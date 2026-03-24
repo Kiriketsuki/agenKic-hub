@@ -97,7 +97,7 @@ Vary the choice each time. If the last diagram was dark and technical, make the 
 
 **Mermaid layout direction:** Prefer `flowchart TD` (top-down) over `flowchart LR` (left-to-right) for complex diagrams. Use LR only for simple 3-4 node linear flows.
 
-**Mermaid line breaks in flowchart labels:** Use `<br/>` inside quoted labels. Never use escaped newlines like `\n`.
+**Mermaid line breaks in flowchart labels:** Do NOT use `<br/>` in labels — Mermaid converts it to `<br>` inside SVG `<foreignObject>`, which is invalid XML and causes parse errors in browsers. Keep labels single-line instead. If a label is too long, shorten the text or split into multiple connected nodes.
 
 **Mermaid CSS class collision constraint:** Never define `.node` as a page-level CSS class. Use the namespaced `.ve-card` class for card components instead.
 
@@ -182,7 +182,7 @@ Three approaches depending on complexity:
 **Use Mermaid.** Use `erDiagram` syntax.
 
 ### State Machines / Decision Trees
-**Use Mermaid.** Use `stateDiagram-v2` for states with labeled transitions. Use `flowchart TD` if labels need special characters (colons, parentheses, `<br/>`).
+**Use Mermaid.** Use `stateDiagram-v2` for states with labeled transitions. Use `flowchart TD` if labels need special characters (colons, parentheses). Avoid `<br/>` in labels — it produces malformed SVG XML.
 
 ### Mind Maps / Hierarchical Breakdowns
 **Use Mermaid.** Use `mindmap` syntax.
