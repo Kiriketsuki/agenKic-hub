@@ -689,10 +689,12 @@ prompt: |
   - If no code-level issues were identified, the Suggested Fixes section is omitted
 
   When a genuine code issue IS found:
-  1. **Bug / defect (any scope)**: Fix it unconditionally. Never punt bugs to new issues.
-  2. **In-PR fix -- scoped improvement**: Addressable in current PR with small change.
-  3. **PR description update**: Scope changed; note what to add/amend.
-  4. **Critical Discovery -- informational only, not a fix target**: If an agent raised a
+  1. **Fix it in this PR**: Every verified finding -- bug, improvement, or hardening --
+     gets fixed in the current PR. There is no "follow-on" or "non-blocking" tier.
+     If the council found it and verified it, it belongs in the current changeset.
+     The only exception is Critical Discoveries (see below).
+  2. **PR description update**: If the fixes expand the PR scope, note what to add/amend.
+  3. **Critical Discovery -- informational only, not a fix target**: If an agent raised a
      CRITICAL DISCOVERY during the debate, note it in the recommendation. Category tag must
      be Security, Data Loss, or Compliance -- anything else is dropped. Critical Discoveries
      are never added to Suggested Fixes. They are presented to the user as informational.
@@ -790,11 +792,10 @@ prompt: |
   [Only present if genuine issues were raised and substantiated in the debate.
    If none, write: "No issues identified." and omit all sub-sections below.]
 
-  #### Bug Fixes (always in-PR, regardless of original scope)
-  - [Fix description] -- [file/path.ext:LINE] -- [why this is a bug]
+  All verified findings are fixed in the current PR -- no "follow-on" tier exists.
 
-  #### In-PR Improvements (scoped, non-bug)
-  - [Fix description] -- [file/path.ext:LINE or area] -- [why it can be done in this PR]
+  #### Fixes (all in-PR)
+  - [Fix description] -- [file/path.ext:LINE] -- [severity: Bug/Improvement] -- [rationale]
 
   #### PR Description Amendments (update scope/intent)
   - [What to add/change in the PR description]
@@ -1002,6 +1003,7 @@ When the arbiter reports "Council complete. Recommendation saved to: [filename]"
    ```
    Severity values: `Bug`, `Security`, `Improvement`, `Style`.
    Status values: `Verified`, `Unverified`, `Runtime`, `Skipped` (verification skipped -- no citations found).
+   ALL findings appear in one flat list -- there is no "follow-on" or "non-blocking" column.
    Purged findings are omitted from this table entirely (documented in Verification Results section only).
    If there are no code-level findings, render one row: `| -- | -- | -- | -- | No findings identified. | -- | -- |`
 
@@ -1022,7 +1024,7 @@ When the arbiter reports "Council complete. Recommendation saved to: [filename]"
 Arbiter recommends: [FOR / AGAINST / CONDITIONAL]
 [2-3 sentence reasoning from the recommendation file]
 
-In-PR Fixes ([N]):
+Fixes ([N] -- all applied in this PR):
   1. [Fix 1]
   ...
 
@@ -1057,9 +1059,14 @@ Proceed? [y/N/modify]
 ```
 
 Responses (CODE):
-- `y` -- enter plan mode immediately. Present the full implementation plan
-  covering all in-PR fixes and the updated PR description text.
-  Do NOT start executing -- stay in plan mode until the user approves the plan.
+- `y` -- enter plan mode. Present a full implementation plan covering ALL
+  verified fixes (no tier distinction -- bugs and improvements alike) and the
+  updated PR description text. The plan should note which fixes can be
+  parallelized. Once the user approves the plan, use `/agent-route` to select
+  the optimal agent type for the fixes, then spawn a team via `TeamCreate`
+  with appropriately-routed agents to implement fixes in parallel where possible.
+  Update the PR description to reflect the expanded scope. Once all fixes are
+  applied and tests pass, commit the changes and push to the remote branch.
   Critical Discoveries (if any) are informational -- they are not part of the plan.
 - `N` -- note the result, take no further action. Inform the user:
   "Council result noted. No action taken."
