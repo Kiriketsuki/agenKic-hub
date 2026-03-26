@@ -15,6 +15,19 @@ Bundled at `assets/template.md` (relative to this skill's directory).
 
 ---
 
+## Handoff from Brainstorming
+
+When invoked after the brainstorming skill, the conversation already contains a user-approved design with decisions about architecture, approach, scope, and trade-offs. **Do not re-interview what was already decided.** Instead:
+
+1. Review the brainstorming conversation for confirmed decisions (feature name, user story, scope, architecture, components, data flow, error handling).
+2. Pre-fill every template section you can from those decisions.
+3. Only ask the user about sections that brainstorming did not cover (typically: acceptance scenarios, task breakdown, exit criteria, references).
+4. Show the pre-filled sections for confirmation: "I've carried over X, Y, Z from our brainstorming -- does this look right?"
+
+This avoids the frustrating pattern of re-asking questions the user already answered.
+
+---
+
 ## Workflow
 
 ### Step 1: Enter Plan Mode + Read Context
@@ -23,6 +36,7 @@ Bundled at `assets/template.md` (relative to this skill's directory).
 - Scan the CWD for context: README, package.json, pyproject.toml, go.mod, existing specs, migration files, API route files — anything that reveals the stack, architecture, and domain vocabulary.
 - Run `git branch --show-current` and `gh pr view --json number,title,body 2>/dev/null` to detect if the user is on a non-default branch with an open PR. Store branch name and PR number/body if found — you'll need them in Step 5.
 - Copy the bundled template (`assets/template.md` relative to this skill's directory) verbatim to `./feature_spec.md` in CWD. This is the working draft you'll progressively fill in.
+- **If following a brainstorming handoff**: immediately pre-fill sections from the approved design before starting the interview. Only interview for gaps.
 - Keep a mental working state of what's been confirmed so you don't re-ask.
 
 ### Step 2: Interview — Section by Section
