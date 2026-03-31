@@ -1,7 +1,7 @@
 ---
-name: brainstorming
+name: brainstorm
 description: "Collaborative design exploration before implementation. Understands project context, asks clarifying questions one at a time, proposes 2-3 approaches with trade-offs, and converges on an approved design. Chains into feature-spec for structured output. Use before building features, components, or making significant changes."
-attribution: "Adapted from the superpowers plugin (https://github.com/anthropics/claude-plugins-official) by Anthropic. Original skill by the superpowers contributors."
+attribution: "Adapted from the claude-plugins-official repository (https://github.com/anthropics/claude-plugins-official) by Anthropic."
 ---
 
 # Brainstorming Ideas Into Designs
@@ -32,7 +32,7 @@ You MUST create a task for each of these items and complete them in order:
 ## Process Flow
 
 ```dot
-digraph brainstorming {
+digraph brainstorm {
     "Explore project context" [shape=box];
     "Visual questions ahead?" [shape=diamond];
     "Offer Visual Companion\n(own message, no other content)" [shape=box];
@@ -102,7 +102,7 @@ Once the user approves the design, invoke the **feature-spec** skill to formaliz
 
 > "Design approved. Invoking feature-spec to formalize this into a structured spec."
 
-Then invoke the feature-spec skill. The brainstorming skill ends here — feature-spec takes over for the structured output.
+Then invoke the feature-spec skill. The brainstorm skill ends here — feature-spec takes over for the structured output.
 
 ## Key Principles
 
@@ -130,4 +130,4 @@ A browser-based companion for showing mockups, diagrams, and visual options duri
 A question about a UI topic is not automatically a visual question. "What does personality mean in this context?" is a conceptual question — use the terminal. "Which wizard layout works better?" is a visual question — use the browser.
 
 If they agree to the companion, read the detailed guide before proceeding:
-`skills/brainstorming/visual-companion.md`
+`skills/brainstorm/visual-companion.md`

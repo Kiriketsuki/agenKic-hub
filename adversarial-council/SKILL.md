@@ -51,6 +51,13 @@ Options:
   --roles "adv1,adv2:crit1"         Named roles, colon-separated by side (advocates : critics)
   --skeptic                          Flip ratio: N-1 advocates, N critics.
                                      Recommended for PR and code review contexts.
+  --model sonnet|opus|haiku          Override model for ALL debate agents (arbiter, advocates,
+                                     critics). Questioner stays haiku unless --model-questioner
+                                     is also set. Bypasses auto-complexity classification.
+  --model-advocate sonnet|opus|haiku Override model for advocates only
+  --model-critic sonnet|opus|haiku   Override model for critics only
+  --model-arbiter sonnet|opus|haiku  Override model for arbiter only
+  --model-questioner sonnet|opus|haiku Override model for questioner (default: haiku)
 ```
 
 Examples:
@@ -66,6 +73,14 @@ Examples:
   --motion "Use glassmorphism in dark mode" \
   --n 3 --rounds 5 \
   --roles "DARKMODE-ADVOCATE,UX-ADVOCATE,PERF-ADVOCATE:CONTRAST-CRITIC,A11Y-CRITIC"
+
+/adversarial-council --motion "Rewrite auth in Rust" --model opus
+# Forces all debate agents to opus (questioner stays haiku)
+
+/adversarial-council \
+  --motion "Adopt microservices" \
+  --model-advocate sonnet --model-critic opus --model-arbiter opus
+# Per-role: critics and arbiter get opus, advocates get sonnet
 ```
 
 ## Workflow
@@ -157,11 +172,22 @@ For GENERAL motions, both are empty and the scan section is omitted.
 
 ### Step 1.5 -- Model Selection
 
-Classify the motion's complexity to assign model tiers for each agent role.
-This avoids burning opus tokens on simple motions where sonnet would suffice,
-while ensuring complex or high-stakes motions get the reasoning depth they need.
+Model assignment uses two layers: auto-complexity classification (default) and
+explicit overrides (`--model` and `--model-*` flags). Overrides always win.
 
-#### Complexity classification
+#### Override resolution order
+
+1. **Per-role flags** (`--model-advocate`, `--model-critic`, `--model-arbiter`,
+   `--model-questioner`) take highest precedence for that specific role.
+2. **Blanket flag** (`--model`) applies to all roles EXCEPT questioner (which
+   defaults to haiku unless `--model-questioner` is also set).
+3. **Auto-complexity** (below) fills in any roles not covered by flags.
+
+In other words: `--model opus --model-questioner sonnet` gives opus to advocates,
+critics, and arbiter, but sonnet to the questioner. `--model-arbiter opus` alone
+only overrides the arbiter -- all other roles fall through to auto-complexity.
+
+#### Complexity classification (when no override covers a role)
 
 Evaluate the motion against these signals:
 
@@ -177,7 +203,7 @@ Score: count how many signals are High.
 - 2 High signals → `COMPLEXITY = medium`
 - 3-4 High signals → `COMPLEXITY = high`
 
-#### Model assignment
+#### Auto-complexity model assignment
 
 | Role | Low | Medium | High |
 |:---|:---|:---|:---|
@@ -193,14 +219,31 @@ The questioner stays on haiku regardless -- probing is mechanical and benefits
 from speed over depth. The verifier stays on sonnet -- it does semantic comparison,
 not deep reasoning.
 
+#### Final assignment
+
+For each role, resolve the model in override order (per-role > blanket > auto):
+
+```
+MODEL_ADVOCATE   = --model-advocate  || --model  || auto[advocate]
+MODEL_CRITIC     = --model-critic    || --model  || auto[critic]
+MODEL_ARBITER    = --model-arbiter   || --model  || auto[arbiter]
+MODEL_QUESTIONER = --model-questioner           || auto[questioner]   # --model does NOT cascade here
+MODEL_VERIFIER   = sonnet (always -- not overridable)
+```
+
+Note: `--model` intentionally does NOT cascade to the questioner. The questioner's
+default (haiku) is almost always correct -- override it explicitly with
+`--model-questioner` if needed.
+
 Store the assignments as `MODEL_ADVOCATE`, `MODEL_CRITIC`, `MODEL_ARBITER`,
 `MODEL_QUESTIONER`, `MODEL_VERIFIER` for use in Steps 3 and 5.
 
 Report the classification to the user before proceeding:
 
 ```
-Motion complexity: [low/medium/high]
-Models: advocates=[model], critics=[model], arbiter=[model], questioner=haiku
+Motion complexity: [low/medium/high] [or "overridden" if --model is set]
+Models: advocates=[model], critics=[model], arbiter=[model], questioner=[model]
+[If any overrides active: "Overrides: --model=X / --model-advocate=Y / ..."]
 ```
 
 ---
@@ -524,6 +567,10 @@ prompt: |
   for you before speaking -- they broadcast freely and respond to your probes
   when they can. What matters is that unsubstantiated claims are named, visible,
   and on the record for the ARBITER to weigh.
+
+  IMPORTANT: Broadcast probes PROMPTLY as claims appear. Do not wait for nudges
+  from the arbiter or team lead. Do not batch probes across rounds. If you see
+  an unsubstantiated claim, fire the PROBE immediately.
 
   ## Motion
   [FULL MOTION TEXT]
@@ -1059,15 +1106,57 @@ Proceed? [y/N/modify]
 ```
 
 Responses (CODE):
-- `y` -- enter plan mode. Present a full implementation plan covering ALL
-  verified fixes (no tier distinction -- bugs and improvements alike) and the
-  updated PR description text. The plan should note which fixes can be
-  parallelized. Once the user approves the plan, use `/agent-route` to select
-  the optimal agent type for the fixes, then spawn a team via `TeamCreate`
-  with appropriately-routed agents to implement fixes in parallel where possible.
-  Update the PR description to reflect the expanded scope. Once all fixes are
-  applied and tests pass, commit the changes and push to the remote branch.
-  Critical Discoveries (if any) are informational -- they are not part of the plan.
+- `y` -- write a **council-fix handoff** and invoke `/context-handoff` so the
+  fix loop runs in a fresh context window. This prevents the council debate
+  (which consumes significant context) from crowding out the implementation work.
+
+  **Council-fix handoff procedure:**
+
+  1. Write `council-fix-manifest.json` to the same directory as the recommendation file:
+     ```json
+     {
+       "recommendation_file": "[absolute path to recommendation .md]",
+       "motion": "[full motion text]",
+       "arbiter_verdict": "FOR | AGAINST | CONDITIONAL",
+       "branch": "[current git branch]",
+       "fixes": [
+         {
+           "id": 1,
+           "description": "[fix description]",
+           "file": "[file path]",
+           "line": [line number],
+           "severity": "Bug | Improvement",
+           "citations": ["file L:line", ...]
+         }
+       ],
+       "pr_amendments": ["[amendment text]", ...],
+       "test_command": "[detected test runner command, e.g. pytest, npm test, cargo test]",
+       "created": "[ISO 8601 timestamp]"
+     }
+     ```
+
+  2. Auto-detect the test command by checking for:
+     - `pytest.ini` / `pyproject.toml` [tool.pytest] / `setup.cfg` [tool:pytest] → `pytest`
+     - `package.json` scripts.test → `npm test`
+     - `Cargo.toml` → `cargo test`
+     - `Makefile` with `test` target → `make test`
+     - If none found, set to `null` and flag in handoff for user input
+
+  3. Invoke `/context-handoff` with the council-fix manifest path as the primary
+     next step. The handoff's "Next Steps" section should read:
+     ```
+     1. Read council-fix-manifest.json at [path]
+     2. Read the recommendation file for full context
+     3. Enter the Bounded Fix Loop (adversarial-council skill Step 7)
+     ```
+
+  4. Report to user:
+     ```
+     Council complete. Fix manifest written to: [path]
+     Handoff prepared. Start a new session and run `/context-resume` to begin the fix loop.
+     ```
+
+  Critical Discoveries (if any) are informational -- they are not part of the fix manifest.
 - `N` -- note the result, take no further action. Inform the user:
   "Council result noted. No action taken."
 - `modify` -- ask the user how they want to amend the motion.
@@ -1120,3 +1209,162 @@ reconvene completes):
 2. Call TeamDelete to remove the team and task list.
 
 Inform the user: "Team disbanded." if TeamDelete succeeds.
+
+---
+
+### Step 7 -- Bounded Fix Loop (resumed session)
+
+This step runs in a **fresh context window** after the user runs `/context-resume`
+following a council-fix handoff. The handoff points to a `council-fix-manifest.json`
+file that contains all fix details.
+
+#### 7.1 -- Load Manifest
+
+1. Read the `council-fix-manifest.json` file referenced in the handoff.
+2. Read the recommendation file for full context on each finding.
+3. Confirm the branch matches: `git branch --show-current` must match `manifest.branch`.
+   If not, ask the user before switching.
+4. If `manifest.test_command` is `null`, ask the user: "What command runs your tests?"
+
+#### 7.2 -- Plan Presentation
+
+Enter plan mode. Present a fix plan covering ALL fixes from the manifest:
+
+```
+# Council Fix Loop -- [motion summary]
+
+## Fixes ([N] total)
+1. [Fix 1 description] -- [file:line] -- [severity]
+2. [Fix 2 description] -- [file:line] -- [severity]
+...
+
+## Approach
+For each fix:
+  a. Generate a regression test that FAILS on current code (proves the bug)
+  b. Apply the fix
+  c. Confirm the test PASSES (proves the fix)
+  d. Max 3 attempts per fix -- escalate to human if still red
+
+## Parallelization
+[Which fixes touch independent files and can be done in parallel]
+
+## Test Command
+[manifest.test_command]
+```
+
+Wait for user approval before proceeding.
+
+#### 7.3 -- Fix Iteration
+
+Process each fix sequentially (or parallel where files are independent):
+
+```
+FOR each fix in manifest.fixes:
+
+  ATTEMPT = 0
+  MAX_ATTEMPTS = 3
+
+  -- Phase A: Red (prove the bug exists)
+  1. Read the cited file at the cited line (verify citation is still valid)
+     - If file/line no longer matches: SKIP fix, report "citation stale"
+  2. Write a targeted regression test that asserts the CORRECT behavior
+     (which should FAIL against current buggy code)
+  3. Run: [test_command] -k [test_name] (or equivalent targeted run)
+  4. If test PASSES (unexpected green):
+     - The bug may already be fixed, or the test is wrong
+     - Report: "Test passed on current code -- fix may be unnecessary or test is incorrect"
+     - SKIP this fix, move to next
+
+  -- Phase B: Green (apply fix, confirm it works)
+  5. Apply the code fix
+  6. Run: [test_command] -k [test_name]
+  7. If test PASSES: mark fix as DONE, move to next fix
+  8. If test FAILS:
+     ATTEMPT += 1
+     If ATTEMPT < MAX_ATTEMPTS:
+       - Read the test output, diagnose, adjust the fix
+       - Go to step 5
+     If ATTEMPT >= MAX_ATTEMPTS:
+       - Revert the fix: git checkout -- [file]
+       - Mark fix as ESCALATED
+       - Report: "Fix [N] failed after 3 attempts -- needs human review"
+       - Continue to next fix
+```
+
+#### 7.4 -- Simplify Pass
+
+After all fixes are processed and before running the full suite:
+
+1. Run `/simplify` on all files changed by the fix loop
+   (`git diff --name-only` against the pre-fix-loop HEAD).
+2. If `/simplify` produces changes, stage them as part of the fix commit.
+3. If `/simplify` finds no issues, proceed directly to 7.5.
+
+This catches duplicate logic, dead code, and overly defensive patterns
+introduced by mechanical fix application.
+
+#### 7.5 -- Full Suite Verification & Auto-Commit
+
+After all fixes are processed and simplified:
+
+1. Run the full test suite: `[test_command]`
+2. If all green:
+   - Commit all changes: `fix: apply council fixes for [motion-slug]`
+   - Push to remote: `git push`
+   - Report: "All tests green. Committed and pushed."
+3. If any failures:
+   - Report which tests failed and whether they are related to the fixes
+   - Do NOT re-council. Escalate to user:
+     ```
+     Full suite: [X] passed, [Y] failed
+     Failures related to fixes: [list or "none"]
+     Pre-existing failures: [list or "none"]
+
+     How would you like to proceed?
+     ```
+   - Do NOT auto-commit on failure. Wait for user direction.
+
+#### 7.6 -- Fix Report
+
+After the loop completes (whether all green or partially escalated), write a
+fix report to the same directory as the manifest:
+
+```markdown
+# Council Fix Report -- [motion summary]
+
+> Recommendation: [path to recommendation file]
+> Branch: [branch]
+> Date: [ISO 8601]
+
+## Results
+
+| # | Fix | File:Line | Test | Attempts | Status |
+|---|-----|-----------|------|----------|--------|
+| 1 | [desc] | [file:line] | [test name] | [1-3] | DONE / ESCALATED / SKIPPED |
+
+## Summary
+- Fixed: [N] / [total]
+- Escalated: [N] (need human review)
+- Skipped: [N] (stale citation or already fixed)
+
+## Full Suite
+- Result: [PASS / FAIL]
+- [If FAIL: list failing tests]
+
+## Escalated Fixes (human review needed)
+[For each ESCALATED fix:]
+- Fix [N]: [description]
+  - Last error: [test output excerpt]
+  - Attempts: [what was tried]
+```
+
+#### 7.7 -- Constraints
+
+- **3-attempt ceiling per fix** -- prevents runaway token burn on edge cases
+- **No re-council** -- if fixes fail, escalate to human. A full council is too expensive
+  for verification when targeted tests already prove correctness
+- **Red-first mandatory** -- if the regression test passes before the fix is applied,
+  the test is suspect. Skip, don't proceed with a potentially wrong test
+- **Revert on failure** -- if a fix can't be made green in 3 attempts, revert to avoid
+  leaving the codebase in a broken state
+- **Never force-push or amend** -- all fixes are new commits
