@@ -58,6 +58,11 @@ Options:
   --model-critic sonnet|opus|haiku   Override model for critics only
   --model-arbiter sonnet|opus|haiku  Override model for arbiter only
   --model-questioner sonnet|opus|haiku Override model for questioner (default: haiku)
+  --supervised                         Wrap with council-supervisor: heartbeat monitoring,
+                                       stall detection, agent replacement, and structured
+                                       council-result.json output
+  --chain-fix                          After verdict, auto-invoke /parallel-fix on findings.
+                                       Implies --supervised.
 ```
 
 Examples:
@@ -81,9 +86,25 @@ Examples:
   --motion "Adopt microservices" \
   --model-advocate sonnet --model-critic opus --model-arbiter opus
 # Per-role: critics and arbiter get opus, advocates get sonnet
+
+/adversarial-council --motion-file pr-diff.md --supervised --chain-fix
+# Full pipeline: council debate -> council-result.json -> parallel-fix auto-remediation
 ```
 
 ## Workflow
+
+### Step 0 -- Supervisor Delegation
+
+If `--chain-fix` is passed, it implies `--supervised`.
+
+If `--supervised` or `--chain-fix` is set:
+1. Hand off to `/council-supervisor` with all options passed through
+2. Council-supervisor orchestrates the entire workflow (heartbeat monitoring,
+   stall detection, structured output, and optional parallel-fix chaining)
+3. Do NOT proceed to Step 1 -- council-supervisor will invoke this skill
+   internally without the `--supervised` flag
+
+If neither flag is set, proceed normally to Step 1.
 
 ### Step 1 -- Motion Intake
 
@@ -405,6 +426,18 @@ prompt: |
     prior experience, or explicit reasoning chain.
   Ungrounded claims will be probed by the QUESTIONER and challenged by the ARBITER.
 
+  ## Claim Verification Protocol (MANDATORY for CODE motions)
+  Before asserting ANY code defect in a POSITION, REBUTTAL, or OBJECTION:
+  1. **Read the actual source file** at the location you intend to cite, using the Read tool
+  2. **Quote the exact line(s)** with line numbers in your message
+  3. **Explain the defect** referencing the quoted code -- not a paraphrase or memory
+  Never report defects from memory, scan summaries, or assumptions about what the code
+  contains. If you cannot read the file to verify, prefix your claim with "[UNVERIFIED]"
+  and state why verification was not possible.
+  Fabricated findings -- citing code that does not match the actual file content -- are
+  treated as automatic concessions by the ARBITER and damage your credibility for the
+  remainder of the debate.
+
   ## Flow
   [IF CODE MOTION:]
   0. SCAN: Explore all files/diff listed in the Pre-Debate Scan section above.
@@ -523,6 +556,18 @@ prompt: |
   - **Non-code motion**: name your evidence -- a data source, documented precedent,
     prior experience, or explicit reasoning chain.
   Ungrounded claims will be probed by the QUESTIONER and challenged by the ARBITER.
+
+  ## Claim Verification Protocol (MANDATORY for CODE motions)
+  Before asserting ANY code defect in a POSITION, REBUTTAL, or OBJECTION:
+  1. **Read the actual source file** at the location you intend to cite, using the Read tool
+  2. **Quote the exact line(s)** with line numbers in your message
+  3. **Explain the defect** referencing the quoted code -- not a paraphrase or memory
+  Never report defects from memory, scan summaries, or assumptions about what the code
+  contains. If you cannot read the file to verify, prefix your claim with "[UNVERIFIED]"
+  and state why verification was not possible.
+  Fabricated findings -- citing code that does not match the actual file content -- are
+  treated as automatic concessions by the ARBITER and damage your credibility for the
+  remainder of the debate.
 
   ## Flow
   [IF CODE MOTION:]
