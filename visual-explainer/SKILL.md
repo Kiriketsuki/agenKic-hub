@@ -30,6 +30,7 @@ Detailed prompt templates in `./commands/`. Invoke as `/visual-explainer:diff-re
 | `plan-review` | Compare a plan against the codebase with risk assessment |
 | `project-recap` | Mental model snapshot for context-switching back to a project |
 | `fact-check` | Verify accuracy of a document against actual code |
+| `share` | Upload HTML to LAN docs server and return a shareable URL |
 
 ## Workflow
 
