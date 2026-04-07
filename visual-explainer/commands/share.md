@@ -36,31 +36,35 @@ Upload a generated HTML file to the AutoConnect docs server, organized by reposi
 
 4. **Return the URL.** Print the shareable LAN URL:
    ```
-   http://<lan-host>:8081/ve/<repo>/<filename>
+   http://<lan-host>:8081/<repo>/<filename>
    ```
 
 5. **Confirm accessibility.** Verify HTTP 200:
    ```bash
-   curl -s -o /dev/null -w '%{http_code}' http://<lan-host>:8081/ve/<repo>/<filename>
+   curl -s -o /dev/null -w '%{http_code}' http://<lan-host>:8081/<repo>/<filename>
    ```
 
 ## Directory Structure
 
 ```
-/ve/
-  index.html                     <- browsable index linking all repos
+/                                   <- browsable index linking all repos
+  index.html
   AutoConnect/
     versioning.html
-    mission-lifecycle.html
     ...
   <repo>/
+    docs/visual-explainer/diagrams/   <- nested structure preserved from branch
+    versioning.html
     ...
   <repo>/
-    ...
   <repo>/
-    ...
+  <repo>/
+  <repo>/
+  <repo>/
+  <repo>/
+  <repo>/
   RemoteSupervisor/
-    ...
+  <repo>/
 ```
 
 The root `index.html` dynamically reads each repo's directory listing and presents a browsable card layout.
@@ -70,9 +74,9 @@ The root `index.html` dynamically reads each repo's directory listing and presen
 - **Host**: `<lan-host>` (SG server, LAN only)
 - **Port**: `8081`
 - **Upload base**: `~/<docs-dir>/ve-uploads/<repo>/`
-- **Serve base**: `http://<lan-host>:8081/ve/<repo>/`
+- **Serve base**: `http://<lan-host>:8081/<repo>/`
 - **Auth**: `<server-user>` / `<password>` (via sshpass)
-- **Index**: `http://<lan-host>:8081/ve/` — root index with all repos
+- **Index**: `http://<lan-host>:8081/` — root index with all repos
 
 ## Valid Repo Names
 
@@ -82,17 +86,23 @@ The root `index.html` dynamically reads each repo's directory listing and presen
 | <repo> | `ve-uploads/<repo>/` |
 | <repo> | `ve-uploads/<repo>/` |
 | <repo> | `ve-uploads/<repo>/` |
+| <repo> | `ve-uploads/<repo>/` |
+| <repo> | `ve-uploads/<repo>/` |
+| <repo> | `ve-uploads/<repo>/` |
+| <repo> | `ve-uploads/<repo>/` |
+| <repo> | `ve-uploads/<repo>/` |
 | RemoteSupervisor | `ve-uploads/RemoteSupervisor/` |
+| <repo> | `ve-uploads/<repo>/` |
 
 ## Example
 
 ```
-> cd ~/<work-dir>/AutoConnect
-> /visual-explainer:generate-web-diagram "mission lifecycle"
-# ... generates /tmp/visual-explainer/mission-lifecycle.html
+> cd ~/<work-dir>/<repo>
+> /visual-explainer:generate-web-diagram "gRPC migration phases"
+# ... generates /tmp/visual-explainer/grpc-migration.html
 
 > /visual-explainer:share
-Detected repo: AutoConnect
-Uploaded: AutoConnect/mission-lifecycle.html
-URL: http://<lan-host>:8081/ve/AutoConnect/mission-lifecycle.html
+Detected repo: <repo>
+Uploaded: <repo>/grpc-migration.html
+URL: http://<lan-host>:8081/<repo>/grpc-migration.html
 ```
