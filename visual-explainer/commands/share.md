@@ -36,31 +36,35 @@ Upload a generated HTML file to the AutoConnect docs server, organized by reposi
 
 4. **Return the URL.** Print the shareable LAN URL:
    ```
-   http://192.168.1.29:8081/ve/<repo>/<filename>
+   http://192.168.1.29:8081/<repo>/<filename>
    ```
 
 5. **Confirm accessibility.** Verify HTTP 200:
    ```bash
-   curl -s -o /dev/null -w '%{http_code}' http://192.168.1.29:8081/ve/<repo>/<filename>
+   curl -s -o /dev/null -w '%{http_code}' http://192.168.1.29:8081/<repo>/<filename>
    ```
 
 ## Directory Structure
 
 ```
-/ve/
-  index.html                     <- browsable index linking all repos
+/                                   <- browsable index linking all repos
+  index.html
   AutoConnect/
     versioning.html
-    mission-lifecycle.html
     ...
+  AutoConnect-MEC-Miki/
+    docs/visual-explainer/diagrams/   <- nested structure preserved from branch
+    versioning.html
+    ...
+  AutoConnect-MEC-Mini/
+  AutoConnect-VEH-Gufi/
+  AutoConnect-INT-Doni/
+  AutoConnect-ART-Desi/
   StandManagement/
-    ...
   BHAManagement/
-    ...
   FleetManagement/
-    ...
   RemoteSupervisor/
-    ...
+  RouteVisualiser/
 ```
 
 The root `index.html` dynamically reads each repo's directory listing and presents a browsable card layout.
@@ -70,29 +74,35 @@ The root `index.html` dynamically reads each repo's directory listing and presen
 - **Host**: `192.168.1.29` (SG server, LAN only)
 - **Port**: `8081`
 - **Upload base**: `~/autoconnect_docs/ve-uploads/<repo>/`
-- **Serve base**: `http://192.168.1.29:8081/ve/<repo>/`
+- **Serve base**: `http://192.168.1.29:8081/<repo>/`
 - **Auth**: `sg-server-user` / `B!lt0n1213` (via sshpass)
-- **Index**: `http://192.168.1.29:8081/ve/` — root index with all repos
+- **Index**: `http://192.168.1.29:8081/` — root index with all repos
 
 ## Valid Repo Names
 
 | Repo | Directory |
 |------|-----------|
 | AutoConnect | `ve-uploads/AutoConnect/` |
+| AutoConnect-MEC-Miki | `ve-uploads/AutoConnect-MEC-Miki/` |
+| AutoConnect-MEC-Mini | `ve-uploads/AutoConnect-MEC-Mini/` |
+| AutoConnect-VEH-Gufi | `ve-uploads/AutoConnect-VEH-Gufi/` |
+| AutoConnect-INT-Doni | `ve-uploads/AutoConnect-INT-Doni/` |
+| AutoConnect-ART-Desi | `ve-uploads/AutoConnect-ART-Desi/` |
 | StandManagement | `ve-uploads/StandManagement/` |
 | BHAManagement | `ve-uploads/BHAManagement/` |
 | FleetManagement | `ve-uploads/FleetManagement/` |
 | RemoteSupervisor | `ve-uploads/RemoteSupervisor/` |
+| RouteVisualiser | `ve-uploads/RouteVisualiser/` |
 
 ## Example
 
 ```
-> cd ~/workdev/Aurrigo/AutoConnect
-> /visual-explainer:generate-web-diagram "mission lifecycle"
-# ... generates /tmp/visual-explainer/mission-lifecycle.html
+> cd ~/workdev/Aurrigo/AutoConnect-MEC-Miki
+> /visual-explainer:generate-web-diagram "gRPC migration phases"
+# ... generates /tmp/visual-explainer/grpc-migration.html
 
 > /visual-explainer:share
-Detected repo: AutoConnect
-Uploaded: AutoConnect/mission-lifecycle.html
-URL: http://192.168.1.29:8081/ve/AutoConnect/mission-lifecycle.html
+Detected repo: AutoConnect-MEC-Miki
+Uploaded: AutoConnect-MEC-Miki/grpc-migration.html
+URL: http://192.168.1.29:8081/AutoConnect-MEC-Miki/grpc-migration.html
 ```
