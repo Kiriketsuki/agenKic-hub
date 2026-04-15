@@ -1,44 +1,34 @@
 ---
 name: council-fix
 description: >
-  One-command alias for the full council-to-fix pipeline. Runs a supervised adversarial
-  council with heartbeat monitoring, then auto-remediates findings via parallel fix agents
-  in isolated worktrees. Just type /council-fix PR #123 or /council-fix [topic].
+  One-command alias for the full council review pipeline. Runs a supervised adversarial
+  council, produces council-result.json and fix-manifest.md, then writes a prioritised
+  plan file to ~/.claude/plans for the human to implement. Just type /council-fix PR #123
+  or /council-fix [topic].
   Triggers: "council fix", "review and fix", "council-fix PR", "/council-fix".
 ---
 
 ## Context
 
-This is a convenience alias that chains three skills with sensible defaults:
+This is a convenience alias that chains the council with a plan-file handoff:
 
 ```
 /council-fix PR #42
        |
        v
-/adversarial-council --supervised --chain-fix --skeptic
+/adversarial-council --supervised --skeptic
        |
        v
-/council-supervisor (heartbeat, stall recovery, council-result.json)
+/council-supervisor (heartbeat, stall recovery, council-result.json, fix-manifest.md)
        |
        v
-/parallel-fix --from-council .council/council-result.json
+Plan file written to ~/.claude/plans/council-fix-<slug>-<date>.md
        |
        v
-Winning fix applied, tests passing, done.
+Human clears context, opens plan, implements findings in priority order.
 ```
 
-No flags to remember. Just `/council-fix` and a target.
-
-By default, the full pipeline runs (council -> fix). To stop after the council and
-hand the fix list off to another agent or system, use `--manifest-only`:
-
-```
-/council-fix PR #42 --manifest-only
-```
-
-This runs the supervised council, writes `council-result.json` AND a human/agent-readable
-`fix-manifest.md`, then stops. No auto-fix. Hand the manifest to Codex, Cursor, Devin,
-another Claude session, or any agent that can read markdown task lists.
+No auto-applying of code. The council identifies and verifies findings; you implement them.
 
 ## Triggers
 
@@ -67,115 +57,111 @@ Determine what to review:
 
 ### Step 2 -- Invoke the Pipeline
 
+**HARD REQUIREMENT**: Invoke the adversarial-council skill via the `Skill` tool — do NOT run the debate inline as text. The skill will call `TeamCreate` and spawn real agents. If you write ADVOCATE/CRITIC/ARBITER sections yourself without calling `Skill`, you are doing it wrong. Stop and invoke the skill.
+
 Invoke `/adversarial-council` with these defaults:
 
 ```
 --motion "[constructed motion]"
 --supervised
---chain-fix
---skeptic              (recommended for code review -- more critics than advocates)
---n 2                  (2 advocates, 2 critics in skeptic mode)
+--skeptic
+--n 2
 --rounds 4
 ```
-
-The `--supervised` flag triggers Step 0 in the council skill, which delegates to
-`/council-supervisor`. The `--chain-fix` flag tells the supervisor to auto-invoke
-`/parallel-fix` after the verdict.
 
 All other council options can still be appended by the user:
 
 ```
 /council-fix PR #42 --n 3 --rounds 5 --model opus
-/council-fix PR #42 --manifest-only
+/council-fix PR #42 --quick
 ```
 
-If `--manifest-only` is set, do NOT pass `--chain-fix` to the council. Pass only
-`--supervised`. After the council completes, proceed to Step 3 (manifest generation)
-and stop.
+### Step 3 -- Generate Plan File
 
-### Step 2b -- Generate Fix Manifest (always)
+After the council writes `council-result.json` and `fix-manifest.md`, generate a plan file at:
 
-After the council writes `council-result.json`, generate `.council/fix-manifest.md`:
+```
+~/.claude/plans/council-fix-<motion-slug>-<YYYY-MM-DD>.md
+```
+
+The slug is derived from the motion text (lowercase, spaces to hyphens, truncated at 40 chars) — the same slug `council-supervisor` already computes internally.
+
+Plan file content:
 
 ```markdown
-# Fix Manifest -- PR #[N]: [title]
+# Plan: Address Council Findings — <motion>
 
-Council verdict: [VERDICT] | [date] | [N] findings ([M] verified)
+## Context
+Council verdict: <VERDICT> on <date>. <N> findings (<M> verified, <K> unverified, <P> phantom).
+Motion: <motion text>
+Source: .council/council-result.json
 
-## Fixes Required
+## Findings to Address
 
-### 1. [finding description]
-- **File**: `path/to/file.ext`
-- **Line**: [N]
-- **Type**: [bug/improvement/hardening/security]
-- **Severity**: [critical/high/medium/low]
-- **Verification**: [verified/unverified]
-- **Fix**: [fix_description]
-- **Citations**: `file:line`, `file:line`
+### Blockers (must fix before merge)
+<findings with severity: critical/high AND verification: verified>
+- [ ] **<description>** — `file:line`
+  - Type: <type> | Severity: <severity>
+  - Fix: <fix_description>
+  - Citations: <cites>
 
-### 2. [next finding...]
-...
+### Non-blockers (address when possible)
+<findings with severity: medium/low, OR verification: unverified>
+- [ ] **<description>** — `file:line`
+  - Type: <type> | Severity: <severity>
+  - Fix: <fix_description>
+  - Citations: <cites>
 
-## Conditions
-- [any merge conditions from the verdict]
+### Unverified / Phantom (investigate manually)
+<findings with verification: phantom>
+- [ ] **<description>** — flagged as phantom by verifier
+  - Cite: <cites>
+  - Action: read source to confirm finding is real before fixing
 
-## Test Command
-[auto-detected test command, or "not detected -- specify manually"]
+## Implementation Notes
+- Conditions from verdict: <conditions, or "none">
+- Suggested order: blockers first, then non-blockers, phantom investigation last
+- Each fix should be its own commit (conventional commits format)
+- Run tests after each change: <auto-detected test command, or "not detected — specify manually">
 
 ## Raw Data
-council-result.json: .council/council-result.json
+- Council result: .council/council-result.json
+- Fix manifest:   .council/fix-manifest.md
 ```
 
-This manifest is designed to be copy-pastable into any agent's prompt. Each fix is
-self-contained with file, line, description, and recommended action.
+If there are no verified/unverified findings (all phantom), the Blockers and Non-blockers sections are omitted and a note is added: "No actionable findings. All findings were marked phantom after source verification."
 
-If `--manifest-only`: report the manifest path and stop. Do not invoke parallel-fix.
-```
-Council complete. Verdict: [VERDICT]. [N] findings.
-Fix manifest: .council/fix-manifest.md
-JSON data:    .council/council-result.json
-
-Hand these to your preferred agent or fix tool.
-```
-
-### Step 3 -- Report
-
-The pipeline reports its own progress at each stage. When complete, this skill
-adds a final summary:
+### Step 4 -- Report
 
 ```
-Council-Fix Complete: PR #42
+Council-Fix Complete: <target>
 
-Council:  CONDITIONAL (3 findings, 2 verified)
-Fix:      2/3 findings remediated (minimal patch strategy)
-          1 finding needs manual review [UNVERIFIED]
-Tests:    All passing
-Result:   .council/council-result.json
+Council:  <VERDICT> (<N> findings: <M> verified, <K> unverified, <P> phantom)
+Plan:     ~/.claude/plans/council-fix-<slug>-<date>.md
+Raw:      .council/council-result.json
 
-Next: review the diff, then push when ready.
+Next steps:
+  1. /clear
+  2. Open the plan file
+  3. Implement findings in priority order (blockers first)
 ```
 
 ## Presets
-
-The user can also pass named presets instead of individual flags:
 
 | Preset | Expands to | Use case |
 |:---|:---|:---|
 | `--thorough` | `--n 3 --rounds 5 --model opus` | High-stakes PRs, architectural changes |
 | `--quick` | `--n 1 --rounds 2 --model sonnet` | Small PRs, obvious changes |
-| `--manifest-only` | `--supervised` (no `--chain-fix`) | Stop after verdict, output fix list for external agents |
-| (default) | `--n 2 --rounds 4 --skeptic --chain-fix` | Standard code review with auto-fix |
+| (default) | `--n 2 --rounds 4 --skeptic` | Standard review → plan handoff |
 
 ```
 /council-fix PR #42 --thorough
 /council-fix PR #42 --quick
-/council-fix PR #42 --manifest-only    # review only, hand fixes to Codex/Cursor/etc
 ```
 
 ## Edge Cases
 
-- **PR has no code changes** (docs-only): Skip parallel-fix, report council verdict only
-- **PR is already merged**: Report "PR #N is already merged. Nothing to review."
-- **No test framework detected**: Council runs normally but parallel-fix asks for test command
-- **All findings are PHANTOM after verification**: Report "No actionable findings. PR looks good."
-  and skip parallel-fix
+- **PR has no code changes** (docs-only): Council runs normally, plan file still generated, but "No code changes to fix" note added to Implementation Notes.
+- **PR is already merged**: Report "PR #N is already merged. Nothing to review." Stop.
+- **No test framework detected**: Note "not detected — specify manually" in the plan's test command field.
+- **All findings are phantom after verification**: Report "No actionable findings. PR looks good." Plan file is still written with a phantom-only section so the user has the record.

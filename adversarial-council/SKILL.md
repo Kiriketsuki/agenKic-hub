@@ -9,6 +9,17 @@ description: >
   "challenge this plan", "adversarial review of", "get the council to look at".
 ---
 
+## HARD REQUIREMENT — REAL AGENTS ONLY
+
+**NEVER run this council inline as text.** The debate MUST be conducted by real spawned agents via the `Agent` tool with a shared `team_name`. Steps 2 and 3 are non-negotiable:
+
+- Step 2: Call `TeamCreate` before anything else
+- Step 3: Call `Agent` (simultaneously, in one message) for each debate role
+
+If you write ADVOCATE/CRITIC/ARBITER sections as prose in your own response without calling `Agent`, you are violating this skill. Stop and restart using real agent spawns.
+
+---
+
 ## Context
 
 Convenes an adversarial agent team to debate a motion. N advocate agents argue
