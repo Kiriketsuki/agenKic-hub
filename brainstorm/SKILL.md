@@ -2,6 +2,7 @@
 name: brainstorm
 description: "Collaborative design exploration before implementation. Understands project context, asks clarifying questions one at a time, proposes 2-3 approaches with trade-offs, and converges on an approved design. Chains into feature-spec for structured output. Use before building features, components, or making significant changes."
 attribution: "Adapted from the claude-plugins-official repository (https://github.com/anthropics/claude-plugins-official) by Anthropic."
+model: opus
 ---
 
 # Brainstorming Ideas Into Designs
