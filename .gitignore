@@ -25,3 +25,4 @@ task-scaffolder/
 todo-capture/
 todo-gcal-sync/
 smart-linker/
+__pycache__/
