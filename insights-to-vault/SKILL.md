@@ -134,7 +134,7 @@ One paragraph from fun_ending.
 
 ---
 
-*Authored by: Clault KiperS 4.6*
+*Authored by: Clault Kiper{S|O|H} {version}*
 ```
 
 ## Step 4: Create the vault symlink (if missing)
@@ -150,3 +150,4 @@ step is only needed when installing the skill fresh. The skill directory is alre
 - The `report-html` path in frontmatter uses the absolute Linux path (not `~`).
 - If the insights data is not in the conversation context, ask the user to run `/insights` first.
 - After creating both files, confirm: "Archived to vault as `<FILENAME>`."
+- Sign with your current model's Clault Kiper signature per 000-System/Agents/AGENTS.md (Sonnet KiperS 4.6, Opus KiperO 4.8, Haiku KiperH 4.5) — derive from the model you are running as; never hardcode.

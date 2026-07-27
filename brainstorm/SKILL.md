@@ -28,7 +28,7 @@ You MUST create a task for each of these items and complete them in order:
 3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
 4. **Propose 2-3 approaches** — with trade-offs and your recommendation
 5. **Present design** — in sections scaled to their complexity, get user approval after each section
-6. **Hand off to feature-spec** — invoke the feature-spec skill, which formalizes the approved design into a structured spec
+6. **Hand off to feature-spec** — invoke the feature-spec skill, which formalizes the approved design into a structured spec (written to the target repo's `docs/specs/todo/`)
 
 ## Process Flow
 
