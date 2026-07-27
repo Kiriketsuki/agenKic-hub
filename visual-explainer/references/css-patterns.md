@@ -105,9 +105,11 @@ The fundamental building block. A colored card representing a system component, 
   position: relative;
 }
 
-/* Colored accent border (left or top) */
+/* CORRECT: Full border + background tint for status/accent cards */
+/* NEVER use border-left/border-right > 1px as a colored accent stripe */
 .ve-card--accent-a {
-  border-left: 3px solid var(--node-a);
+  border: 1px solid color-mix(in srgb, var(--node-a) 28%, transparent);
+  background: color-mix(in srgb, var(--node-a) 8%, transparent);
 }
 
 /* --- Depth tiers: vary card depth to signal importance --- */

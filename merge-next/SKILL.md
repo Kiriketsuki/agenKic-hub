@@ -42,6 +42,10 @@ ask the user before continuing.
 
 Run `git status` and `git diff --stat`. If there are uncommitted changes:
 
+- **Spec lifecycle check**: if the branch implemented a spec that sits in `docs/specs/todo/`,
+  `git mv` it to `docs/specs/done/` and include the move in the final commit (see the repo's
+  `docs/specs/README.md`).
+
 - Group changes by logical unit of work (e.g., separate a bug fix from a feature addition)
 - For each group, stage the relevant files and create a commit with a conventional commit
   message that reflects what that group does

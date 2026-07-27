@@ -20,6 +20,22 @@ If you write ADVOCATE/CRITIC/ARBITER sections as prose in your own response with
 
 ---
 
+## Agent Communication Model
+
+| Agent type | How spawned | Has SendMessage? | How results are returned |
+|:---|:---|:---|:---|
+| Debate agents (advocates, critics, questioner, arbiter) | `Agent` with `team_name` | Yes | Broadcast to team via SendMessage |
+| Verifier (Step 5) | `Agent` standalone (no team) | **No** | Final text output → Agent tool return value |
+| Parallel-fix agents | `Agent` with `isolation: worktree` | **No** | Final text output → Agent tool return value |
+
+**Never SendMessage to a standalone agent.** Read the Agent tool's return value instead.
+**Never ask a standalone agent to SendMessage.** Tell it to return results as final text output.
+
+If a spawned agent reports "I don't have SendMessage" — that agent's output IS its results.
+Read its response text; do not retry or ask it to send again.
+
+---
+
 ## Context
 
 Convenes an adversarial agent team to debate a motion. N advocate agents argue
@@ -1035,7 +1051,21 @@ When the arbiter reports "Council complete. Recommendation saved to: [filename]"
    type is read-only and optimized for code investigation, which is exactly what
    verification requires.
 
-   Provide the verifier with each finding and its citations. For each citation:
+   **Communication model**: The verifier is a standalone Agent, NOT a team member.
+   It does NOT have SendMessage. Do NOT use SendMessage to talk to it or ask it
+   to SendMessage back. The verifier returns its results as the Agent tool's return
+   value -- read the tool result directly.
+
+   Provide the verifier with each finding and its citations. The verifier prompt MUST
+   include this output instruction:
+
+   ```
+   ## Output
+   You are a standalone agent. You do NOT have SendMessage -- do not attempt to use it.
+   Return your results as your final text output. The caller reads your response directly.
+   ```
+
+   For each citation the verifier checks:
    1. If the citation names a symbol: prefer `gitnexus_context({name: symbolName})` to
       confirm the symbol exists and verify the claim (more token-efficient than file reads).
       Fall back to Read if gitnexus is unavailable or the citation is line-specific only.
@@ -1046,9 +1076,9 @@ When the arbiter reports "Council complete. Recommendation saved to: [filename]"
       - Line number is out of file range → verdict: `PHANTOM`
       - Code at the cited location matches the claim → verdict: `VERIFIED`
       - Code exists but does not match the claim → verdict: `UNVERIFIED`
-   3. `CITE: RUNTIME` lines → verdict: `RUNTIME` (not file-verifiable, retain as-is)
+   4. `CITE: RUNTIME` lines → verdict: `RUNTIME` (not file-verifiable, retain as-is)
 
-   Verifier returns a structured verdict list:
+   Verifier returns a structured verdict list as its final text output:
    ```
    Finding 1: [description]
      CITE: `src/auth/handler.py` L:142 → VERIFIED

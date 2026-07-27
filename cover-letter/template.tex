@@ -1,0 +1,48 @@
+% Cover letter template — clean and simple.
+% Compile: tectonic letter.tex
+% Placeholders (double-brace): DATE, RECIPIENT, ROLE, BODY — see SKILL.md.
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[a4paper,margin=2.5cm,top=2cm,bottom=2.5cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{parskip}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+
+\definecolor{rule}{HTML}{888888}
+
+\pagestyle{empty}
+\setlength{\parskip}{0.7em}
+\linespread{1.12}
+
+\begin{document}
+
+% ---------- Header ----------
+{\LARGE\bfseries Jovian Lim}\\[2pt]
+{\small\color{rule}%
+Singapore \textbullet{}
+\href{mailto:limzh.jovian@gmail.com}{limzh.jovian@gmail.com}}
+
+\vspace{4pt}
+{\color{rule}\hrule height 0.6pt}
+\vspace{14pt}
+
+% ---------- Meta ----------
+{{DATE}}
+
+{{RECIPIENT}}\\
+Re: {{ROLE}}
+
+\vspace{6pt}
+
+% ---------- Body ----------
+{{BODY}}
+
+\vspace{10pt}
+Best Regards,\\[2pt]
+Jovian
+
+\end{document}
