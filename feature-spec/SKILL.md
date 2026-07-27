@@ -1,11 +1,11 @@
 ---
 name: feature-spec
-description: Use when the user wants to create a new feature specification, start speccing a feature, or fill out a feature spec sheet. Triggers: "Spec a feature", "New feature spec", "Create spec", "/spec", "Start feature spec", "spec this out". Always invoke this skill when the user wants to define what a feature should do before building it — even casual phrasings like "let's spec this out", "write up the spec", "plan this feature", "define the feature", or just "spec it" should trigger this. The skill enters plan mode immediately, interviews the user conversationally section by section, and produces a filled feature_spec.md in the current working directory.
+description: Use when the user wants to create a new feature specification, start speccing a feature, or fill out a feature spec sheet. Triggers: "Spec a feature", "New feature spec", "Create spec", "/spec", "Start feature spec", "spec this out". Always invoke this skill when the user wants to define what a feature should do before building it — even casual phrasings like "let's spec this out", "write up the spec", "plan this feature", "define the feature", or just "spec it" should trigger this. The skill enters plan mode immediately, interviews the user conversationally section by section, and produces a filled feature_spec.md in the target repo's docs/specs/todo/ directory.
 ---
 
 ## Purpose
 
-Produce a filled `[feature-name]-spec.md` in the current working directory by interviewing the user section-by-section. Enter plan mode at the start and stay there — this is a planning exercise from first question to final file.
+Produce a filled `[feature-name]-spec.md` in the target repo's `docs/specs/todo/` directory — the repo is the current working directory by default, or a path the caller/handoff specifies (e.g. a brand-new repo created for the feature); create `docs/specs/todo/` if missing — by interviewing the user section-by-section. Enter plan mode at the start and stay there — this is a planning exercise from first question to final file.
 
 **Hard boundary**: this skill ends when the spec file is written and any downstream updates (daily note, PR) are fired. Do not begin implementation, do not suggest code changes, do not offer to "start on T1". The spec is the deliverable.
 
@@ -34,8 +34,8 @@ This avoids the frustrating pattern of re-asking questions the user already answ
 
 - Call `EnterPlanMode` immediately — before saying anything else to the user.
 - Scan the CWD for context: README, package.json, pyproject.toml, go.mod, existing specs, migration files, API route files — anything that reveals the stack, architecture, and domain vocabulary.
-- Run `git branch --show-current` and `gh pr view --json number,title,body 2>/dev/null` to detect if the user is on a non-default branch with an open PR. Store branch name and PR number/body if found — you'll need them in Step 5.
-- Copy the bundled template (`assets/template.md` relative to this skill's directory) verbatim to `./feature_spec.md` in CWD. This is the working draft you'll progressively fill in.
+- Run `git branch --show-current` and `gh pr view --json number,title,body 2>/dev/null` to detect if the user is on a non-default branch with an open PR. Store branch name and PR number/body if found — you'll need them in Step 4. (Skip quietly if the target repo is not a git repo, e.g. a brand-new repo that has not been `git init`-ed.)
+- Copy the bundled template (`assets/template.md` relative to this skill's directory) verbatim to `./docs/specs/todo/feature_spec.md` (create the directory if missing). This is the working draft you'll progressively fill in.
 - **If following a brainstorming handoff**: immediately pre-fill sections from the approved design before starting the interview. Only interview for gaps.
 - Keep a mental working state of what's been confirmed so you don't re-ask.
 
@@ -138,13 +138,14 @@ Ask: "Any related specs, tickets, or docs I should link?" If none, omit the plac
 
 ### Step 3: Finalise the Spec
 
-- Write the complete, filled spec to `./feature_spec.md`.
-- Rename it to `./[kebab-case-feature-name]-spec.md`.
-- Sign the bottom (above any existing `---`):
+- Write the complete, filled spec to `./docs/specs/todo/feature_spec.md`.
+- Rename it to `./docs/specs/todo/[kebab-case-feature-name]-spec.md`.
+- Sign the bottom (above any existing `---`) with **your Clault Kiper signature for the model you are currently running as** — derive it, do NOT hardcode:
   ```
   ---
-  *Authored by: Clault KiperS 4.6*
+  *Authored by: Clault Kiper{S|O|H} {major.minor}*
   ```
+  Suffix + version per `000-System/Agents/AGENTS.md`: Sonnet → `Clault KiperS 4.6`, Opus → `Clault KiperO 4.8`, Haiku → `Clault KiperH 4.5`. Use your own current model identity (e.g. running as Opus 4.8 → `Clault KiperO 4.8`). The spec file gets this signature; the Step 5 daily note does not (it is a shared, auto-generated note).
 - Tell the user the final filename and path.
 
 ---
@@ -162,7 +163,7 @@ Replace the existing body with the following content (derived from the completed
 [3-5 bullet points drawn from Must-Have scope items — what this PR will deliver]
 
 ## Spec
-See `[feature-name]-spec.md` in the branch root for full acceptance criteria, technical plan, and task breakdown.
+See `docs/specs/todo/[feature-name]-spec.md` for full acceptance criteria, technical plan, and task breakdown.
 
 ## Test plan
 [Bulleted checklist drawn from the Acceptance Scenarios — one item per happy-path scenario, plus any edge cases]
@@ -176,20 +177,35 @@ Rules:
 
 ### Step 5: Daily Note Update (Background Subagent)
 
-Spawn a **background** subagent — fire and forget, do not await it. Pass it this exact task (substitute real values):
+Spawn a **background** subagent — fire and forget, do not await it. **Resolve two things yourself first** and substitute them as literals (do not make the subagent guess):
+
+- **Link form** — check whether the spec file lives inside the vault (`/home/kiriketsuki/dev/obKidian/...`):
+  - Inside the vault → use an Obsidian wikilink: `[[<feature-name>-spec]]`.
+  - Outside the vault (e.g. a separate code repo) → a wikilink would dangle, so reference the spec by absolute path in backticks, and link a related in-vault note if one exists (e.g. `` `~/dev/Personal/foo/foo-spec.md` · see [[Some Related Note]] ``).
+- **Today's daily note path**: `/home/kiriketsuki/dev/obKidian/500-Chronological-Logs/510-Personal/[YYYY]/[MMM]-[DD].md`.
+
+Pass the subagent this task (substitute real values):
 
 ```
 Today's date: [YYYY-MM-DD]
-Daily note path: /home/kiriketsuki/dev/obKidian/500-Chronological-Logs/510-Personal/[YYYY]/[MMM]-[DD].md
+Daily note path: <resolved path above>
 
-Append the following line under the `## Daily Focus` section (create the section if missing, place it before `## End of Day` if that section exists, otherwise append at end of file):
-  - [ ] Specced feature: [[[kebab-case-feature-name]-spec]] — [one-sentence description of what the feature does]
+Goal: add ONE checkbox line recording that a feature was specced today — WITHOUT assuming any specific section exists (daily-note templates vary and change over time).
+
+Line to add (already resolved by the caller — use verbatim):
+  - [ ] Specced feature: <LINK> — [one-sentence description of what the feature does]
+
+Placement (adaptive — never hardcode a single section name):
+1. Read the note. Insert the line under the FIRST of these sections that exists, after any bullets already in it:
+   "## Daily Focus" -> "## Key Objectives (Major Projects)" -> "## Key Objectives" -> "## Today's Plan" -> "## Log".
+2. If none of those exist, create a "## Daily Focus" section placed immediately after the frontmatter / "## Summary" block and before the next "## " heading.
+3. Never insert inside a fenced code block (e.g. a ```dataviewjs``` block).
 
 Rules:
 - No emojis.
 - Do not modify any other content in the file.
-- If the file does not exist, do nothing.
-- Append `*Authored by: Clault KiperS 4.6*` at the very end of the file only if it is not already there.
+- Do NOT add an author signature — the daily note is a shared, auto-generated note (morning-planner / the user / other skills all edit it), not an agent-authored note.
+- If the daily note does not exist, do nothing and report that — it may not have been created yet (weekends, or before the morning-planner / /daily run); the main session can add the line later.
 ```
 
 ---
@@ -201,5 +217,6 @@ Rules:
 - **No emojis** anywhere: questions, file content, log entries.
 - **Don't ask what you can read.** Repo context is free — spend it.
 - **One topic per turn.** Long lists of questions kill momentum.
-- **The spec stays in CWD only.** It is not saved back to the vault.
+- **The spec lives in the target repo's `docs/specs/todo/`** — repo is CWD by default, or a caller/handoff-specified path. It is not copied back into the vault unless the vault itself is the target repo. (If the spec lands outside the vault, the Step 5 daily-note link references it by path, not a wikilink.)
+- **Spec lifecycle**: `docs/specs/` buckets are `todo` (born here), `done` (moved on implementation merge, by implement-spec or merge-next), `superseded`, `obsolete`, and `archive` (pre-system legacy). See the repo's `docs/specs/README.md`.
 - **Infer, show, confirm** — faster than blank-slate questions every time.

@@ -20,6 +20,19 @@ stall recovery, and structured output.
 The council-supervisor IS the council. The adversarial-council skill hands off here
 when `--supervised` or `--chain-fix` is set, and this skill takes it from Step 1.
 
+## Agent Communication Model
+
+| Agent type | How spawned | Has SendMessage? | How results are returned |
+|:---|:---|:---|:---|
+| Debate agents (advocates, critics, questioner, arbiter) | `Agent` with `team_name` | Yes | Broadcast to team via SendMessage |
+| Verifier (Step 5) | `Agent` standalone (no team) | **No** | Final text output → Agent tool return value |
+
+**Never SendMessage to a standalone agent.** Read the Agent tool's return value instead.
+**Never ask a standalone agent to SendMessage.** Tell it to return results as final text output.
+
+If a spawned agent reports "I don't have SendMessage" — that agent's output IS its results.
+Read its response text; do not retry or ask it to send again.
+
 ## Options
 
 All adversarial-council options are accepted, plus:
@@ -214,6 +227,14 @@ adversarial-council):
 2. ARBITER synthesizes into a recommendation: FOR / AGAINST / CONDITIONAL with findings.
 3. A separate verifier agent (sonnet) reads all cited file:line references and confirms
    each finding matches the actual source. Findings that don't verify are marked phantom.
+   **The verifier is a standalone Agent (no team_name) — it does NOT have SendMessage.**
+   Do NOT use SendMessage to communicate with it. Read its results from the Agent tool
+   return value. The verifier prompt MUST include:
+   ```
+   ## Output
+   You are a standalone agent. You do NOT have SendMessage -- do not attempt to use it.
+   Return your results as your final text output. The caller reads your response directly.
+   ```
 4. Parse the recommendation into structured data.
 
 Update checkpoint status to "verdict_received".
@@ -315,4 +336,7 @@ When agent capacity is exceeded:
   also stall, fall back to consolidated review.
 - **Network/tool errors on SendMessage**: Retry once. If it fails again, checkpoint
   and report the error to the user. Do not silently drop messages.
+- **Agent reports "no SendMessage"**: The agent is standalone, not a team member.
+  Its output IS the result — read the Agent tool return value directly. Do not retry
+  SendMessage or ask it to resend. This is expected for verifier agents.
 - **ARBITER stalls before DEBATE CALLED**: Replace after 1 nudge. No verdict = no result.
