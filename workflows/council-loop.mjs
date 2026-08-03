@@ -45,7 +45,8 @@
  *     maxLoops,          // default 10 — bounded cap on council convenings (fix→re-review iterations)
  *     requireUnconditional, // default true — converge ONLY on unconditional FOR
  *     applyNonBlockers,  // default true — fix non-blockers (cosmetic + follow-ups) in-loop too; converge on ZERO findings
- *     model: { advocate, critic, questioner, arbiter, fix, verify }, // per-role model overrides
+ *     model: { advocate, critic, questioner, arbiter, fixPlan, fix, fixReview, merge, verify }, // per-role model overrides
+ *     effort: { advocate, critic, fixPlan, fix, fixReview },         // per-role reasoning effort overrides
  *   },
  * }
  */
@@ -79,8 +80,12 @@ const C = Object.assign(
   { advocates: 1, critics: 1, questioner: false, rounds: 2, maxLoops: 10, requireUnconditional: true, applyNonBlockers: true },
   A.council || {})
 const M = Object.assign(
-  { advocate: 'sonnet', critic: 'sonnet', questioner: 'sonnet', arbiter: 'opus', fix: 'sonnet', verify: 'sonnet' },
+  { advocate: 'opus', critic: 'opus', questioner: 'sonnet', arbiter: 'fable', fixPlan: 'fable', fix: 'opus', fixReview: 'fable', merge: 'sonnet', verify: 'sonnet' },
   (A.council && A.council.model) || {})
+// per-role reasoning effort. Bounds spend on the opus and fable roles.
+const E = Object.assign(
+  { advocate: 'low', critic: 'low', fixPlan: 'medium', fix: 'low', fixReview: 'low' },
+  (A.council && A.council.effort) || {})
 
 // --- limit-aware retry + resumable stop ----------------------------------------------------
 // Backs off on transient blips (529/overloaded/timeout) but BAILS FAST on a hard usage/rate
@@ -130,7 +135,7 @@ const PARENT_BRANCH = PARENT.replace(/^origin\//, '')
 const branchPin = () => T.branch
   ? `\nBRANCH PIN (critical): all work for this council happens ON BRANCH ${T.branch}. FIRST run \`git rev-parse --abbrev-ref HEAD\`; if the checkout is not on ${T.branch}, run \`git checkout ${T.branch}\` (then \`git pull --ff-only origin ${T.branch}\` if it has an upstream) BEFORE doing anything else. If the working tree is dirty with ANOTHER branch's work, STOP and report it instead of checking out over it. NEVER run \`git commit\` or \`git push\` while on ${PARENT_BRANCH} or main, and NEVER push to ${PARENT_BRANCH} or main — the ONLY branch you may push is ${T.branch}.`
   : `\nBRANCH PIN (critical, reduced — no target branch was resolved): FIRST run \`git rev-parse --abbrev-ref HEAD\`. If the checkout is on ${PARENT_BRANCH} or main, STOP and report — NEVER commit or push there. Work only on the branch already checked out, and never push any ref you did not verify by name.`
-const COMMIT = (n) => `When the fixes build clean, stage them and commit with a semantic conventional-commit message (e.g. \`fix(<scope>): address council round ${n} findings\`), then push${T.branch ? ` with \`git push origin ${T.branch}\`` : ' to update the PR'}${PRREF}. Before committing, re-verify \`git rev-parse --abbrev-ref HEAD\`${T.branch ? ` prints ${T.branch}` : ' is the PR branch'} — if not, STOP and report. If there is nothing to commit (the work was already committed on a prior attempt), do NOT error — skip the commit and just ensure the branch is pushed${T.branch ? ` (\`git push --force-with-lease origin ${T.branch}\`)` : ' (plain \`git push\` of the verified current branch only — NEVER force-push an unresolved ref)'}. AFTER pushing, VERIFY the push landed: \`git ls-remote origin ${T.branch || '<branch>'}\` must print the same SHA as \`git rev-parse HEAD\`; report pushed:true/false accordingly. Do NOT squash, rebase, or merge — just commit + push this round's work.`
+const COMMIT = (n) => `When the fixes build clean, commit them SEMANTICALLY: one conventional commit per logical fix (or per tightly related group), never one opaque "round ${n} fixes" blob. Each subject is \`<type>(<scope>): <what changed>\` and each body states (a) the council finding it addresses and (b) why the fix matters (the failure it prevents). STE form: short sentences, no em-dash, no semicolon, no contraction. Then push${T.branch ? ` with \`git push origin ${T.branch}\`` : ' to update the PR'}${PRREF}. Before committing, re-verify \`git rev-parse --abbrev-ref HEAD\`${T.branch ? ` prints ${T.branch}` : ' is the PR branch'} — if not, STOP and report. If there is nothing to commit (the work was already committed on a prior attempt), do NOT error — skip the commit and just ensure the branch is pushed${T.branch ? ` (\`git push --force-with-lease origin ${T.branch}\`)` : ' (plain \`git push\` of the verified current branch only — NEVER force-push an unresolved ref)'}. AFTER pushing, VERIFY the push landed: \`git ls-remote origin ${T.branch || '<branch>'}\` must print the same SHA as \`git rev-parse HEAD\`; report pushed:true/false accordingly. Do NOT squash, rebase, or merge — just commit + push this round's work.`
 
 const SCOPENOTE = A.scope ? `\nReview scope: ${A.scope}` : ''
 // Council review follow-up (2026-07-30): ENV was defined but never injected — envNote silently
@@ -160,7 +165,8 @@ const review = () => T.branch
 // which the convergence test then discarded).
 const VERDICT_SCHEMA = { type: 'object', additionalProperties: false, required: ['verdict', 'unconditional', 'rationale'], properties: { verdict: { type: 'string', enum: ['FOR', 'AGAINST', 'CONDITIONAL'] }, unconditional: { type: 'boolean' }, conditions: { type: 'array', items: { type: 'string' } }, findings: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['description', 'severity'], properties: { description: { type: 'string' }, file: { type: 'string' }, line: { type: 'integer' }, severity: { type: 'string', enum: ['critical', 'high', 'medium', 'low', 'cosmetic'] }, fix: { type: 'string' } } } }, followUps: { type: 'array', items: { type: 'string' } }, rationale: { type: 'string' } } }
 const FIX_SCHEMA = { type: 'object', additionalProperties: false, required: ['applied', 'buildPassed'], properties: { applied: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['item'], properties: { item: { type: 'string' }, file: { type: 'string' }, change: { type: 'string' } } } }, buildPassed: { type: 'boolean' }, pushed: { type: 'boolean' }, notes: { type: 'string' } } }
-const VERIFY_SCHEMA = { type: 'object', additionalProperties: false, required: ['build', 'mergeable'], properties: { build: { type: 'string', enum: ['pass', 'fail'] }, tests: { type: 'string', enum: ['pass', 'fail', 'none'] }, output: { type: 'string' }, mergeable: { type: 'boolean' } } }
+const FIXREVIEW_SCHEMA = { type: 'object', additionalProperties: false, required: ['ok'], properties: { ok: { type: 'boolean' }, issues: { type: 'array', items: { type: 'string' } }, notes: { type: 'string' } } }
+const VERIFY_SCHEMA ={ type: 'object', additionalProperties: false, required: ['build', 'mergeable'], properties: { build: { type: 'string', enum: ['pass', 'fail'] }, tests: { type: 'string', enum: ['pass', 'fail', 'none'] }, output: { type: 'string' }, mergeable: { type: 'boolean' } } }
 const MERGE_SCHEMA = { type: 'object', additionalProperties: false, required: ['merged'], properties: { merged: { type: 'boolean' }, blocked: { type: 'boolean' }, output: { type: 'string' } } }
 
 const isCosmetic = (sev) => /^(low|cosmetic|nit|info|trivial)/i.test(sev || '')
@@ -197,12 +203,19 @@ for (iter = 1; iter <= C.maxLoops; iter++) {
   if (lowBudget()) { stopReason = 'budget'; break }   // stop before spending a whole round we can't finish
   // fix FIRST (from the previous round's findings) so each review reflects the latest code — all in-PR
   if (pending && pending.length) {
+    // fix pipeline: plan (fable, medium) -> implement (opus, low) -> review (fable, low)
+    const plan = await tryAgent(
+`Plan the fixes for these council findings on ${TITLE}${PRREF} (${NAME}). READ the cited code first. For each finding: the exact file(s) and change, the order of application, risks and interactions between fixes, and the semantic commit split (one conventional commit per logical fix, subject + one-line why). Do NOT edit anything. Output a numbered plan as text.
+${pending.map((b, i) => `${i + 1}. ${b}`).join('\n')}`,
+      { label: `fix-plan#${iter}`, phase: 'Council', model: M.fixPlan, effort: E.fixPlan })
+    if (limitHit) { stopReason = 'limit'; break }
     const fix = await tryAgent(
-`Apply these council-raised fixes to ${TITLE}${PRREF} as IN-PR updates in the working tree. Implement each fully, verify by reading the result, then run \`${BUILD}\`${A.liveValidate ? ' and re-validate the backend if a fix touched it' : ''}.${branchPin()}
+`Apply these council-raised fixes to ${TITLE}${PRREF} as IN-PR updates in the working tree. Follow the plan below. Implement each fully, verify by reading the result, then run \`${BUILD}\`${A.liveValidate ? ' and re-validate the backend if a fix touched it' : ''}.${branchPin()}
 ${pending.map((b, i) => `${i + 1}. ${b}`).join('\n')}
+${plan ? `\nPLAN (from the planning agent — deviate only with a stated reason in notes):\n${plan}\n` : ''}
 ${RULES}
 ${COMMIT(iter)}`,
-      { label: `fix#${iter}`, phase: 'Council', model: M.fix, agentType: AGENT, schema: FIX_SCHEMA })
+      { label: `fix#${iter}`, phase: 'Council', model: M.fix, effort: E.fix, agentType: AGENT, schema: FIX_SCHEMA })
     // Council review F3 (2026-07-30): the fix result used to be discarded. A build failure or
     // an unlanded push means the next review would re-read IDENTICAL committed code and
     // re-litigate the same findings until maxLoops — a silent budget burn misreported as
@@ -215,6 +228,21 @@ ${COMMIT(iter)}`,
       stopReason = 'fix-failed'
       break
     }
+    // fix review: a cheap fable pass that checks each pending item actually landed as planned
+    // BEFORE the full council re-reviews. On a reject, the issues become the next round's
+    // pending and we re-fix (bounded by maxLoops and the budget guard) instead of burning a
+    // full advocate/critic/arbiter round on a botched fix.
+    const fr = await tryAgent(
+`Review the fix commits just pushed for ${TITLE}${PRREF} (${NAME}). ${review()}
+Check ONLY that each item below was fully and correctly implemented (read the code, no fabrication), that no fix introduced an obvious new defect, and that the commits are semantic (one logical fix per commit, body states the finding and why the fix matters). Do NOT re-review the whole PR. ok=true if all items landed. Otherwise list each problem as a self-contained fix instruction in issues.
+${pending.map((b, i) => `${i + 1}. ${b}`).join('\n')}`,
+      { label: `fix-review#${iter}`, phase: 'Council', model: M.fixReview, effort: E.fixReview, schema: FIXREVIEW_SCHEMA })
+    if (limitHit) { stopReason = 'limit'; break }
+    if (fr && fr.ok === false && Array.isArray(fr.issues) && fr.issues.length) {
+      log(`fix review round ${iter} rejected ${fr.issues.length} item(s) — re-fixing next round`)
+      pending = fr.issues
+      continue
+    }
     pending = null
   }
 
@@ -222,11 +250,11 @@ ${COMMIT(iter)}`,
     ...advNames.map(n => () => tryAgent(
 `You are ${n} in an adversarial council on ${TITLE}${PRREF} (${NAME}). ${review()}
 ${SPEC ? `Verify against ${SPEC} (acceptance criteria). ` : ''}Argue FOR merging with the strongest evidence-based case; ground every claim in file:line; honestly flag what you cannot defend. <=${C.rounds} rounds. Output text.`,
-      { label: `${n.toLowerCase()}#${iter}`, phase: 'Council', model: M.advocate })),
+      { label: `${n.toLowerCase()}#${iter}`, phase: 'Council', model: M.advocate, effort: E.advocate })),
     ...critNames.map(n => () => tryAgent(
 `You are ${n} in an adversarial council on ${TITLE}${PRREF} (${NAME}). ${review()}
 READ each cited file to confirm issues (no fabrication). Find REAL blocking defects: ${SPEC ? 'spec violations, ' : ''}security gaps, bugs, missing error handling, mutation, broken build/tests, unmet acceptance criteria. Every finding needs file:line + one-line fix + severity. "No blocking issues" is a valid honest result. <=${C.rounds} rounds. Output text.`,
-      { label: `${n.toLowerCase()}#${iter}`, phase: 'Council', model: M.critic })),
+      { label: `${n.toLowerCase()}#${iter}`, phase: 'Council', model: M.critic, effort: E.critic })),
     ...(C.questioner ? [() => tryAgent(
 `You are the QUESTIONER in an adversarial council on ${TITLE}${PRREF} (${NAME}). ${review()}
 You do NOT argue for or against merging. Probe every claim — from any agent — that lacks a file:line or test/output citation. For each: state the specific question, then READ the code yourself and mark it SUBSTANTIATED or UNSUBSTANTIATED. Claims you mark UNSUBSTANTIATED must be excluded from fixes by the arbiter. <=${C.rounds} rounds. Output text.`,
@@ -343,7 +371,7 @@ TARGET LOCK (critical): the ONLY thing you may merge is the PR whose head branch
    - "merge conflict" when mergeable is CONFLICTING.
    NEVER report "approval hook" (or "needs approval") as the stop reason — the approval gate is not the blocker; identify and report the actual draft/checks/conflict cause from the gh pr view output above.
 Report the merge result (merged, blocked, and output including the gh pr ready stdout/stderr and any gh pr view diagnostic).`,
-      { label: 'merge', phase: 'Merge', model: M.fix, agentType: AGENT, schema: MERGE_SCHEMA })
+      { label: 'merge', phase: 'Merge', model: M.merge, agentType: AGENT, schema: MERGE_SCHEMA })
   } else if (MERGE && converged) {
     log('converged but verify reported not mergeable — skipping squash-merge')
   }
