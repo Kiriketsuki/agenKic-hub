@@ -1,0 +1,104 @@
+# kilint shipped defaults - the house style.
+#
+# Discovery order, first hit wins for the file, then merged shallow to deep:
+#   1. --config PATH
+#   2. $KILINT_CONFIG
+#   3. nearest .kilint.toml walking up from the linted file
+#   4. ~/.config/kilint/config.toml
+#   5. this file
+# Earlier entries override later ones. Tables merge, arrays replace, and any
+# key named extend_* appends instead of replacing.
+
+default_profile = "flavored"
+min_words = 40
+
+# Comments in source files are terse by nature.
+comment_sentence_bonus = 10
+comment_min_words = 6
+
+[weights]
+error = 1.0
+warn = 0.6
+info = 0.25
+
+[words]
+extend_marketing = ["frictionless", "bleeding-edge", "first-class", "effortlessly", "seamlessly"]
+extend_filler = ["in today's fast-paced", "the fact of the matter is"]
+
+# Predicate adjectives that only look passive. "The build is broken" names a
+# state, not an action, so there is no actor to name. One "is X" entry covers
+# every be-word, so "are broken" and "was broken" are covered too.
+extend_allow_passive = [
+  "is set", "is enabled", "is disabled", "is closed", "is open", "is expired",
+  "is broken", "is focused", "is undefined", "is defined", "is installed",
+  "is configured", "is symlinked", "is related", "is read only", "is done",
+  "is finished", "is empty", "is complete", "is fixed", "is unset",
+  "is checked", "is unchecked", "is selected", "is sorted", "is stale",
+  "is confused", "is blocked", "is stuck", "is connected", "is disconnected",
+]
+
+# One name for one thing. Empty by default so TRM001 never fires uninvited.
+[terminology]
+
+# Path routing. Entries run in order and the LAST match wins. Globs are matched
+# against the path relative to the config root and then against the absolute
+# path. Anything that matches nothing here falls back to default_profile.
+
+# Personal writing is exempt. Projects can add more routes in .kilint.toml.
+[[paths]]
+glob = "**/journal/**"
+profile = "off"
+
+[[paths]]
+glob = "**/journals/**"
+profile = "off"
+
+[[paths]]
+glob = "**/daily-notes/**"
+profile = "off"
+
+[[paths]]
+glob = "**/diary/**"
+profile = "off"
+
+[[paths]]
+glob = "**/reference/**"
+profile = "off"
+
+[[paths]]
+glob = "**/node_modules/**"
+profile = "off"
+
+[[paths]]
+glob = "**/.git/**"
+profile = "off"
+
+# Long-form writing with a voice.
+[[paths]]
+glob = "**/lectures/**"
+profile = "prose"
+
+[[paths]]
+glob = "**/essays/**"
+profile = "prose"
+
+[[paths]]
+glob = "**/digital-garden/**"
+profile = "prose"
+
+# Procedures and anything a reader follows under pressure.
+[[paths]]
+glob = "**/ERROR*.md"
+profile = "strict"
+
+[[paths]]
+glob = "**/runbook*.md"
+profile = "strict"
+
+[[paths]]
+glob = "**/RUNBOOK*.md"
+profile = "strict"
+
+[[paths]]
+glob = "**/migrations/**"
+profile = "strict"
