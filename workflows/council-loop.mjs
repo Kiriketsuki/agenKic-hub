@@ -27,7 +27,9 @@
  *
  * TARGET = {
  *   title,                                    // what's under review (1 line)
- *   target: { branch, parentRef, pr },        // parentRef e.g. "origin/main" (default); pr/branch informational
+ *   target: { branch, parentRef, pr },        // parentRef e.g. "origin/main" (default). Pass branch when known;
+ *                                             // a pr-only target gets its head branch resolved up front so the
+ *                                             // branch pin and merge target lock are never empty
  *   scope,                                    // optional: explicit "review only X / ignore Y" note
  *   project: { name, buildCmd, testCmd, specFile },
  *   liveValidate,                             // optional: instructions to prove behavior on a REAL backend
@@ -120,14 +122,22 @@ const NOISSUE = `STRICT: Never create — or suggest deferring work to — a new
 // the feature's entire implementation there and pushed — auto-merging the epic PR on GitHub and
 // firing a version bump. The branch pin makes that class of accident impossible.)
 const PARENT_BRANCH = PARENT.replace(/^origin\//, '')
-const BRANCH_PIN = T.branch
+// Council review F1 (2026-07-30): BRANCH_PIN used to collapse to '' when T.branch was unset
+// (a documented pr-only input shape), silently removing every branch-safety instruction from
+// the tree-mutating agents. Now: pr-only callers get the branch resolved up front (see the
+// resolver agent below, before the loop); a caller with NEITHER branch nor pr runs in
+// working-tree mode with a reduced pin that still forbids touching main/the parent.
+const branchPin = () => T.branch
   ? `\nBRANCH PIN (critical): all work for this council happens ON BRANCH ${T.branch}. FIRST run \`git rev-parse --abbrev-ref HEAD\`; if the checkout is not on ${T.branch}, run \`git checkout ${T.branch}\` (then \`git pull --ff-only origin ${T.branch}\` if it has an upstream) BEFORE doing anything else. If the working tree is dirty with ANOTHER branch's work, STOP and report it instead of checking out over it. NEVER run \`git commit\` or \`git push\` while on ${PARENT_BRANCH} or main, and NEVER push to ${PARENT_BRANCH} or main — the ONLY branch you may push is ${T.branch}.`
-  : ''
-const COMMIT = (n) => `When the fixes build clean, stage them and commit with a semantic conventional-commit message (e.g. \`fix(<scope>): address council round ${n} findings\`), then push${T.branch ? ` with \`git push origin ${T.branch}\`` : ' to update the PR'}${PRREF}. Before committing, re-verify \`git rev-parse --abbrev-ref HEAD\`${T.branch ? ` prints ${T.branch}` : ' is the PR branch'} — if not, STOP and report. If there is nothing to commit (the work was already committed on a prior attempt), do NOT error — skip the commit and just ensure the branch is pushed (\`git push --force-with-lease origin ${T.branch || 'HEAD'}\`). Do NOT squash, rebase, or merge — just commit + push this round's work.`
+  : `\nBRANCH PIN (critical, reduced — no target branch was resolved): FIRST run \`git rev-parse --abbrev-ref HEAD\`. If the checkout is on ${PARENT_BRANCH} or main, STOP and report — NEVER commit or push there. Work only on the branch already checked out, and never push any ref you did not verify by name.`
+const COMMIT = (n) => `When the fixes build clean, stage them and commit with a semantic conventional-commit message (e.g. \`fix(<scope>): address council round ${n} findings\`), then push${T.branch ? ` with \`git push origin ${T.branch}\`` : ' to update the PR'}${PRREF}. Before committing, re-verify \`git rev-parse --abbrev-ref HEAD\`${T.branch ? ` prints ${T.branch}` : ' is the PR branch'} — if not, STOP and report. If there is nothing to commit (the work was already committed on a prior attempt), do NOT error — skip the commit and just ensure the branch is pushed${T.branch ? ` (\`git push --force-with-lease origin ${T.branch}\`)` : ' (plain \`git push\` of the verified current branch only — NEVER force-push an unresolved ref)'}. AFTER pushing, VERIFY the push landed: \`git ls-remote origin ${T.branch || '<branch>'}\` must print the same SHA as \`git rev-parse HEAD\`; report pushed:true/false accordingly. Do NOT squash, rebase, or merge — just commit + push this round's work.`
 
 const SCOPENOTE = A.scope ? `\nReview scope: ${A.scope}` : ''
+// Council review follow-up (2026-07-30): ENV was defined but never injected — envNote silently
+// did nothing. It now leads both the review preamble and the fix rules, since environment
+// context (repo location, cwd caveats) must be read BEFORE any git command runs.
 const ENV = A.envNote ? `\nEnvironment: ${A.envNote}` : ''
-const RULES = `
+const RULES = `${ENV}
 Project rules you MUST follow when applying fixes:
 - Immutability: never mutate inputs; return new objects/arrays.
 - Many small focused files; JSDoc/types on exported APIs. No console.log in committed code.
@@ -136,15 +146,20 @@ Project rules you MUST follow when applying fixes:
 - If you add deps, update the lockfile (CI runs a clean install). Do NOT edit version files (CI bumps on merge).
 - ${NOISSUE}${A.extraRules ? '\n- ' + A.extraRules : ''}`
 
-const REVIEW = T.branch
+// A function (not a const) so the pr-only branch resolution below is honored: T.branch may be
+// assigned after module init, and every prompt built later must see the branch-pinned variant.
+const review = () => T.branch
   // Branch-pinned review: reviewers run in PARALLEL on a shared checkout, so they must NEVER
   // checkout/mutate the tree. Review the COMMITTED state of the branch directly via refs.
-  ? `Inspect the changes under review with \`git fetch origin ${T.branch} --quiet; git diff ${PARENT}...origin/${T.branch} -- . ':(exclude)package-lock.json' ':(exclude)uv.lock'\` and read full files with \`git show origin/${T.branch}:<path>\`. Do NOT \`git checkout\`, do NOT modify the working tree, and IGNORE the working tree's current state — the committed branch ${T.branch} is the single source of truth for this review.${SCOPENOTE}`
-  : `Inspect the changes under review with \`git diff ${PARENT} -- . ':(exclude)package-lock.json'\` (modified tracked files) and \`git status --porcelain\` (NEW untracked files — read those directly). Work is uncommitted in the working tree.${SCOPENOTE}`
+  ? `${ENV}Inspect the changes under review with \`git fetch origin ${T.branch} --quiet; git diff ${PARENT}...origin/${T.branch} -- . ':(exclude)package-lock.json' ':(exclude)uv.lock'\` and read full files with \`git show origin/${T.branch}:<path>\`. Do NOT \`git checkout\`, do NOT modify the working tree, and IGNORE the working tree's current state — the committed branch ${T.branch} is the single source of truth for this review.${SCOPENOTE}`
+  : `${ENV}Inspect the changes under review with \`git diff ${PARENT} -- . ':(exclude)package-lock.json'\` (modified tracked files) and \`git status --porcelain\` (NEW untracked files — read those directly). Work is uncommitted in the working tree.${SCOPENOTE}`
 
 // ---------------- Schemas ----------------
-const VERDICT_SCHEMA = { type: 'object', additionalProperties: false, required: ['verdict', 'unconditional', 'rationale'], properties: { verdict: { type: 'string', enum: ['FOR', 'AGAINST', 'CONDITIONAL'] }, unconditional: { type: 'boolean' }, conditions: { type: 'array', items: { type: 'string' } }, findings: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['description', 'severity'], properties: { description: { type: 'string' }, file: { type: 'string' }, line: { type: 'integer' }, severity: { type: 'string' }, fix: { type: 'string' } } } }, followUps: { type: 'array', items: { type: 'string' } }, rationale: { type: 'string' } } }
-const FIX_SCHEMA = { type: 'object', additionalProperties: false, required: ['applied', 'buildPassed'], properties: { applied: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['item'], properties: { item: { type: 'string' }, file: { type: 'string' }, change: { type: 'string' } } } }, buildPassed: { type: 'boolean' }, notes: { type: 'string' } } }
+// severity is an ENUM so the isCosmetic split below can never diverge from what the arbiter
+// intends to demote (council review F2, 2026-07-30: a free-form "minor" landed in blocking,
+// which the convergence test then discarded).
+const VERDICT_SCHEMA = { type: 'object', additionalProperties: false, required: ['verdict', 'unconditional', 'rationale'], properties: { verdict: { type: 'string', enum: ['FOR', 'AGAINST', 'CONDITIONAL'] }, unconditional: { type: 'boolean' }, conditions: { type: 'array', items: { type: 'string' } }, findings: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['description', 'severity'], properties: { description: { type: 'string' }, file: { type: 'string' }, line: { type: 'integer' }, severity: { type: 'string', enum: ['critical', 'high', 'medium', 'low', 'cosmetic'] }, fix: { type: 'string' } } } }, followUps: { type: 'array', items: { type: 'string' } }, rationale: { type: 'string' } } }
+const FIX_SCHEMA = { type: 'object', additionalProperties: false, required: ['applied', 'buildPassed'], properties: { applied: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['item'], properties: { item: { type: 'string' }, file: { type: 'string' }, change: { type: 'string' } } } }, buildPassed: { type: 'boolean' }, pushed: { type: 'boolean' }, notes: { type: 'string' } } }
 const VERIFY_SCHEMA = { type: 'object', additionalProperties: false, required: ['build', 'mergeable'], properties: { build: { type: 'string', enum: ['pass', 'fail'] }, tests: { type: 'string', enum: ['pass', 'fail', 'none'] }, output: { type: 'string' }, mergeable: { type: 'boolean' } } }
 const MERGE_SCHEMA = { type: 'object', additionalProperties: false, required: ['merged'], properties: { merged: { type: 'boolean' }, blocked: { type: 'boolean' }, output: { type: 'string' } } }
 
@@ -153,10 +168,28 @@ const fmt = (f) => `${f.severity || ''}: ${f.description}${f.file ? ` (${f.file}
 
 // ---------------- Phase 1: Council (fix-THEN-review loop → unconditional FOR) ----------------
 phase('Council')
+
+// Council review F1 (2026-07-30): a pr-only caller gets the head branch resolved BEFORE any
+// tree-mutating agent runs, so the full BRANCH_PIN and the merge TARGET LOCK are never empty.
+// Workflow scripts have no exec access, so a tiny read-only agent does the lookup.
+if (!T.branch && T.pr) {
+  const resolved = await tryAgent(
+    `Run \`gh pr view ${T.pr} --json headRefName,baseRefName\` and report the result. Read-only: run NOTHING else.`,
+    { label: 'resolve-branch', phase: 'Council', model: 'sonnet',
+      schema: { type: 'object', additionalProperties: false, required: ['headRefName'], properties: { headRefName: { type: 'string' }, baseRefName: { type: 'string' } } } })
+  if (resolved && resolved.headRefName) {
+    T.branch = resolved.headRefName
+    log(`resolved PR ${T.pr} head branch: ${T.branch}`)
+  } else {
+    log(`could not resolve the head branch for PR ${T.pr} — fix agents run with the reduced pin`)
+  }
+}
+
 const advNames = Array.from({ length: C.advocates }, (_, i) => `ADVOCATE${C.advocates > 1 ? i + 1 : ''}`)
 const critNames = Array.from({ length: C.critics }, (_, i) => `CRITIC${C.critics > 1 ? i + 1 : ''}`)
 let verdict = null, pending = null, iter = 0, stalled = false, converged = false
-let stopReason = null                  // 'budget' | 'limit' | 'review-incomplete' → resumable stop (never merges)
+let stopReason = null                  // 'budget' | 'limit' | 'review-incomplete' | 'fix-failed' → resumable stop (never merges)
+let lastBlocking = []                  // blocking findings from the most recent judged round (surfaced top-level)
 const history = []
 
 try {
@@ -164,26 +197,38 @@ for (iter = 1; iter <= C.maxLoops; iter++) {
   if (lowBudget()) { stopReason = 'budget'; break }   // stop before spending a whole round we can't finish
   // fix FIRST (from the previous round's findings) so each review reflects the latest code — all in-PR
   if (pending && pending.length) {
-    await tryAgent(
-`Apply these council-raised fixes to ${TITLE}${PRREF} as IN-PR updates in the working tree. Implement each fully, verify by reading the result, then run \`${BUILD}\`${A.liveValidate ? ' and re-validate the backend if a fix touched it' : ''}.${BRANCH_PIN}
+    const fix = await tryAgent(
+`Apply these council-raised fixes to ${TITLE}${PRREF} as IN-PR updates in the working tree. Implement each fully, verify by reading the result, then run \`${BUILD}\`${A.liveValidate ? ' and re-validate the backend if a fix touched it' : ''}.${branchPin()}
 ${pending.map((b, i) => `${i + 1}. ${b}`).join('\n')}
 ${RULES}
 ${COMMIT(iter)}`,
       { label: `fix#${iter}`, phase: 'Council', model: M.fix, agentType: AGENT, schema: FIX_SCHEMA })
+    // Council review F3 (2026-07-30): the fix result used to be discarded. A build failure or
+    // an unlanded push means the next review would re-read IDENTICAL committed code and
+    // re-litigate the same findings until maxLoops — a silent budget burn misreported as
+    // "did not converge". Stop resumable with the real cause instead.
+    // Ultracode review (2026-08-02): FIX_SCHEMA does not require `pushed`, so a
+    // model that omits it yields undefined, and `undefined === false` let the
+    // unlanded-push arm never fire. In branch mode only an explicit true counts.
+    if (fix && (fix.buildPassed === false || (T.branch && fix.pushed !== true))) {
+      log(`fix round ${iter} did not land (buildPassed=${fix.buildPassed} pushed=${fix.pushed}): ${(fix.notes || '').slice(0, 200)}`)
+      stopReason = 'fix-failed'
+      break
+    }
     pending = null
   }
 
   const lenses = [
     ...advNames.map(n => () => tryAgent(
-`You are ${n} in an adversarial council on ${TITLE}${PRREF} (${NAME}). ${REVIEW}
+`You are ${n} in an adversarial council on ${TITLE}${PRREF} (${NAME}). ${review()}
 ${SPEC ? `Verify against ${SPEC} (acceptance criteria). ` : ''}Argue FOR merging with the strongest evidence-based case; ground every claim in file:line; honestly flag what you cannot defend. <=${C.rounds} rounds. Output text.`,
       { label: `${n.toLowerCase()}#${iter}`, phase: 'Council', model: M.advocate })),
     ...critNames.map(n => () => tryAgent(
-`You are ${n} in an adversarial council on ${TITLE}${PRREF} (${NAME}). ${REVIEW}
+`You are ${n} in an adversarial council on ${TITLE}${PRREF} (${NAME}). ${review()}
 READ each cited file to confirm issues (no fabrication). Find REAL blocking defects: ${SPEC ? 'spec violations, ' : ''}security gaps, bugs, missing error handling, mutation, broken build/tests, unmet acceptance criteria. Every finding needs file:line + one-line fix + severity. "No blocking issues" is a valid honest result. <=${C.rounds} rounds. Output text.`,
       { label: `${n.toLowerCase()}#${iter}`, phase: 'Council', model: M.critic })),
     ...(C.questioner ? [() => tryAgent(
-`You are the QUESTIONER in an adversarial council on ${TITLE}${PRREF} (${NAME}). ${REVIEW}
+`You are the QUESTIONER in an adversarial council on ${TITLE}${PRREF} (${NAME}). ${review()}
 You do NOT argue for or against merging. Probe every claim — from any agent — that lacks a file:line or test/output citation. For each: state the specific question, then READ the code yourself and mark it SUBSTANTIATED or UNSUBSTANTIATED. Claims you mark UNSUBSTANTIATED must be excluded from fixes by the arbiter. <=${C.rounds} rounds. Output text.`,
       { label: `questioner#${iter}`, phase: 'Council', model: M.questioner })] : []),
   ]
@@ -203,7 +248,7 @@ You do NOT argue for or against merging. Probe every claim — from any agent �
   // council.requireUnconditional. Do NOT edit the prompt text below to "fix" this — prompt changes
   // invalidate resume journals for in-flight runs.
   verdict = await tryAgent(
-`You are the ARBITER of an adversarial council on ${TITLE}${PRREF} (${NAME}). Independently verify contested claims by reading the cited code. ${REVIEW}
+`You are the ARBITER of an adversarial council on ${TITLE}${PRREF} (${NAME}). Independently verify contested claims by reading the cited code. ${review()}
 "unconditional" = true ONLY if FOR with ZERO blocking conditions/findings: build+tests pass${SPEC ? `, acceptance criteria in ${SPEC} met` : ''}, no security gaps${A.liveValidate ? ', backend behavior validated live' : ''}. Drop findings you cannot verify in code, that are pre-existing/unrelated${C.questioner ? ', or that the QUESTIONER marked UNSUBSTANTIATED' : ''}. Demote LOW/cosmetic nits to in-PR follow-ups (put them in followUps; do NOT block on them). Each blocking finding needs file+line+fix. ${NOISSUE}
 Council positions:
 ${sides.map((s, i) => `--- ${i + 1} ---\n${s}`).join('\n\n')}`,
@@ -227,9 +272,14 @@ ${sides.map((s, i) => `--- ${i + 1} ---\n${s}`).join('\n\n')}`,
     ...(verdict.followUps || []),
     ...((verdict.findings || []).filter(f => isCosmetic(f.severity)).map(fmt)),
   ]
+  lastBlocking = blocking
   const verdictOk = verdict.verdict === 'FOR' && (!C.requireUnconditional || verdict.unconditional)
-  // converged = verdict passes AND (when applyNonBlockers) the tree is fully clean — zero findings of any kind
-  if (verdictOk && (!C.applyNonBlockers || !nonBlocking.length)) { converged = true; break }
+  // converged = verdict passes AND ZERO blocking findings remain AND (when applyNonBlockers) the
+  // tree is fully clean. Council review F2 (2026-07-30): the !blocking.length term is load-bearing —
+  // without it, an arbiter that says "unconditional FOR" while still listing a non-cosmetic finding
+  // (or any plain FOR under requireUnconditional:false) converged PAST its own blocker and could
+  // auto-merge it. The council's findings outrank the arbiter's self-reported flag.
+  if (verdictOk && !blocking.length && (!C.applyNonBlockers || !nonBlocking.length)) { converged = true; break }
 
   // when applyNonBlockers, drive non-blockers to zero too; otherwise only blockers feed the next round
   const toFix = C.applyNonBlockers ? [...blocking, ...nonBlocking] : blocking
@@ -245,14 +295,16 @@ ${sides.map((s, i) => `--- ${i + 1} ---\n${s}`).join('\n\n')}`,
 if (stopReason && !converged) {
   const why = stopReason === 'budget' ? 'turn token budget nearly exhausted'
             : stopReason === 'review-incomplete' ? 'a council reviewer did not complete (likely a limit/blip) — refusing to judge unreviewed code'
+            : stopReason === 'fix-failed' ? 'a fix round did not land (build failed or the push never reached the remote) — re-reviewing identical code would burn rounds for nothing'
             : 'hit a usage/rate limit'
   log(`council-loop stopping (resumable): ${why} at round ${iter}`)
   return {
     title: TITLE,
     target: { branch: T.branch, parentRef: PARENT, pr: T.pr },
-    council: { config: C, iterations: iter, history, finalVerdict: verdict },
+    council: { config: C, iterations: history.length, stoppedAtRound: iter, history, finalVerdict: verdict },
     verify: null, merge: null, converged: false, resumable: true,
     reason: `stopped early — ${why}. Resume after limits/budget reset: Workflow({ scriptPath, args, resumeFromRunId }).`,
+    unresolvedBlockers: lastBlocking,
     inPrFollowUps: [],
   }
 }
@@ -262,13 +314,19 @@ phase('Verify')
 let verify = null, merge = null
 try {
   verify = await tryAgent(
-`Final verification of ${TITLE}${PRREF} — do NOT change code, only verify and report.${BRANCH_PIN}
+`Final verification of ${TITLE}${PRREF} — do NOT change code, only verify and report.${branchPin()}
 1. \`${BUILD}\` (must pass). 2. \`${TEST}\` (report pass/fail+counts; "none" if no test script).${A.liveValidate ? ' 3. Re-run the backend reset/health to confirm it still applies cleanly.' : ''}
 Report concise excerpts + whether mergeable.`,
     { label: 'verify', phase: 'Verify', model: M.verify, schema: VERIFY_SCHEMA })
 
   // ---------------- Phase 3: Merge (optional — squash-merge on an unconditional FOR) ----------------
-  if (MERGE && converged && verify && verify.mergeable !== false) {
+  // Ultracode review (2026-08-02): in pure working-tree mode T.branch and T.pr
+  // both stay undefined, and every merge-phase command template then renders a
+  // bare `gh pr merge`. That is the exact call the TARGET LOCK forbids, so the
+  // merge phase requires a resolved target.
+  if (MERGE && converged && !T.branch && !T.pr) {
+    log('merge requested but no branch or PR was resolved (working-tree mode). Skipping squash-merge to avoid a bare gh pr merge.')
+  } else if (MERGE && converged && verify && verify.mergeable !== false) {
     phase('Merge')
     merge = await tryAgent(
 `${TITLE}${PRREF} reached an UNCONDITIONAL FOR and verification passed. Squash-merge it now. Stop and report if any step fails — never force.
@@ -294,9 +352,10 @@ Report the merge result (merged, blocked, and output including the gh pr ready s
     log('council-loop hit a usage/rate limit during verify/merge — resumable')
     return {
       title: TITLE, target: { branch: T.branch, parentRef: PARENT, pr: T.pr },
-      council: { config: C, iterations: iter, history, finalVerdict: verdict },
+      council: { config: C, iterations: history.length, history, finalVerdict: verdict },
       verify, merge: null, converged, resumable: true,
       reason: 'hit a usage/rate limit during verify/merge. Resume with resumeFromRunId once limits reset.',
+      unresolvedBlockers: lastBlocking,
       inPrFollowUps: [],
     }
   }
@@ -318,11 +377,14 @@ const reason = converged
 return {
   title: TITLE,
   target: { branch: T.branch, parentRef: PARENT, pr: T.pr },
-  council: { config: C, iterations: iter, history, finalVerdict: verdict },
+  // iterations = judged rounds (history entries). The raw loop variable over-counted by one on
+  // maxLoops exhaustion (council review F4, 2026-07-30).
+  council: { config: C, iterations: history.length, history, finalVerdict: verdict },
   verify,
   merge,                // squash-merge result when merge:true + converged + mergeable; null otherwise
   converged,
   resumable: false,     // reached a terminal verdict (converged or honestly stalled) — nothing to resume
   reason,
+  unresolvedBlockers: lastBlocking,  // blocking findings from the last judged round — empty on convergence
   inPrFollowUps,        // apply in-PR / fold into the PR — never file as a GitHub issue
 }
