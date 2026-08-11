@@ -42,6 +42,7 @@ non-interactive run. Manual per-OS symlink commands live in
 | [agent-route](skills/agent-route/) | Recommend the right subagent type for a task |
 | [brainstorm](skills/brainstorm/) | Collaborative design exploration before implementation, one question at a time |
 | [brainstorm-grill](skills/brainstorm-grill/) | The relentless variant: interrogates a plan along the decision-tree frontier |
+| [continuous-learning-v2](skills/continuous-learning-v2/) | Instinct-based learning system that observes sessions via hooks and evolves instincts into skills |
 | [context-handoff](skills/context-handoff/) | Write a session handoff before context runs out |
 | [context-resume](skills/context-resume/) | Resume work from a previous session handoff |
 | [council-fix](skills/council-fix/) | One-command council review pipeline that ends in a prioritized fix plan |
@@ -53,9 +54,11 @@ non-interactive run. Manual per-OS symlink commands live in
 | [insights-to-vault](skills/insights-to-vault/) | Archive a Claude Code Insights report into a notes vault |
 | [kilint](skills/kilint/) | Prose linter for the STE house style |
 | [merge-next](skills/merge-next/) | Merge the current branch and advance to the next sibling |
+| [model-route](skills/model-route/) | Recommend the optimal model tier for a task |
 | [parallel-fix](skills/parallel-fix/) | Fan out independent fixes to parallel worktree agents |
 | [release-notes-enricher](skills/release-notes-enricher/) | Enrich git-cliff release notes with PR prose summaries |
 | [repo-hooks](skills/repo-hooks/) | Install and manage the repo's git hook conventions |
+| [security-scan](skills/security-scan/) | Audit Claude Code configuration for security risks with AgentShield |
 | [ste-writing](skills/ste-writing/) | Rewrite AI-flavored prose into a controlled house style |
 | [visual-explainer](skills/visual-explainer/) | Self-contained HTML pages that explain systems, diffs, and plans visually |
 
