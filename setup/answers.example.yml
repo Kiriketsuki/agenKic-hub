@@ -1,0 +1,34 @@
+# agentic-hub setup answers file.
+# Pass to the installer: ./setup.sh --profile my-answers.yml
+# Format: flat "key: value" lines. Arrays are comma lists. Comments start with #.
+# Copy this file, edit the values, keep it out of version control if it holds
+# personal paths. Never put secrets here. Reference env vars instead.
+
+# Components to install, as a comma list. Valid names match the files in
+# setup/components/ (without .conf):
+# skills, workflows, harness-claude-code, harness-codex, harness-opencode,
+# harness-pi, harness-hermes, config-tmux, config-zsh, config-statusline
+components: skills, config-tmux, config-zsh
+
+# --- Template variables ---
+# Every {{variable}} used by a .tmpl file is documented below.
+
+# Display name. Used in the tmux status line and commented git examples.
+user_name: Jane Dev
+
+# Git commit email. Only used in commented examples, never applied for you.
+git_email: jane@example.com
+
+# Absolute path to your notes vault. Used by the "vault" alias in the zsh fragment.
+vault_path: /home/jane/dev/vault
+
+# Absolute path to the bin directory of your node install.
+# Needed because lazy-loaded NVM keeps node off PATH in scripts.
+node_path: /home/jane/.nvm/versions/node/v24.14.0/bin
+
+# Claude Code config directory. Default is ~/.claude.
+claude_config_dir: /home/jane/.claude
+
+# Theme accent colors, hex. Used by the tmux status line.
+accent_color: "#7aa2f7"
+accent_color_secondary: "#9ece6a"
