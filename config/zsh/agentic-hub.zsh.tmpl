@@ -1,0 +1,29 @@
+# agentic-hub zsh fragment.
+# STARTER TEMPLATE. This awaits the real port from the author's Linux machine.
+# Rendered into ~/.config/zsh/agentic-hub.zsh.
+# Add this line to your ~/.zshrc to enable it:
+#   source ~/.config/zsh/agentic-hub.zsh
+
+# Node on PATH. NVM lazy-loads, so scripts need the absolute path.
+# node_path points at the bin directory of the active node install.
+export PATH="{{node_path}}:$PATH"
+
+# Claude Code config directory. Leave the default unless you run
+# a multi-account setup. Secrets never live here, only paths.
+export CLAUDE_CONFIG_DIR="{{claude_config_dir}}"
+
+# Quick navigation.
+alias vault='cd "{{vault_path}}"'
+
+# Commented examples. Uncomment what you use.
+# alias cc='claude'
+# alias gs='git status'
+# alias gl='git log --oneline -20'
+
+# Git identity example. Prefer per-repo config over globals.
+# git config user.name "{{user_name}}"
+# git config user.email "{{git_email}}"
+
+# API keys stay in the environment, never in this file.
+# Load them from a private file that is not under version control:
+# [ -f "$HOME/.secrets.zsh" ] && source "$HOME/.secrets.zsh"

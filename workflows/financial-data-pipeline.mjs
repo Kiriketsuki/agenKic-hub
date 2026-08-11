@@ -1,6 +1,25 @@
+/**
+ * financial-data-pipeline.mjs — WORKED EXAMPLE workflow.
+ *
+ * What it does: parses bank and card statement PDFs (stored in Google Drive) into a
+ * row-level transaction dataset, consolidates and dedups them to CSV, then runs a
+ * Python EDA pass that writes charts and a markdown analysis report.
+ *
+ * This file is a worked example with placeholder data. Before you run it, customize:
+ *   - args.dataDir  : absolute output directory for the dataset and charts
+ *   - args.notePath : absolute path for the markdown analysis report
+ *   - STATEMENTS    : replace the placeholder Drive file ids, account names, and
+ *                     period hints with your own statements
+ *   - CATEGORIES    : adjust the category list to your spending taxonomy
+ *   - The Analyze prompt: income sources, currency (example uses SGD), and any
+ *     account-specific quirks are examples — edit them for your data
+ * Credentials: Google Drive access comes from the `gws` CLI's own auth
+ * (`gws auth login`). Never hardcode credentials in this file.
+ */
+
 export const meta = {
   name: 'financial-data-pipeline',
-  description: 'Parse FRANK + GXS statement PDFs into a row-level transactions dataset, consolidate/dedup to CSV, then run Python EDA with charts and an analysis report',
+  description: 'Parse bank and card statement PDFs into a row-level transactions dataset, consolidate/dedup to CSV, then run Python EDA with charts and an analysis report',
   whenToUse: 'When you want a clean structured transaction dataset from the bank/card PDFs plus exploratory data analysis.',
   phases: [
     { title: 'Extract', detail: 'one agent per statement PDF → row-level JSON on disk' },
@@ -9,39 +28,23 @@ export const meta = {
   ],
 }
 
-const DATA_DIR = '/home/kiriketsuki/dev/obKidian/300-Areas-of-Responsibility/350-Personal-Finance/data'
+// Customize: where the consolidated dataset and charts are written.
+const A = typeof args === 'string' && args.trim() ? JSON.parse(args) : (args && typeof args === 'object' ? args : {})
+const DATA_DIR = A.dataDir || '/absolute/path/to/finance/data'
 const RAW_DIR = '/tmp/findata'
-const NOTE_PATH = '/home/kiriketsuki/dev/obKidian/300-Areas-of-Responsibility/350-Personal-Finance/Financial Data Analysis.md'
+// Customize: where the markdown analysis report is written.
+const NOTE_PATH = A.notePath || '/absolute/path/to/finance/Financial Data Analysis.md'
 
 const CATEGORIES = 'Food & Dining, Groceries, Transport, Shopping, Subscriptions & SaaS, Bills & Utilities, Healthcare & Fitness, Entertainment & Leisure, Travel, Transfers & Payments, Cash/ATM, Income/Credits, Other'
 
 const STATEMENTS = [
-  // FRANK (OCBC, debit). Oct-25 id is the REAL October (the older Oct file was a June dup — excluded).
-  { id: '1Xc07DE2o2hTW3CsoGJe9usLvM2D3jeuy', account: 'FRANK', type: 'debit', hint: 'Jun-25' },
-  { id: '1rjoQbZHR2igsR3Gl4wjUuvrUZsHBpJeT', account: 'FRANK', type: 'debit', hint: 'Jul-25' },
-  { id: '138RQGM5huquXIgdAAOiYYzjmJk4bqKnU', account: 'FRANK', type: 'debit', hint: 'Aug-25' },
-  { id: '1FJXHLSiDTvgLK4UNmIo9Q0YfA-vtX2IQ', account: 'FRANK', type: 'debit', hint: 'Sep-25' },
-  { id: '1uzqx07OzXkxvQORazc2Ureof5IZfmLA1', account: 'FRANK', type: 'debit', hint: 'Oct-25' },
-  { id: '1D6q7B9rZlmf3Wc5Gx-VAAUgcTL6XLnHv', account: 'FRANK', type: 'debit', hint: 'Nov-25' },
-  { id: '1TiZYabdpDozmqN1DsnZQQEKL7My_1mOp', account: 'FRANK', type: 'debit', hint: 'Dec-25' },
-  { id: '19A_b6wnfiIXh4rJIh6m1lVokfnQ2U7K-', account: 'FRANK', type: 'debit', hint: 'Jan-26' },
-  { id: '1bHl0XMcwvMWiHhTXfdVxrmGqRuzBeeNZ', account: 'FRANK', type: 'debit', hint: 'Feb-26' },
-  { id: '1J_lFtJXGwu6WvBmzOlrS6-6dALS89DNY', account: 'FRANK', type: 'debit', hint: 'Mar-26' },
-  { id: '1uk7N5kHr28ndD0bE2lwsamV7IHz5xlD_', account: 'FRANK', type: 'debit', hint: 'Apr-26' },
-  // GXS FlexiCard (credit). Several filenames are mislabeled dups — dedup happens in Consolidate by TRUE period.
-  { id: '15-2dSKFBgtS44Qq72TQi_hdPRVyL9B0g', account: 'GXS', type: 'credit', hint: '27May-26Jun25' },
-  { id: '1AP6O8z6Jpr1hut53ceSUxlzqRQ8lschp', account: 'GXS', type: 'credit', hint: '26Jun-27Jul25' },
-  { id: '1_bqmX0tEQbYXNjaXpw78T_F2S3xbadbl', account: 'GXS', type: 'credit', hint: '27Jul-27Aug25' },
-  { id: '1SNeoszRjfeEIEECW5i_EWrwBj4oI7UMh', account: 'GXS', type: 'credit', hint: '27Aug-26Sep25' },
-  { id: '1smFhPU5thda21JTNZ8zrWFQ7-A2V9kk5', account: 'GXS', type: 'credit', hint: '26Sep-27Oct25' },
-  { id: '1zgKYjp2xOqLuKWa92D7WJzq71AtM8skd', account: 'GXS', type: 'credit', hint: '27Oct-26Nov25' },
-  { id: '1u6vrhfcSepgf1PF-qn9Bqok96m9loKpl', account: 'GXS', type: 'credit', hint: '26Nov-27Dec25' },
-  { id: '1WWzL9qWE0jRcbp0eSpsriueN1OGWjmmy', account: 'GXS', type: 'credit', hint: '27Dec25-27Jan26' },
-  { id: '1XA5ItWpr0k_EblaF4fsYgFyZB5x7mcbx', account: 'GXS', type: 'credit', hint: '27Jan-24Feb (yr?)' },
-  { id: '1b_Q07tHjz8yOyodnA81owawfTJy9Y02u', account: 'GXS', type: 'credit', hint: '27Jan-24Feb26' },
-  { id: '1CqdxrJuEjIAnOXhK2goUoqSlZIIyLQGa', account: 'GXS', type: 'credit', hint: '24Feb-27Mar26' },
-  { id: '1WqIDE3ygHvOny2idBi_o0tuynoHJ8eee', account: 'GXS', type: 'credit', hint: '27Mar-26Apr26' },
-  { id: '1hCGWWLFTLUzDxgQY__KN_HrMcJYp6uLP', account: 'GXS', type: 'credit', hint: '26Apr-27May26' },
+  // WORKED EXAMPLE: replace with your own Google Drive file ids, accounts, and hints.
+  // "hint" is the filename's period label only — the extractor reads the TRUE period
+  // from the PDF content, so mislabeled filenames are fine.
+  { id: 'DRIVE_FILE_ID_1', account: 'EXAMPLE-BANK', type: 'debit', hint: 'Jun-25' },
+  { id: 'DRIVE_FILE_ID_2', account: 'EXAMPLE-BANK', type: 'debit', hint: 'Jul-25' },
+  { id: 'DRIVE_FILE_ID_3', account: 'EXAMPLE-CARD', type: 'credit', hint: '27May-26Jun25' },
+  { id: 'DRIVE_FILE_ID_4', account: 'EXAMPLE-CARD', type: 'credit', hint: '26Jun-27Jul25' },
 ]
 
 const EXTRACT_SCHEMA = {
@@ -106,7 +109,7 @@ STEPS (Bash):
 5. Extract EVERY transaction as a row. For ${s.type === 'credit'
       ? 'a CREDIT CARD: amount = transaction amount; direction "out" for purchases/charges, "in" for payments-to-card and refunds. Card payments ("PAYMENT RECEIVED"/autopay) -> is_transfer true. Flexi/late fees -> category "Bills & Utilities". Cashback/"rewards" lines -> direction "in", category "Income/Credits", is_transfer true.'
       : 'a DEBIT account: amount from the Withdrawals (direction "out") or Deposits (direction "in") column; running balance is NOT a transaction. Skip opening/closing balance and subtotal lines.'}
-6. Categorise each row into EXACTLY ONE of: ${CATEGORIES}. Set is_transfer=true for money-movement (Syfe, GxS card top-ups, self-transfers, loan/GIRO repayments, Orange Credit, PayNow to/from individuals, card payments); false for genuine consumption.
+6. Categorise each row into EXACTLY ONE of: ${CATEGORIES}. Set is_transfer=true for money-movement (investment platform contributions, card top-ups, self-transfers, loan/GIRO repayments, peer-to-peer transfers to/from individuals, card payments); false for genuine consumption.
 7. Normalise: date -> "YYYY-MM-DD" (infer year from the statement period); counterparty = cleaned merchant/person name; amount = positive number.
 8. Write a JSON array to ${RAW_DIR}/rows_${s.account}_${s.id}.json where each element is:
    {"date","account","raw_description","counterparty","amount","direction","category","is_transfer","period","source_file_id"}
@@ -126,7 +129,7 @@ phase('Consolidate')
 const consolidation = await agent(
   `You have python3 + Bash. Consolidate all extracted transaction rows into one clean dataset.
 
-INPUT: every file matching ${RAW_DIR}/rows_*.json (JSON arrays of transaction rows). There are duplicate statements (some GXS filenames were mislabeled copies of the same cycle, and earlier OCBC Oct was a June dup) — you MUST dedup.
+INPUT: every file matching ${RAW_DIR}/rows_*.json (JSON arrays of transaction rows). Some exports may contain duplicate statements (mislabeled copies of the same cycle) — you MUST dedup.
 
 STEPS (write a python3 script and run it):
 1. Load all ${RAW_DIR}/rows_*.json into one list of rows.
@@ -161,16 +164,16 @@ SETUP: ensure pandas, numpy, matplotlib are importable; if not, \`pip install --
 ANALYSIS (write one python3 script, run it, iterate if it errors):
 1. Overview: date range, #transactions, per-account counts.
 2. Money flow vs consumption: per month, total in / out, and CONSUMPTION = out-rows where is_transfer==False. Show how much of gross outflow is just transfers.
-3. Savings rate: monthly investing (Syfe) / income (salary credits).
+3. Savings rate: monthly investing (your investment platform) / income (salary credits).
 4. Category breakdown of CONSUMPTION only: totals, monthly average, % share.
 5. Monthly spending trend (consumption) over time.
 6. Top 15 counterparties by spend (consumption) and separately top transfer destinations.
-7. Income: identify salary inflows (Aurrigo) and the irregular Ngee Ann Poly income; show monthly income.
+7. Income: identify salary inflows (your employer) and any irregular income sources; show monthly income.
 8. Subscriptions: total monthly_sgd, split AI/dev vs Telco vs Insurance, and flag the AI-tooling share.
-9. Anomalies: flag outlier transactions (z-score on consumption, and any in/out same-day same-amount "wash" pairs like the Jan PayNow<->Syfe round-trip).
+9. Anomalies: flag outlier transactions (z-score on consumption, and any in/out same-day same-amount "wash" pairs, such as a transfer round-trip).
 CHARTS (matplotlib, save PNG to ${DATA_DIR}/charts/): (a) monthly consumption trend line; (b) consumption-by-category bar; (c) monthly income vs consumption vs investing grouped bars; (d) subscriptions by category. Keep them clean, titled, SGD-labelled.
 
-REPORT: write a markdown note to ${NOTE_PATH} with: frontmatter (title "Financial Data Analysis", type analysis, area "Personal Finance", currency SGD, created 2026-05-29, tags [finance, analysis, eda]); an executive summary; the findings above with real numbers; embedded chart links (relative: data/charts/<name>.png); a data-quality/caveats section (note GXS coverage gaps + duplicate statements); and end with a line: "---" then "*Authored by: Clault KiperO 4.8*". NO emojis anywhere.
+REPORT: write a markdown note to ${NOTE_PATH} with: frontmatter (title "Financial Data Analysis", type analysis, area "Personal Finance", currency SGD (customize), tags [finance, analysis, eda]); an executive summary; the findings above with real numbers; embedded chart links (relative: data/charts/<name>.png); a data-quality/caveats section (note any coverage gaps and duplicate statements). NO emojis anywhere.
 
 Return ONLY the structured object (charts = list of PNG paths written; keyFindings = 5-8 bullet strings; headlineStats = one-line summary).`,
   { label: 'analyze:eda-report', phase: 'Analyze', schema: ANALYZE_SCHEMA }

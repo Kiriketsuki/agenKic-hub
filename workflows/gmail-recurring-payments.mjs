@@ -1,3 +1,21 @@
+/**
+ * gmail-recurring-payments.mjs — WORKED EXAMPLE workflow.
+ *
+ * What it does: crawls the authenticated Gmail account via the `gws` CLI to find
+ * receipts for recurring payments, subscriptions, and bills, then synthesizes a
+ * deduped list with a monthly-equivalent total.
+ *
+ * This file is a worked example. Before you run it, customize:
+ *   - args.after : start of the date window (default below is an example)
+ *   - FINDERS    : the sender-domain and subject query lists are EXAMPLES built for
+ *                  a Singapore-based user (local banks, telcos, insurers). Replace
+ *                  them with the vendors, banks, and utilities relevant to you.
+ *   - Currency   : the example reports in SGD with a fixed USD->SGD rate in the
+ *                  Synthesize prompt. Change the target currency and FX assumption.
+ * Credentials: Gmail access comes from the `gws` CLI's own auth (`gws auth login`).
+ * Never hardcode credentials in this file.
+ */
+
 export const meta = {
   name: 'gmail-recurring-payments',
   description: 'Crawl Gmail via gws CLI to surface recurring payments, subscriptions, and bills, then synthesize a monthly-equivalent SGD spend list',
@@ -8,7 +26,7 @@ export const meta = {
   ],
 }
 
-// Date window: default last ~6 months. Override by passing args = { after: "2025/11/01" }.
+// Date window: customize. Override by passing args = { after: "YYYY/MM/DD" }.
 const AFTER = (args && args.after) || '2025/11/01'
 
 const FINDER_SCHEMA = {

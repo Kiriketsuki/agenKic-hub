@@ -17,8 +17,8 @@ vault root:
 
 ```
 Workflow({
-  scriptPath: "/home/kiriketsuki/.claude/workflows/feature-loop.mjs",
-  args: { ...<FEATURE>, workflowsDir: "/home/kiriketsuki/.claude/workflows" }
+  scriptPath: "/absolute/path/to/.claude/workflows/feature-loop.mjs",
+  args: { ...<FEATURE>, workflowsDir: "/absolute/path/to/.claude/workflows" }
 })
 ```
 
@@ -95,7 +95,7 @@ Process features in **dependency order**. For each:
 ```bash
 git fetch -q origin && git checkout <feature-branch> && git rebase origin/$EPICSLUG
 ```
-Run `Workflow({ scriptPath:"/home/kiriketsuki/.claude/workflows/feature-loop.mjs", args:{ ...<FEATURE>, workflowsDir:"/home/kiriketsuki/.claude/workflows" } })` and **wait for the completion notification**.
+Run `Workflow({ scriptPath:"/absolute/path/to/.claude/workflows/feature-loop.mjs", args:{ ...<FEATURE>, workflowsDir:"/absolute/path/to/.claude/workflows" } })` and **wait for the completion notification**.
 Read the result. If `converged`:
 ```bash
 git add -A && git commit -m "feat(<scope>): <feature> (#<issue>)"
@@ -145,8 +145,8 @@ from the stopped run's tool result:
 
 ```
 Workflow({
-  scriptPath: "/home/kiriketsuki/.claude/workflows/feature-loop.mjs",
-  args: { ...<FEATURE>, workflowsDir: "/home/kiriketsuki/.claude/workflows" },
+  scriptPath: "/absolute/path/to/.claude/workflows/feature-loop.mjs",
+  args: { ...<FEATURE>, workflowsDir: "/absolute/path/to/.claude/workflows" },
   resumeFromRunId: "<runId from the stopped run>"
 })
 ```
