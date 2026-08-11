@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="colors_and_type.css"/>
+<link rel="icon" type="image/svg+xml" href="assets/chrysaki-favicon.svg"/>
+<style>
+html,body{margin:0;background:#000;color:#e6e8f0;font-family:Inter,system-ui,sans-serif;overflow:hidden}
+a{color:#1a8a6a;text-decoration:none;border-bottom:1px solid #14664e}
+a:hover{color:#FBB13C;border-bottom-color:#FBB13C}
+@keyframes ckflow{from{background-position:0 50%}to{background-position:200% 50%}}
+</style>
+</helmet>
+<x-import component-from-global-scope="deck-stage" from="./deck-stage.js" width="1920" height="1080" hint-size="100%,100%">
+
+<section data-label="Title" data-screen-label="01 Title" data-speaker-notes="So this is my whole setup, from a bare shell up to the agentic stuff. Fifteen layers. You do not need all fifteen, basically each one is its own decision, and I will name the alternatives as we go." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="position:absolute;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,#14664e,#122858,#3a2068)"></div>
+  <div style="position:absolute;left:0;right:0;top:4px;height:1px;background:linear-gradient(90deg,#1a8a6a,#1c3d7a,#583090,#1a8a6a);background-size:200% 100%;animation:ckflow 4s linear infinite;opacity:.6"></div>
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-blonde)">agenKic sKills · a workflow tour</div>
+  <h1 style="font-size:96px;font-weight:800;color:var(--ck-fg1);letter-spacing:-0.02em;line-height:1;margin:28px 0 0;max-width:1400px">One hub,<br/><span style="color:var(--ck-emerald-lt)">in layers.</span></h1>
+  <div style="flex:1;justify-content:center;font-size:34px;color:var(--ck-fg2);margin-top:28px;max-width:1180px;line-height:1.45;text-wrap:pretty">Fifteen layers. Each one swaps on its own. Take what you want, leave the rest.</div>
+  <div style="position:absolute;left:100px;bottom:150px;display:flex;gap:40px;font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-fg2)">
+    <span>15 <b style="color:var(--ck-blonde);font-weight:700">LAYERS</b></span>
+    <span>23 <b style="color:var(--ck-blonde);font-weight:700">SKILLS</b></span>
+    <span>5 <b style="color:var(--ck-blonde);font-weight:700">HARNESSES</b></span>
+    <span>0 <b style="color:var(--ck-blonde);font-weight:700">MANDATORY</b></span>
+  </div>
+  <img src="assets/chrysaki-mark.svg" alt="" style="position:absolute;right:100px;bottom:130px;width:230px;height:230px;opacity:.92"/>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>agenKic-sKills</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">01 / 25</span>
+  </div>
+</section>
+
+<section data-label="The stack" data-screen-label="02 The stack" data-speaker-notes="So there are four bands. The terminal band is basically comfort. The git band is review speed. The agent band is where the actual work happens. And then the automation band runs on its own. Nothing above depends on the specific tool below it." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">02 · Architecture</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 40px">The stack, one frame.</h2>
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <div style="display:grid;grid-template-columns:300px 1fr;gap:28px;align-items:center;background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid #1a8a6a;padding:22px 28px;box-shadow:3px 3px 0 rgba(0,0,0,.7)">
+      <div style="font-family:var(--ck-font-mono);font-size:26px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ck-emerald-lt)">Terminal</div>
+      <div style="font-size:30px;color:var(--ck-fg1)">emulator · font · multiplexer · prompt · CLI tools</div>
+    </div>
+    <div style="display:grid;grid-template-columns:300px 1fr;gap:28px;align-items:center;background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid #1c3d7a;padding:22px 28px;box-shadow:3px 3px 0 rgba(0,0,0,.7)">
+      <div style="font-family:var(--ck-font-mono);font-size:26px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ck-teal-lt)">Git</div>
+      <div style="font-size:30px;color:var(--ck-fg1)">lazygit · gh · worktrees</div>
+    </div>
+    <div style="display:grid;grid-template-columns:300px 1fr;gap:28px;align-items:center;background:var(--ck-raised);border:1px solid var(--ck-border);border-top:3px solid #583090;padding:22px 28px;box-shadow:3px 3px 0 rgba(0,0,0,.7)">
+      <div style="font-family:var(--ck-font-mono);font-size:26px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ck-blonde)">Agent core</div>
+      <div style="font-size:30px;color:var(--ck-fg1)">harness · memory · context · hooks · skills · workflows</div>
+    </div>
+    <div style="display:grid;grid-template-columns:300px 1fr;gap:28px;align-items:center;background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid #197278;padding:22px 28px;box-shadow:3px 3px 0 rgba(0,0,0,.7)">
+      <div style="font-family:var(--ck-font-mono);font-size:26px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ck-teal-lt)">Automation</div>
+      <div style="font-size:30px;color:var(--ck-fg1)">Actions · issue-branch · release notes · installer</div>
+    </div>
+  </div>
+  <div style="flex:1;justify-content:center;font-size:30px;color:var(--ck-fg2);margin-top:38px;max-width:1500px;line-height:1.45;text-wrap:pretty">No band depends on a specific tool below it.</div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>architecture</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">02 / 25</span>
+  </div>
+</section>
+
+<section data-label="Nothing mandatory" data-screen-label="03 Nothing mandatory" data-speaker-notes="So the installer is a checkbox picker. That is basically the contract. Every component is one manifest file, and skipping one never breaks another. If you do not want tmux, just uncheck tmux." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">03 · The contract</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">Nothing here is mandatory.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1.05fr 1fr;gap:56px;align-items:start">
+    <div style="background:var(--ck-abyss);border:1px solid var(--ck-border);padding:32px 36px;font-family:var(--ck-font-mono);font-size:28px;line-height:1.75;color:var(--ck-fg1);box-shadow:3px 3px 0 rgba(0,0,0,.7)">
+      <div style="color:var(--ck-fg3);font-size:24px;letter-spacing:.16em;text-transform:uppercase;margin-bottom:18px">./setup/setup.sh</div>
+      <div><span style="color:var(--ck-emerald-lt)">▰</span> skills</div>
+      <div><span style="color:var(--ck-emerald-lt)">▰</span> workflows</div>
+      <div><span style="color:var(--ck-emerald-lt)">▰</span> harness-claude-code</div>
+      <div><span style="color:var(--ck-fg3)">▱</span> <span style="color:var(--ck-fg3)">harness-codex</span></div>
+      <div><span style="color:var(--ck-fg3)">▱</span> <span style="color:var(--ck-fg3)">harness-opencode</span></div>
+      <div><span style="color:var(--ck-fg3)">▱</span> <span style="color:var(--ck-fg3)">config-tmux</span></div>
+      <div><span style="color:var(--ck-emerald-lt)">▰</span> config-zsh</div>
+      <div><span style="color:var(--ck-fg3)">▱</span> <span style="color:var(--ck-fg3)">config-statusline</span></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:26px">
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">One component, one manifest. Five keys.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Skipping one never breaks another.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Existing files move to <span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">.bak</span>. Never overwritten.</div>
+      <div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-teal-lt);letter-spacing:.06em">--profile my-answers.yml &nbsp;·&nbsp; --dry-run</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>contract</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">03 / 25</span>
+  </div>
+</section>
+
+<section data-label="§ Terminal" data-screen-label="04 Section Terminal" data-speaker-notes="Okay, first band, the terminal. Four slides. I think this is the most optional band in the deck, and also the one people argue about the most." style="background:var(--ck-abyss);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="position:absolute;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,#14664e,#122858,#3a2068)"></div>
+  <div style="font-family:var(--ck-font-mono);font-size:26px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--ck-blonde)">Band 01</div>
+  <h2 style="font-size:88px;font-weight:800;color:var(--ck-fg1);letter-spacing:-0.02em;line-height:1.05;margin:24px 0 0">Terminal foundation</h2>
+  <div style="font-size:34px;color:var(--ck-fg2);margin-top:24px;max-width:1200px;line-height:1.45">Comfort and session survival. Not agent capability.</div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>band 01</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">04 / 25</span>
+  </div>
+</section>
+
+<section data-label="Emulator" data-screen-label="05 Emulator" data-speaker-notes="So the emulator basically just draws text and passes keystrokes. It does not change the shell. I use Ghostty, mainly for the GPU rendering, and the whole config is one plain text file. But any GPU terminal does the same job, so use whatever you like." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">05 · Layer 01</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">The terminal emulator.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:24px">
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Draws text, forwards keys. It is not the shell.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">I use Ghostty: GPU, native, one plain config file.</div>
+      
+    </div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid;border-image:linear-gradient(90deg,#1a8a6a,#1c3d7a,#583090) 1;padding:26px 30px;box-shadow:3px 3px 0 rgba(0,0,0,.7)"><pre style="margin:0;font-family:var(--ck-font-mono);font-size:26px;line-height:1.6;color:var(--ck-fg1)"><span style="color:var(--ck-fg3);font-style:italic"># ~/.config/ghostty/config
+</span>font-family = <span style="color:var(--ck-emerald-lt)">"JetBrainsMono Nerd Font"
+</span>font-size   = <span style="color:var(--ck-blonde-lt)">13
+</span>theme       = <span style="color:var(--ck-emerald-lt)">catppuccin-mocha
+</span>keybind     = cmd+shift+enter=new_split:right</pre></div>
+  </div>
+  <div style="display:flex;gap:20px;align-items:center;margin-top:auto;margin-bottom:18px;font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-fg2)">
+    <span style="background:var(--ck-emerald);clip-path:var(--ck-clip-parallelogram);padding:8px 22px;color:var(--ck-fg1);letter-spacing:.14em;font-size:24px">SWAP FOR</span>
+    <span>WezTerm</span><span style="color:var(--ck-fg3)">◆</span><span>Kitty</span><span style="color:var(--ck-fg3)">◆</span><span>Alacritty</span><span style="color:var(--ck-fg3)">◆</span><span>iTerm2</span><span style="color:var(--ck-fg3)">◆</span><span>Windows Terminal</span><span style="color:var(--ck-fg3)">◆</span><span>whatever ships with your OS</span>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>terminal</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span>deep dive <a href="Deep Dive - Terminal Layer.dc.html" style="color:var(--ck-teal-lt)">Terminal Layer</a></span>
+    <span style="color:var(--ck-blonde)">05 / 25</span>
+  </div>
+</section>
+
+<section data-label="Nerd Fonts" data-screen-label="06 Nerd Fonts" data-speaker-notes="So a Nerd Font is basically a normal font with icon glyphs patched into the private use area. The tool sends a code point, and the font supplies the icon. So if you see boxes, it is the terminal font setting. It is not a bug in starship, people spend a long time debugging the wrong thing there." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">06 · Layer 02</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">Nerd Fonts.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:24px">
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Icon glyphs patched into a font's private use area.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Prompts, lazygit and eza assume those glyphs.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Boxes? It is the font setting, not the tool.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:24px">
+      <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid #1a8a6a;padding:26px 30px;box-shadow:3px 3px 0 rgba(0,0,0,.7)">
+        <div style="font-family:var(--ck-font-mono);font-size:24px;letter-spacing:.16em;text-transform:uppercase;color:var(--ck-emerald-lt);margin-bottom:14px">Renders</div>
+        <div style="font-family:var(--ck-font-mono);font-size:44px;color:var(--ck-fg1);letter-spacing:.12em">⬢ ⬡ ◆ ◈ ▰ ▱ ━ ↑ →</div>
+      </div>
+      <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid var(--ck-error-lt);padding:26px 30px;box-shadow:3px 3px 0 rgba(0,0,0,.7)">
+        <div style="font-family:var(--ck-font-mono);font-size:24px;letter-spacing:.16em;text-transform:uppercase;color:var(--ck-error-lt);margin-bottom:14px">Or does not</div>
+        <div style="font-family:var(--ck-font-mono);font-size:44px;color:var(--ck-fg3);letter-spacing:.12em">□ □ □ □ □ □ □ □ □</div>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;gap:20px;align-items:center;margin-top:auto;margin-bottom:18px;font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-fg2)">
+    <span style="background:var(--ck-emerald);clip-path:var(--ck-clip-parallelogram);padding:8px 22px;color:var(--ck-fg1);letter-spacing:.14em;font-size:24px">SKIP IF</span>
+    <span>you run a plain prompt and plain <span style="color:var(--ck-fg1)">ls</span>.</span>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>fonts</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">06 / 25</span>
+  </div>
+</section>
+
+<section data-label="Multiplexer" data-screen-label="07 Multiplexer" data-speaker-notes="So this is the one terminal layer I would actually argue for. A long agent run over SSH dies when the connection drops. tmux keeps the process on the server. You detach, close the laptop, and then reattach later from wherever, and it is still running." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">07 · Layer 03</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">The multiplexer.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:24px">
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Sessions hold windows. The session lives on the server.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">The connection drops, the session does not.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">The cost is one prefix key. That is it.</div>
+    </div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid;border-image:linear-gradient(90deg,#1a8a6a,#1c3d7a,#583090) 1;padding:26px 30px;box-shadow:3px 3px 0 rgba(0,0,0,.7)"><pre style="margin:0;font-family:var(--ck-font-mono);font-size:26px;line-height:1.65;color:var(--ck-fg1)">ssh devbox
+tmux new -s claude
+claude
+<span style="color:var(--ck-fg3);font-style:italic"># Ctrl-a d, close the laptop
+</span>
+ssh devbox
+tmux attach -t claude   <span style="color:var(--ck-emerald-lt)">← still running</span></pre></div>
+  </div>
+  <div style="display:flex;gap:20px;align-items:center;margin-top:auto;margin-bottom:18px;font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-fg2)">
+    <span style="background:var(--ck-emerald);clip-path:var(--ck-clip-parallelogram);padding:8px 22px;color:var(--ck-fg1);letter-spacing:.14em;font-size:24px">SWAP FOR</span>
+    <span>Zellij</span><span style="color:var(--ck-fg3)">◆</span><span>screen</span><span style="color:var(--ck-fg3)">◆</span><span>terminal-native tabs, if you never work remote</span>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>tmux</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span>deep dive <a href="Deep Dive - Terminal Layer.dc.html" style="color:var(--ck-teal-lt)">Terminal Layer</a></span>
+    <span style="color:var(--ck-blonde)">07 / 25</span>
+  </div>
+</section>
+
+<section data-label="Prompt + tools" data-screen-label="08 Prompt and tools" data-speaker-notes="So the prompt shows state I would otherwise have to ask for: branch, dirty tree, exit code. I use Starship because it is one TOML file and works in every shell. I used p10k before, that one is good too. And then the small tools are basically a menu. Add one at a time, no need to install all six on day one." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">08 · Layer 04</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">The prompt and the small tools.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:24px">
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Branch, dirty tree, last exit code. No need to ask.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">I use Starship: one binary, one TOML, every shell.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">My statusline: model, context percent, git state.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div style="display:grid;grid-template-columns:170px 1fr;gap:20px;font-size:30px;color:var(--ck-fg1);align-items:baseline"><span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">zoxide</span><span>cd that learns</span></div>
+      <div style="display:grid;grid-template-columns:170px 1fr;gap:20px;font-size:30px;color:var(--ck-fg1);align-items:baseline"><span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">eza</span><span>ls with git state</span></div>
+      <div style="display:grid;grid-template-columns:170px 1fr;gap:20px;font-size:30px;color:var(--ck-fg1);align-items:baseline"><span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">bat</span><span>cat with highlighting</span></div>
+      <div style="display:grid;grid-template-columns:170px 1fr;gap:20px;font-size:30px;color:var(--ck-fg1);align-items:baseline"><span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">fzf</span><span>fuzzy finder</span></div>
+      <div style="display:grid;grid-template-columns:170px 1fr;gap:20px;font-size:30px;color:var(--ck-fg1);align-items:baseline"><span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">rg · fd</span><span>fast search</span></div>
+      <div style="font-size:28px;color:var(--ck-fg3);line-height:1.4;margin-top:10px">A menu, not a mandate.</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>prompt</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">08 / 25</span>
+  </div>
+</section>
+
+<section data-label="Git speed" data-screen-label="09 Git at keyboard speed" data-speaker-notes="So an agent stages files faster than I can review them in a browser. lazygit gives hunk-level staging on single keys, so I can actually keep up. And then gh is how the agent talks to GitHub at all. No gh auth, no pull requests." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">09 · Layer 05</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">Git at keyboard speed.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start">
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid #1a8a6a;padding:28px 32px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:18px">
+      <div style="font-family:var(--ck-font-mono);font-size:26px;letter-spacing:.16em;text-transform:uppercase;color:var(--ck-emerald-lt)">lazygit · review</div>
+      <div style="font-size:30px;color:var(--ck-fg1);line-height:1.4">Everything on one screen. Space stages a hunk.</div>
+      <div style="font-size:30px;color:var(--ck-fg1);line-height:1.4">The agent proposes. I stage what survives.</div>
+      <div style="font-size:30px;color:var(--ck-fg1);line-height:1.4">Interactive rebase becomes a two-key list.</div>
+    </div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid #583090;padding:28px 32px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:18px">
+      <div style="font-family:var(--ck-font-mono);font-size:26px;letter-spacing:.16em;text-transform:uppercase;color:var(--ck-blonde)">gh · the bridge</div>
+      <div style="font-size:30px;color:var(--ck-fg1);line-height:1.4">Claude Code shells out to <span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">gh</span>. No direct API.</div>
+      <div style="font-size:30px;color:var(--ck-fg1);line-height:1.4">No auth, no PR — local git still works.</div>
+      <div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-teal-lt);line-height:1.6">gh auth status<br/>gh auth switch --user work-acct</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:20px;align-items:center;margin-top:auto;margin-bottom:18px;font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-fg2)">
+    <span style="background:var(--ck-emerald);clip-path:var(--ck-clip-parallelogram);padding:8px 22px;color:var(--ck-fg1);letter-spacing:.14em;font-size:24px">SWAP FOR</span>
+    <span>gitui</span><span style="color:var(--ck-fg3)">◆</span><span>tig</span><span style="color:var(--ck-fg3)">◆</span><span>your IDE's git panel</span><span style="color:var(--ck-fg3)">◆</span><span>plain git add -p</span>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>git</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">09 / 25</span>
+  </div>
+</section>
+
+<section data-label="Worktrees" data-screen-label="10 Worktrees" data-speaker-notes="So I ran into this one myself. Two agents in one directory race on the same files and overwrite each other. A worktree is basically a second working directory sharing the same object database. So one agent per worktree, one branch per worktree, and then I merge each result on its own." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">10 · Layer 06</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">Worktrees: one directory per agent.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1.1fr 1fr;gap:56px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:24px">
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">One object database, separate files on disk.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Two agents in one directory clobber each other.</div>
+      
+    </div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid;border-image:linear-gradient(90deg,#1a8a6a,#1c3d7a,#583090) 1;padding:26px 30px;box-shadow:3px 3px 0 rgba(0,0,0,.7)"><pre style="margin:0;font-family:var(--ck-font-mono);font-size:26px;line-height:1.65;color:var(--ck-fg1)">git worktree add ../repo-a task-a
+git worktree add ../repo-b task-b
+
+cd ../repo-a &amp;&amp; claude   <span style="color:var(--ck-fg3);font-style:italic"># pane 1
+</span>cd ../repo-b &amp;&amp; claude   <span style="color:var(--ck-fg3);font-style:italic"># pane 2
+</span>
+git worktree remove ../repo-a
+git branch -d task-a</pre></div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>worktrees</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span>used by <a href="Deep Dive - Multi-Agent Workflows.dc.html" style="color:var(--ck-teal-lt)">parallel-fix</a></span>
+    <span style="color:var(--ck-blonde)">10 / 25</span>
+  </div>
+</section>
+
+<section data-label="§ Agent core" data-screen-label="11 Section Agent core" data-speaker-notes="Okay, second band. This is the part I actually care about, everything before this was basically just comfort. Nine slides: harness, memory, context, hooks, skills, council, spec-loop, tiering, prose." style="background:var(--ck-abyss);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="position:absolute;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,#14664e,#122858,#3a2068)"></div>
+  <div style="font-family:var(--ck-font-mono);font-size:26px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--ck-blonde)">Band 02</div>
+  <h2 style="font-size:88px;font-weight:800;color:var(--ck-fg1);letter-spacing:-0.02em;line-height:1.05;margin:24px 0 0">The agent core</h2>
+  <div style="font-size:34px;color:var(--ck-fg2);margin-top:24px;max-width:1200px;line-height:1.45">The part the rest of the stack exists for.</div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>band 02</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">11 / 25</span>
+  </div>
+</section>
+
+<section data-label="Harness" data-screen-label="12 Harness" data-speaker-notes="So the harness is the runtime that holds the agent. Claude Code is my main one. The repo scaffolds five, each with its own config target, so the skills and rules are not locked to one vendor. Pi and Hermes are just READMEs right now, I would rather say that than pretend otherwise." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">12 · Layer 07</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">The harness layer.</h2>
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:18px">
+    <div style="background:var(--ck-raised);border:1px solid var(--ck-border);border-top:3px solid #1a8a6a;padding:24px 22px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:12px">
+      <div style="font-size:30px;font-weight:700;color:var(--ck-fg1)">Claude Code</div>
+      <div style="font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-blonde)">~/.claude/</div>
+      <div style="font-size:26px;color:var(--ck-fg2);line-height:1.4">Primary. Hooks, agents, rules, statusline.</div>
+    </div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid #197278;padding:24px 22px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:12px">
+      <div style="font-size:30px;font-weight:700;color:var(--ck-fg1)">Codex CLI</div>
+      <div style="font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-blonde)">~/.codex/</div>
+      <div style="font-size:26px;color:var(--ck-fg2);line-height:1.4">config.toml plus AGENTS.md.</div>
+    </div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid #197278;padding:24px 22px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:12px">
+      <div style="font-size:30px;font-weight:700;color:var(--ck-fg1)">OpenCode</div>
+      <div style="font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-blonde)">~/.config/opencode/</div>
+      <div style="font-size:26px;color:var(--ck-fg2);line-height:1.4">Provider, model, keybinds.</div>
+    </div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid var(--ck-border);padding:24px 22px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:12px">
+      <div style="font-size:30px;font-weight:700;color:var(--ck-fg2)">Pi</div>
+      <div style="font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">scaffold</div>
+      <div style="font-size:26px;color:var(--ck-fg3);line-height:1.4">README only, honest about it.</div>
+    </div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid var(--ck-border);padding:24px 22px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:12px">
+      <div style="font-size:30px;font-weight:700;color:var(--ck-fg2)">Hermes</div>
+      <div style="font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">scaffold</div>
+      <div style="font-size:26px;color:var(--ck-fg3);line-height:1.4">README only, honest about it.</div>
+    </div>
+  </div>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1fr 1fr;gap:56px;margin-top:44px">
+    <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">A README, templates, one manifest.</div>
+    <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Skills install separately. The harness only wires them.</div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>harnesses</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">12 / 25</span>
+  </div>
+</section>
+
+<section data-label="Memory files" data-screen-label="13 Memory files" data-speaker-notes="So CLAUDE.md loads on every session start. AGENTS.md is the cross-tool file other agents read. Import one from the other instead of keeping two copies. And keep it short, basically, because a long memory file competes with the actual task for attention, and then the model starts ignoring both." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">13 · Layer 08</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">Project memory.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:24px">
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">CLAUDE.md every session. AGENTS.md for other tools.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">A few dozen lines: commands and hard rules.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Split detail into topic files. Prune like code.</div>
+    </div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid;border-image:linear-gradient(90deg,#1a8a6a,#1c3d7a,#583090) 1;padding:26px 30px;box-shadow:3px 3px 0 rgba(0,0,0,.7)"><pre style="margin:0;font-family:var(--ck-font-mono);font-size:26px;line-height:1.6;color:var(--ck-fg1)"><span style="color:var(--ck-blonde-lt)"># CLAUDE.md
+</span>@AGENTS.md
+
+<span style="color:var(--ck-blonde-lt)">## Commands
+</span>npm run build
+npm run test -- --watch=false
+
+<span style="color:var(--ck-blonde-lt)">## Rules
+</span>- Never edit generated/**, it is codegen.
+- Follow @common/ste-writing.md for prose.</pre></div>
+  </div>
+  <div style="display:flex;gap:20px;align-items:center;margin-top:auto;margin-bottom:18px;font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-fg2)">
+    <span style="background:var(--ck-error);clip-path:var(--ck-clip-parallelogram);padding:8px 22px;color:var(--ck-fg1);letter-spacing:.14em;font-size:24px">NOT IN HERE</span>
+    <span>file lists</span><span style="color:var(--ck-fg3)">◆</span><span>architecture prose</span><span style="color:var(--ck-fg3)">◆</span><span>anything README already says</span><span style="color:var(--ck-fg3)">◆</span><span>unenforced rules</span>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>memory</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">13 / 25</span>
+  </div>
+</section>
+
+<section data-label="Context" data-screen-label="14 Context budget" data-speaker-notes="So quality degrades way before the window is full. I start compressing around 256k, not at the edge. My handoff skill writes the decisions, failed approaches and next steps to a file, and then the resume skill reads it back into a clean window. The difference with /compact is basically that the summarizer decides what survives. With a handoff, I decide. /compact is still fine for lighter sessions though." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">14 · Layer 09</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">Context is a budget.</h2>
+  <div style="display:flex;align-items:stretch;height:96px;font-family:var(--ck-font-mono);font-size:28px;color:var(--ck-fg1);margin-bottom:14px">
+    <div style="background:#14664e;clip-path:polygon(0 0, calc(100% - 16px) 0, 100% 100%, 0 100%);display:flex;align-items:center;padding:0 34px;flex:1">0 — 128k · work freely</div>
+    <div style="background:#122858;clip-path:polygon(0 0, 100% 0, calc(100% - 16px) 100%, 16px 100%);display:flex;align-items:center;padding:0 34px 0 44px;margin-left:-16px;flex:1">128k — 256k · watch it</div>
+    <div style="background:#FBB13C;color:#0f1117;clip-path:polygon(16px 0, calc(100% - 16px) 0, 100% 100%, 0 100%);display:flex;align-items:center;padding:0 34px 0 44px;margin-left:-16px;flex:1;font-weight:700">256k · hand off now</div>
+    <div style="background:#8C2F39;clip-path:polygon(0 0, 100% 0, 100% 100%, 16px 100%);display:flex;align-items:center;padding:0 34px 0 44px;margin-left:-16px;flex:0.8">the edge · too late</div>
+  </div>
+  <div style="font-family:var(--ck-font-mono);font-size:24px;letter-spacing:.16em;text-transform:uppercase;color:var(--ck-fg3);margin-bottom:36px">a full window is not thoroughness · it is a signal to compress</div>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start">
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid var(--ck-fg3);padding:28px 32px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:16px">
+      <div style="font-family:var(--ck-font-mono);font-size:26px;letter-spacing:.16em;text-transform:uppercase;color:var(--ck-fg2)">/compact</div>
+      <div style="font-size:30px;color:var(--ck-fg1);line-height:1.4">The summarizer picks what survives. Rationale goes first.</div>
+    </div>
+    <div style="background:var(--ck-raised);border:1px solid var(--ck-border);border-top:3px solid #1a8a6a;padding:28px 32px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:16px">
+      <div style="font-family:var(--ck-font-mono);font-size:26px;letter-spacing:.16em;text-transform:uppercase;color:var(--ck-emerald-lt)">context-handoff → context-resume</div>
+      <div style="font-size:30px;color:var(--ck-fg1);line-height:1.4">State, decisions, failed approaches, next steps. I choose.</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>context</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">14 / 25</span>
+  </div>
+</section>
+
+<section data-label="Hooks" data-screen-label="15 Hooks" data-speaker-notes="So a prompt asks the model to behave. A hook is a shell command the harness runs whether the model likes it or not. Exit 0 proceeds, exit 2 blocks and hands the reason back on stderr. Basically, if I have told the model a rule twice and it still forgets, that rule becomes a hook." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">15 · Layer 10</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">Hooks: enforcement outside the model.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:24px">
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">A shell command at a lifecycle point. Cannot be skipped.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Exit <span style="font-family:var(--ck-font-mono);color:var(--ck-emerald-lt)">0</span> proceeds. Exit <span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">2</span> blocks and hands stderr back.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Check it in, and the gate travels with the repo.</div>
+      <div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-teal-lt);line-height:1.6">PreToolUse · PostToolUse · SessionStart · Stop</div>
+    </div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid;border-image:linear-gradient(90deg,#1a8a6a,#1c3d7a,#583090) 1;padding:26px 30px;box-shadow:3px 3px 0 rgba(0,0,0,.7)"><pre style="margin:0;font-family:var(--ck-font-mono);font-size:26px;line-height:1.6;color:var(--ck-fg1)"><span style="color:var(--ck-fg3);font-style:italic"># .claude/hooks/check-branch.sh
+</span>branch=$(git branch --show-current)
+<span style="color:var(--ck-blonde-lt)">if</span> [[ ! "$branch" =~ ^(feat|fix|chore)/ ]]; <span style="color:var(--ck-blonde-lt)">then
+</span>  <span style="color:var(--ck-teal-lt)">echo</span> <span style="color:var(--ck-emerald-lt)">"bad branch: $branch"</span> &gt;&amp;2
+  <span style="color:var(--ck-blonde-lt)">exit</span> <span style="color:var(--ck-blonde)">2</span>   <span style="color:var(--ck-fg3);font-style:italic"># blocked before git runs
+</span><span style="color:var(--ck-blonde-lt)">fi</span></pre></div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>hooks</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">15 / 25</span>
+  </div>
+</section>
+
+<section data-label="Skills" data-screen-label="16 Skills" data-speaker-notes="So, twenty-three skills. Each one is basically a directory with a SKILL.md that says when to trigger. They install by symlink and they are independent, so you can take brainstorm and leave the councils, or the reverse. Most of these came from my own frustrations, honestly." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">16 · Layer 11</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 32px">Twenty-three skills.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:repeat(5,1fr);gap:14px 16px">
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);padding:9px 16px;display:flex;flex-direction:column;gap:6px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-emerald-lt)">brainstorm</div><div style="font-size:24px;color:var(--ck-fg2);line-height:1.18">design exploration, one question at a time</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);padding:9px 16px;display:flex;flex-direction:column;gap:6px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-emerald-lt)">brainstorm-grill</div><div style="font-size:24px;color:var(--ck-fg2);line-height:1.18">the relentless variant</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);padding:9px 16px;display:flex;flex-direction:column;gap:6px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-emerald-lt)">feature-spec</div><div style="font-size:24px;color:var(--ck-fg2);line-height:1.18">interview to Gherkin spec</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);padding:9px 16px;display:flex;flex-direction:column;gap:6px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-emerald-lt)">implement-spec</div><div style="font-size:24px;color:var(--ck-fg2);line-height:1.18">spec to code, task by task</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);padding:9px 16px;display:flex;flex-direction:column;gap:6px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-blonde)">adversarial-council</div><div style="font-size:24px;color:var(--ck-fg2);line-height:1.18">advocates, critics, arbiter</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);padding:9px 16px;display:flex;flex-direction:column;gap:6px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-blonde)">council-supervisor</div><div style="font-size:24px;color:var(--ck-fg2);line-height:1.18">heartbeats and checkpoints</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);padding:9px 16px;display:flex;flex-direction:column;gap:6px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-blonde)">council-fix</div><div style="font-size:24px;color:var(--ck-fg2);line-height:1.18">review to prioritised fix plan</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);padding:9px 16px;display:flex;flex-direction:column;gap:6px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-blonde)">parallel-fix</div><div style="font-size:24px;color:var(--ck-fg2);line-height:1.18">competing worktree fixes</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);padding:9px 16px;display:flex;flex-direction:column;gap:6px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-teal-lt)">context-handoff</div><div style="font-size:24px;color:var(--ck-fg2);line-height:1.18">write state before you run out</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);padding:9px 16px;display:flex;flex-direction:column;gap:6px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-teal-lt)">context-resume</div><div style="font-size:24px;color:var(--ck-fg2);line-height:1.18">pick it back up, verified</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);padding:9px 16px;display:flex;flex-direction:column;gap:6px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-teal-lt)">continuous-learning-v2</div><div style="font-size:24px;color:var(--ck-fg2);line-height:1.18">sessions become instincts</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);padding:9px 16px;display:flex;flex-direction:column;gap:6px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-teal-lt)">insights-to-vault</div><div style="font-size:24px;color:var(--ck-fg2);line-height:1.18">archive a report to notes</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);padding:9px 16px;display:flex;flex-direction:column;gap:6px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-fg1)">ste-writing</div><div style="font-size:24px;color:var(--ck-fg2);line-height:1.18">rewrite prose into house style</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);padding:9px 16px;display:flex;flex-direction:column;gap:6px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-fg1)">kilint</div><div style="font-size:24px;color:var(--ck-fg2);line-height:1.18">score the prose, do not rewrite it</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);padding:9px 16px;display:flex;flex-direction:column;gap:6px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-fg1)">visual-explainer</div><div style="font-size:24px;color:var(--ck-fg2);line-height:1.18">self-contained HTML explainers</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);padding:9px 16px;display:flex;flex-direction:column;gap:6px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-fg1)">cover-letter</div><div style="font-size:24px;color:var(--ck-fg2);line-height:1.18">posting to LaTeX PDF</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);padding:9px 16px;display:flex;flex-direction:column;gap:6px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-teal-lt)">merge-next</div><div style="font-size:24px;color:var(--ck-fg2);line-height:1.18">merge, then advance the sibling</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);padding:9px 16px;display:flex;flex-direction:column;gap:6px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-teal-lt)">repo-hooks</div><div style="font-size:24px;color:var(--ck-fg2);line-height:1.18">project-scoped gates per language</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);padding:9px 16px;display:flex;flex-direction:column;gap:6px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-teal-lt)">release-notes-enricher</div><div style="font-size:24px;color:var(--ck-fg2);line-height:1.18">git-cliff plus PR prose</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);padding:9px 16px;display:flex;flex-direction:column;gap:6px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-teal-lt)">security-scan</div><div style="font-size:24px;color:var(--ck-fg2);line-height:1.18">audit the agent config itself</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);padding:9px 16px;display:flex;flex-direction:column;gap:6px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-fg3)">agent-route</div><div style="font-size:24px;color:var(--ck-fg2);line-height:1.18">which subagent for this task</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);padding:9px 16px;display:flex;flex-direction:column;gap:6px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-fg3)">model-route</div><div style="font-size:24px;color:var(--ck-fg2);line-height:1.18">which tier for this task</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);padding:9px 16px;display:flex;flex-direction:column;gap:6px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-fg3)">croc-send</div><div style="font-size:24px;color:var(--ck-fg2);line-height:1.18">files between machines</div></div>
+    </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>skills</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">16 / 25</span>
+  </div>
+</section>
+
+<section data-label="Council" data-screen-label="17 Council" data-speaker-notes="So these are real spawned agents, not prose sections in one reply. One model writing both sides basically just agrees with itself and converges early. So there are advocates, critics, a questioner that asks why at every uncited claim, and then an arbiter that returns FOR, AGAINST or CONDITIONAL with citations." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">17 · Layer 12</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 34px">The adversarial council.</h2>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px">
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid #1a8a6a;padding:24px 26px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:12px"><div style="font-family:var(--ck-font-mono);font-size:26px;letter-spacing:.14em;color:var(--ck-emerald-lt)">ADVOCATE</div><div style="font-size:28px;color:var(--ck-fg1);line-height:1.4">Argues the motion, cited.</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid var(--ck-error-lt);padding:24px 26px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:12px"><div style="font-family:var(--ck-font-mono);font-size:26px;letter-spacing:.14em;color:var(--ck-error-lt)">CRITIC</div><div style="font-size:28px;color:var(--ck-fg1);line-height:1.4">Argues against. Never softens without a reason.</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid #583090;padding:24px 26px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:12px"><div style="font-family:var(--ck-font-mono);font-size:26px;letter-spacing:.14em;color:var(--ck-teal-lt)">QUESTIONER</div><div style="font-size:28px;color:var(--ck-fg1);line-height:1.4">Fires "why?" at uncited claims, in parallel.</div></div>
+    <div style="background:var(--ck-raised);border:1px solid var(--ck-border);border-top:3px solid #FBB13C;padding:24px 26px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:12px"><div style="font-family:var(--ck-font-mono);font-size:26px;letter-spacing:.14em;color:var(--ck-blonde)">ARBITER</div><div style="font-size:28px;color:var(--ck-fg1);line-height:1.4">Returns FOR, AGAINST or CONDITIONAL. Records concessions.</div></div>
+  </div>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1.15fr 1fr;gap:52px;margin-top:40px;align-items:start">
+    <div style="background:var(--ck-abyss);border:1px solid var(--ck-border);padding:26px 30px;font-family:var(--ck-font-mono);font-size:26px;line-height:1.6;color:var(--ck-fg1);box-shadow:3px 3px 0 rgba(0,0,0,.7)">
+      <div style="color:var(--ck-error-lt)">## CRITIC</div>
+      <div>@ADVOCATE: <span style="color:var(--ck-emerald-lt)">"The cache layer adds no latency"</span></div>
+      <div>Counter: profiler output at <span style="color:var(--ck-blonde)">cache.ts:142</span></div>
+      <div>shows 12ms overhead under load.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <div style="font-size:30px;color:var(--ck-fg1);line-height:1.4">Real spawned agents. One model just agrees with itself.</div>
+      <div style="font-size:30px;color:var(--ck-fg1);line-height:1.4">Code claims cite file and line. Concessions are permanent.</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>council</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span>deep dive <a href="Deep Dive - Multi-Agent Workflows.dc.html" style="color:var(--ck-teal-lt)">Multi-Agent Workflows</a></span>
+    <span style="color:var(--ck-blonde)">17 / 25</span>
+  </div>
+</section>
+
+<section data-label="spec-loop" data-screen-label="18 spec-loop" data-speaker-notes="So spec-loop takes a whole spec, decomposes it into a dependency DAG, builds the leaves in parallel worktree waves, and then runs a council on every pull request. One rule I keep: the workflow script only coordinates. Anything that touches the world happens inside an agent prompt, not in the script." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">18 · Layer 13</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">spec-loop: a spec becomes a DAG.</h2>
+  <div style="display:flex;align-items:center;gap:0;font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-fg1);margin-bottom:26px">
+    <div style="background:#14664e;clip-path:polygon(0 0, calc(100% - 16px) 0, 100% 100%, 0 100%);padding:22px 34px;flex:1">spec</div>
+    <div style="background:#122858;clip-path:polygon(0 0, 100% 0, calc(100% - 16px) 100%, 16px 100%);padding:22px 34px 22px 44px;margin-left:-16px;flex:1.3">decompose → routed DAG</div>
+    <div style="background:#3a2068;clip-path:polygon(16px 0, calc(100% - 16px) 0, 100% 100%, 0 100%);padding:22px 34px 22px 44px;margin-left:-16px;flex:1.5">parallel worktree waves</div>
+    <div style="background:#197278;clip-path:polygon(16px 0, calc(100% - 16px) 0, 100% 100%, 0 100%);padding:22px 34px 22px 44px;margin-left:-16px;flex:1.1">council per PR</div>
+    <div style="background:#FBB13C;color:#0f1117;clip-path:polygon(16px 0, 100% 0, 100% 100%, 0 100%);padding:22px 34px 22px 44px;margin-left:-16px;flex:0.8;font-weight:700">merge</div>
+  </div>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1.18fr 1fr;gap:48px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Unblocked leaves build together, one worktree each.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Every PR faces a council. It merges on unconditional FOR.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">The script only coordinates. Only agents touch the world.</div>
+    </div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid;border-image:linear-gradient(90deg,#1a8a6a,#1c3d7a,#583090) 1;padding:26px 30px;box-shadow:3px 3px 0 rgba(0,0,0,.7)"><pre style="margin:0;font-family:var(--ck-font-mono);font-size:26px;line-height:1.6;color:var(--ck-fg1)"><span style="color:var(--ck-fg3);font-style:italic">// synthesis singleton — escalate
+</span><span style="color:var(--ck-blonde-lt)">const</span> spec = <span style="color:var(--ck-blonde-lt)">await</span> <span style="color:var(--ck-teal-lt)">agent</span>(p, {model:<span style="color:var(--ck-emerald-lt)">'top'</span>})
+
+<span style="color:var(--ck-fg3);font-style:italic">// fan-out — never the top tier
+</span><span style="color:var(--ck-blonde-lt)">const</span> out = <span style="color:var(--ck-blonde-lt)">await</span> <span style="color:var(--ck-teal-lt)">parallel</span>(tasks.map(t =&gt; () =&gt;
+  <span style="color:var(--ck-teal-lt)">agent</span>(apply(t), {model:<span style="color:var(--ck-emerald-lt)">'mid'</span>})))</pre></div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>workflows</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span>deep dive <a href="Deep Dive - Multi-Agent Workflows.dc.html" style="color:var(--ck-teal-lt)">Multi-Agent Workflows</a></span>
+    <span style="color:var(--ck-blonde)">18 / 25</span>
+  </div>
+</section>
+
+<section data-label="Model tiering" data-screen-label="19 Model tiering" data-speaker-notes="So this slide exists because I messed up. I ran a 33-agent workflow where every agent inherited the top model, burned about 2 million subagent tokens, and hit the session limit. Fan-out on the mid tier costs way less, and on config work I honestly could not see a quality difference." style="background:var(--ck-abyss);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">19 · Layer 13 · cost</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 40px">Model tiering.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:0.85fr 1fr;gap:64px;align-items:center">
+    <div>
+      <div style="font-family:var(--ck-font-mono);font-size:160px;font-weight:800;color:var(--ck-blonde);line-height:0.95;letter-spacing:-0.03em">2M</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4;margin-top:18px;max-width:560px">tokens I burned when 33 agents all inherited the top model.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:grid;grid-template-columns:1fr 150px;gap:20px;align-items:center;background:var(--ck-surface);border:1px solid var(--ck-border);padding:20px 26px"><span style="font-size:30px;color:var(--ck-fg1)">Thinker · design, hard root-causing</span><span style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-blonde);letter-spacing:.14em">TOP</span></div>
+      <div style="display:grid;grid-template-columns:1fr 150px;gap:20px;align-items:center;background:var(--ck-surface);border:1px solid var(--ck-border);padding:20px 26px"><span style="font-size:30px;color:var(--ck-fg1)">Orchestrator · plans, arbiters</span><span style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-blonde);letter-spacing:.14em">TOP / MID</span></div>
+      <div style="display:grid;grid-template-columns:1fr 150px;gap:20px;align-items:center;background:var(--ck-raised);border:1px solid var(--ck-border);padding:20px 26px"><span style="font-size:30px;color:var(--ck-fg1)">Implementer · the fan-out tier</span><span style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-emerald-lt);letter-spacing:.14em">MID</span></div>
+      <div style="display:grid;grid-template-columns:1fr 150px;gap:20px;align-items:center;background:var(--ck-surface);border:1px solid var(--ck-border);padding:20px 26px"><span style="font-size:30px;color:var(--ck-fg1)">Reviewer · lenses, verification</span><span style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-teal-lt);letter-spacing:.14em">DEPENDS</span></div>
+      <div style="font-size:28px;color:var(--ck-fg3);line-height:1.4;margin-top:8px">Escalate only when the mid tier already failed at it.</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>tiering</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">19 / 25</span>
+  </div>
+</section>
+
+<section data-label="Prose" data-screen-label="20 Prose" data-speaker-notes="So an agent writes commits, PR bodies and docs at volume, and left alone it drifts into filler. There is a rule file for the house style, and then kilint measures it in a PostToolUse hook and again in CI. Two caveats though. Form linting cannot fix a wrong claim, and do not chase a zero score, under about 1.5 per 100 words is clean." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">20 · Layer 14</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">Prose as a build artifact.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:24px">
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Agents write fifty PR bodies a day. Filler adds up.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">From ASD-STE100: short, active, one term per concept.</div>
+      
+    </div>
+    <div style="display:flex;flex-direction:column;gap:24px">
+      <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid;border-image:linear-gradient(90deg,#1a8a6a,#1c3d7a,#583090) 1;padding:26px 30px;box-shadow:3px 3px 0 rgba(0,0,0,.7)"><pre style="margin:0;font-family:var(--ck-font-mono);font-size:26px;line-height:1.6;color:var(--ck-fg1)"><span style="color:var(--ck-fg3);font-style:italic"># PostToolUse, after Write|Edit
+</span>kilint FILE.md
+
+<span style="color:var(--ck-fg3);font-style:italic"># CI gate
+</span>kilint --delta BEFORE.md AFTER.md</pre></div>
+      <div style="background:var(--ck-raised);border:1px solid var(--ck-border);border-top:3px solid #FBB13C;padding:26px 30px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;align-items:baseline;gap:22px">
+        <div style="font-family:var(--ck-font-mono);font-size:66px;font-weight:800;color:var(--ck-blonde);line-height:1">&lt;1.5</div>
+        <div style="font-size:28px;color:var(--ck-fg1);line-height:1.35">per 100 words is clean. Do not chase zero.</div>
+      </div>
+    </div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>prose</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">20 / 25</span>
+  </div>
+</section>
+
+<section data-label="§ Automation" data-screen-label="21 Section Automation" data-speaker-notes="Okay, third band, the short one. The parts that run when I am not at the keyboard: CI, the installer, and then the order I would actually adopt all of this in." style="background:var(--ck-abyss);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="position:absolute;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,#14664e,#122858,#3a2068)"></div>
+  <div style="font-family:var(--ck-font-mono);font-size:26px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--ck-blonde)">Band 03</div>
+  <h2 style="font-size:88px;font-weight:800;color:var(--ck-fg1);letter-spacing:-0.02em;line-height:1.05;margin:24px 0 0">Automation</h2>
+  <div style="font-size:34px;color:var(--ck-fg2);margin-top:24px;max-width:1200px;line-height:1.45">The parts that run without me at the keyboard.</div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>band 03</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">21 / 25</span>
+  </div>
+</section>
+
+<section data-label="CI" data-screen-label="22 CI" data-speaker-notes="So there are six workflows in this repo. The issue-branch handler is the main one, it turns an issue into a branch on its own. And then if you tag claude on a comment, the same agent runs on a GitHub runner instead of my laptop. Secrets go in repo settings, never in the YAML." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">22 · Layer 15</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">CI: the agent without me.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:22px">
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Six files here: docs, release, three gates, issue-branch.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Tag <span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">@claude</span> and it runs on a runner, not my laptop.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Credentials in repo secrets, never in the YAML.</div>
+    </div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid;border-image:linear-gradient(90deg,#1a8a6a,#1c3d7a,#583090) 1;padding:26px 30px;box-shadow:3px 3px 0 rgba(0,0,0,.7)"><pre style="margin:0;font-family:var(--ck-font-mono);font-size:26px;line-height:1.6;color:var(--ck-fg1)"><span style="color:var(--ck-blonde-lt)">on:
+</span>  <span style="color:var(--ck-blonde-lt)">issue_comment:
+</span>    types: [created]
+<span style="color:var(--ck-blonde-lt)">jobs:
+</span>  claude:
+    <span style="color:var(--ck-teal-lt)">if</span>: contains(github.event.comment.body,
+        <span style="color:var(--ck-emerald-lt)">'@claude'</span>)
+    permissions: {contents: write,
+      pull-requests: write, issues: write}</pre></div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>ci</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">22 / 25</span>
+  </div>
+</section>
+
+<section data-label="Installer" data-screen-label="23 Installer" data-speaker-notes="So the installer is where the modularity actually gets enforced. Two equivalent scripts, bash and PowerShell, one manifest per component, templates for anything machine-specific, and then a dry run so you can see what it would do first. Re-running only replaces the links it made itself." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">23 · The mechanism</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">The installer holds the contract.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start">
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid #1a8a6a;padding:26px 30px;box-shadow:3px 3px 0 rgba(0,0,0,.7)"><pre style="margin:0;font-family:var(--ck-font-mono);font-size:26px;line-height:1.6;color:var(--ck-fg1)"><span style="color:var(--ck-fg3);font-style:italic"># setup/components/config-tmux.conf
+</span>name=config-tmux
+desc=Render config/tmux templates
+type=install
+source=config/tmux
+target=~/.config/tmux</pre></div>
+    <div style="display:flex;flex-direction:column;gap:22px">
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4"><span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">link_children</span> symlinks. <span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">install</span> renders templates.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Machine values are <span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">{{variable}}</span>. No secrets in a profile.</div>
+      
+    </div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>installer</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">23 / 25</span>
+  </div>
+</section>
+
+<section data-label="Adoption order" data-screen-label="24 Adoption order" data-speaker-notes="So please do not go and install fifteen layers tonight. Each row here is basically a friction you will actually feel, and then the one layer that fixes it. Wait for the friction, then add the layer. And if you never feel any of these, honestly, install nothing." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">24 · Adoption</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 34px">Add a layer when the friction shows up.</h2>
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div style="display:grid;grid-template-columns:60px 1fr 1fr;gap:28px;align-items:center;background:var(--ck-surface);border:1px solid var(--ck-border);padding:15px 26px"><span style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-fg3)">01</span><span style="font-size:30px;color:var(--ck-fg2)">A dropped link killed a long run</span><span style="font-size:30px;color:var(--ck-fg1);font-weight:600">tmux</span></div>
+    <div style="display:grid;grid-template-columns:60px 1fr 1fr;gap:28px;align-items:center;background:var(--ck-surface);border:1px solid var(--ck-border);padding:15px 26px"><span style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-fg3)">02</span><span style="font-size:30px;color:var(--ck-fg2)">You repeat project context every session</span><span style="font-size:30px;color:var(--ck-fg1);font-weight:600">CLAUDE.md</span></div>
+    <div style="display:grid;grid-template-columns:60px 1fr 1fr;gap:28px;align-items:center;background:var(--ck-surface);border:1px solid var(--ck-border);padding:15px 26px"><span style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-fg3)">03</span><span style="font-size:30px;color:var(--ck-fg2)">Reviewing a diff in a browser is slow</span><span style="font-size:30px;color:var(--ck-fg1);font-weight:600">lazygit</span></div>
+    <div style="display:grid;grid-template-columns:60px 1fr 1fr;gap:28px;align-items:center;background:var(--ck-raised);border:1px solid var(--ck-border);padding:15px 26px"><span style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-fg3)">04</span><span style="font-size:30px;color:var(--ck-fg2)">It forgot a rule you stated twice</span><span style="font-size:30px;color:var(--ck-blonde);font-weight:600">hooks</span></div>
+    <div style="display:grid;grid-template-columns:60px 1fr 1fr;gap:28px;align-items:center;background:var(--ck-surface);border:1px solid var(--ck-border);padding:15px 26px"><span style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-fg3)">05</span><span style="font-size:30px;color:var(--ck-fg2)">Context ran out mid-task</span><span style="font-size:30px;color:var(--ck-fg1);font-weight:600">context-handoff</span></div>
+    <div style="display:grid;grid-template-columns:60px 1fr 1fr;gap:28px;align-items:center;background:var(--ck-surface);border:1px solid var(--ck-border);padding:15px 26px"><span style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-fg2)">06</span><span style="font-size:30px;color:var(--ck-fg2)">Two agents overwrote each other</span><span style="font-size:30px;color:var(--ck-fg1);font-weight:600">worktrees</span></div>
+    <div style="display:grid;grid-template-columns:60px 1fr 1fr;gap:28px;align-items:center;background:var(--ck-surface);border:1px solid var(--ck-border);padding:15px 26px"><span style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-fg3)">07</span><span style="font-size:30px;color:var(--ck-fg2)">A plausible plan broke something</span><span style="font-size:30px;color:var(--ck-fg1);font-weight:600">council</span></div>
+    <div style="display:grid;grid-template-columns:60px 1fr 1fr;gap:28px;align-items:center;background:var(--ck-surface);border:1px solid var(--ck-border);padding:15px 26px"><span style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-fg3)">08</span><span style="font-size:30px;color:var(--ck-fg2)">Commit messages read like filler</span><span style="font-size:30px;color:var(--ck-fg1);font-weight:600">ste-writing + kilint</span></div>
+  </div>
+  <div style="flex:1;justify-content:center;font-size:28px;color:var(--ck-fg2);margin-top:22px">Feel none of these? Install nothing.</div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>adoption</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">24 / 25</span>
+  </div>
+</section>
+
+<section data-label="Deck index" data-screen-label="25 Deck index" data-speaker-notes="So every layer gets its own deeper deck eventually. Two exist right now: the terminal layer and multi-agent workflows. The rest are outlined, and I will build them when someone asks. The repo and docs links are on screen. Okay, that is it from me, I guess." style="background:var(--ck-abyss);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="position:absolute;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,#14664e,#122858,#3a2068)"></div>
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-blonde)">25 · Index</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 34px">Go deeper, one layer at a time.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1fr 1fr;gap:18px 40px">
+    <div style="display:flex;align-items:center;gap:18px;background:var(--ck-raised);border:1px solid var(--ck-border);border-left:0;padding:20px 26px"><span style="color:var(--ck-emerald-lt);font-family:var(--ck-font-mono);font-size:26px">⬢</span><a href="Deep Dive - Terminal Layer.dc.html" style="font-size:30px;font-weight:600">Terminal Layer</a><span style="font-size:26px;color:var(--ck-fg3);margin-left:auto;font-family:var(--ck-font-mono)">built</span></div>
+    <div style="display:flex;align-items:center;gap:18px;background:var(--ck-raised);border:1px solid var(--ck-border);padding:20px 26px"><span style="color:var(--ck-emerald-lt);font-family:var(--ck-font-mono);font-size:26px">⬢</span><a href="Deep Dive - Multi-Agent Workflows.dc.html" style="font-size:30px;font-weight:600">Multi-Agent Workflows</a><span style="font-size:26px;color:var(--ck-fg3);margin-left:auto;font-family:var(--ck-font-mono)">built</span></div>
+    <div style="display:flex;align-items:center;gap:18px;background:var(--ck-surface);border:1px solid var(--ck-border);padding:20px 26px"><span style="color:var(--ck-fg3);font-family:var(--ck-font-mono);font-size:26px">⬡</span><span style="font-size:30px;color:var(--ck-fg2)">Git Layer</span><span style="font-size:26px;color:var(--ck-fg3);margin-left:auto;font-family:var(--ck-font-mono)">outlined</span></div>
+    <div style="display:flex;align-items:center;gap:18px;background:var(--ck-surface);border:1px solid var(--ck-border);padding:20px 26px"><span style="color:var(--ck-fg3);font-family:var(--ck-font-mono);font-size:26px">⬡</span><span style="font-size:30px;color:var(--ck-fg2)">Claude Code Basics + Models</span><span style="font-size:26px;color:var(--ck-fg3);margin-left:auto;font-family:var(--ck-font-mono)">outlined</span></div>
+    <div style="display:flex;align-items:center;gap:18px;background:var(--ck-surface);border:1px solid var(--ck-border);padding:20px 26px"><span style="color:var(--ck-fg3);font-family:var(--ck-font-mono);font-size:26px">⬡</span><span style="font-size:30px;color:var(--ck-fg2)">Context Management</span><span style="font-size:26px;color:var(--ck-fg3);margin-left:auto;font-family:var(--ck-font-mono)">outlined</span></div>
+    <div style="display:flex;align-items:center;gap:18px;background:var(--ck-surface);border:1px solid var(--ck-border);padding:20px 26px"><span style="color:var(--ck-fg3);font-family:var(--ck-font-mono);font-size:26px">⬡</span><span style="font-size:30px;color:var(--ck-fg2)">Hooks</span><span style="font-size:26px;color:var(--ck-fg3);margin-left:auto;font-family:var(--ck-font-mono)">outlined</span></div>
+    <div style="display:flex;align-items:center;gap:18px;background:var(--ck-surface);border:1px solid var(--ck-border);padding:20px 26px"><span style="color:var(--ck-fg3);font-family:var(--ck-font-mono);font-size:26px">⬡</span><span style="font-size:30px;color:var(--ck-fg2)">STE Writing + kilint</span><span style="font-size:26px;color:var(--ck-fg3);margin-left:auto;font-family:var(--ck-font-mono)">outlined</span></div>
+    <div style="display:flex;align-items:center;gap:18px;background:var(--ck-surface);border:1px solid var(--ck-border);padding:20px 26px"><span style="color:var(--ck-fg3);font-family:var(--ck-font-mono);font-size:26px">⬡</span><span style="font-size:30px;color:var(--ck-fg2)">Skills Catalog</span><span style="font-size:26px;color:var(--ck-fg3);margin-left:auto;font-family:var(--ck-font-mono)">outlined</span></div>
+    <div style="display:flex;align-items:center;gap:18px;background:var(--ck-surface);border:1px solid var(--ck-border);padding:20px 26px"><span style="color:var(--ck-fg3);font-family:var(--ck-font-mono);font-size:26px">⬡</span><span style="font-size:30px;color:var(--ck-fg2)">CI Automation</span><span style="font-size:26px;color:var(--ck-fg3);margin-left:auto;font-family:var(--ck-font-mono)">outlined</span></div>
+    <div style="display:flex;align-items:center;gap:18px;background:var(--ck-surface);border:1px solid var(--ck-border);padding:20px 26px"><span style="color:var(--ck-fg3);font-family:var(--ck-font-mono);font-size:26px">⬡</span><span style="font-size:30px;color:var(--ck-fg2)">Installer + Harnesses</span><span style="font-size:26px;color:var(--ck-fg3);margin-left:auto;font-family:var(--ck-font-mono)">outlined</span></div>
+  </div>
+  <div style="display:flex;gap:44px;margin-top:auto;font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-fg2)">
+    <span><span style="color:var(--ck-blonde)">repo</span> github.com/Kiriketsuki/agenKic-sKills</span>
+    <span><span style="color:var(--ck-blonde)">docs</span> kiriketsuki.github.io/agenKic-sKills</span>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>index</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">25 / 25</span>
+  </div>
+</section>
+
+</x-import>
+</x-dc>
+</body>
+</html>
