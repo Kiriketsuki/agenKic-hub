@@ -138,6 +138,15 @@ Ask: "Any related specs, tickets, or docs I should link?" If none, omit the plac
 
 ### Step 3: Finalise the Spec
 
+**Spec self-review** — before writing the final file, look at the draft with fresh eyes:
+
+1. **Placeholder scan:** Any "TBD", "TODO", incomplete sections, or vague requirements? Fix them.
+2. **Internal consistency:** Do any sections contradict each other? Does the technical plan match the scope?
+3. **Scope check:** Is this focused enough for a single implementation plan, or does it need decomposition?
+4. **Ambiguity check:** Could any requirement be interpreted two different ways? If so, pick one and make it explicit.
+
+Fix any issues inline. No need to re-review — just fix and move on. Then:
+
 - Write the complete, filled spec to `./docs/specs/todo/feature_spec.md`.
 - Rename it to `./docs/specs/todo/[kebab-case-feature-name]-spec.md`.
 - Sign the bottom (above any existing `---`) with **your Clault Kiper signature for the model you are currently running as** — derive it, do NOT hardcode:
