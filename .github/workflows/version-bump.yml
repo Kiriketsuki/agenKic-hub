@@ -106,21 +106,8 @@ jobs:
                         if [ -z "$SUFFIX" ]; then
                           SUFFIX="a"
                         else
-                          # Increment suffix as base-26: a..z, aa..az, ba..zz, aaa...
-                          SUFFIX=$(python3 -c "
-def inc(s):
-    chars = list(s)
-    i = len(chars) - 1
-    while i >= 0:
-        if chars[i] == 'z':
-            chars[i] = 'a'
-            i -= 1
-        else:
-            chars[i] = chr(ord(chars[i]) + 1)
-            return ''.join(chars)
-    return 'a' + ''.join(chars)
-print(inc('$SUFFIX'))
-")
+                          # Increment suffix as bijective base-26: a..z, aa..az, ba..zz, aaa...
+                          SUFFIX=$(python3 -c "s='$SUFFIX';f=lambda n:'' if n==0 else f((n-1)//26)+chr(97+(n-1)%26);n=sum((ord(c)-96)*26**i for i,c in enumerate(reversed(s)));print(f(n+1))")
                         fi
                         NEW_VERSION="$YY.$MAJOR.$MINOR.$PATCH$SUFFIX"
                         ;;
