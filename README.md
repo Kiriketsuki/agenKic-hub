@@ -34,6 +34,11 @@ non-interactive run. Manual per-OS symlink commands live in
 | [`setup/`](setup/) | Cross-platform installer with component picker and templating |
 | [`docs/`](docs/) | Source for the docs site (mkdocs-material) |
 
+New to terminal-first development? Read the
+[guide slide deck](docs/guide/terminal-claude-code-deck.md). It walks from a bare
+shell (Ghostty, Nerd Fonts, tmux, lazygit, Starship) to a full Claude Code workflow
+(context management, hooks, STE, MCP, worktrees, CLAUDE.md).
+
 ## Skills
 
 | Skill | What it does |
