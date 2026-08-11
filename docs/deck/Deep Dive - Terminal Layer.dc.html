@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="colors_and_type.css"/>
+<link rel="icon" type="image/svg+xml" href="assets/chrysaki-favicon.svg"/>
+<style>
+html,body{margin:0;background:#000;color:#e6e8f0;font-family:Inter,system-ui,sans-serif;overflow:hidden}
+a{color:#1a8a6a;text-decoration:none;border-bottom:1px solid #14664e}
+a:hover{color:#FBB13C;border-bottom-color:#FBB13C}
+@keyframes ckflow{from{background-position:0 50%}to{background-position:200% 50%}}
+</style>
+</helmet>
+<x-import component-from-global-scope="deck-stage" from="./deck-stage.js" width="1920" height="1080" hint-size="100%,100%">
+
+<section data-label="Title" data-screen-label="01 Title" data-speaker-notes="So this is the deep dive on the most optional band in the stack. Four pieces: emulator, font, multiplexer, editor. I will name a replacement for every one of them as we go." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="position:absolute;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,#14664e,#122858,#3a2068)"></div>
+  <div style="position:absolute;left:0;right:0;top:4px;height:1px;background:linear-gradient(90deg,#1a8a6a,#1c3d7a,#583090,#1a8a6a);background-size:200% 100%;animation:ckflow 4s linear infinite;opacity:.6"></div>
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-blonde)">Deep dive · band 01</div>
+  <h1 style="font-size:96px;font-weight:800;color:var(--ck-fg1);letter-spacing:-0.02em;line-height:1;margin:28px 0 0;max-width:1400px">The terminal<br/><span style="color:var(--ck-emerald-lt)">layer.</span></h1>
+  <div style="flex:1;justify-content:center;font-size:34px;color:var(--ck-fg2);margin-top:28px;max-width:1180px;line-height:1.45;text-wrap:pretty">Four decisions. Every one has a replacement, including none.</div>
+  <img src="assets/chrysaki-mark.svg" alt="" style="position:absolute;right:100px;bottom:130px;width:210px;height:210px;opacity:.92"/>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>terminal layer</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span><a href="Agentic Workflow - Master Deck.dc.html" style="color:var(--ck-teal-lt)">master deck</a></span>
+    <span style="color:var(--ck-blonde)">01 / 14</span>
+  </div>
+</section>
+
+<section data-label="Scope" data-screen-label="02 Scope" data-speaker-notes="Okay, I want to say this plainly at the start so nobody sits through fourteen slides feeling judged. This band changes comfort and session survival. It does not change what the agent can actually do." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">02 · Scope</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 40px">What this layer changes.</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start">
+    <div style="background:var(--ck-raised);border:1px solid var(--ck-border);border-top:3px solid #1a8a6a;padding:32px 36px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:20px">
+      <div style="font-family:var(--ck-font-mono);font-size:26px;letter-spacing:.16em;text-transform:uppercase;color:var(--ck-emerald-lt)">It does change</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Redraw speed under heavy output.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Whether a long run survives a dropped link</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">How much state you read at a glance</div>
+    </div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid var(--ck-error-lt);padding:32px 36px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:20px">
+      <div style="font-family:var(--ck-font-mono);font-size:26px;letter-spacing:.16em;text-transform:uppercase;color:var(--ck-error-lt)">It does not change</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">What the agent can read, write or run</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Which skills, hooks or workflows work</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Your shell — that is a separate choice</div>
+    </div>
+  </div>
+  <div style="flex:1;justify-content:center;font-size:32px;color:var(--ck-fg2);margin-top:40px;max-width:1500px;line-height:1.45;text-wrap:pretty">Skip this deck if your terminal stays out of your way.</div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>scope</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">02 / 14</span>
+  </div>
+</section>
+
+<section data-label="Four pieces" data-screen-label="03 Four pieces" data-speaker-notes="So there are four rows here, four decisions, and then the alternatives on the right. If you already have opinions, just read the right column first." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">03 · Map</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 40px">Four pieces, four exits.</h2>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:grid;grid-template-columns:340px 1fr 1fr;gap:32px;align-items:center;background:var(--ck-surface);border:1px solid var(--ck-border);padding:24px 28px">
+      <div style="font-family:var(--ck-font-mono);font-size:28px;color:var(--ck-emerald-lt);letter-spacing:.08em">Ghostty</div>
+      <div style="font-size:30px;color:var(--ck-fg1)">GPU rendering, one config file</div>
+      <div style="font-size:28px;color:var(--ck-fg2)">WezTerm · Kitty · Alacritty · iTerm2</div>
+    </div>
+    <div style="display:grid;grid-template-columns:340px 1fr 1fr;gap:32px;align-items:center;background:var(--ck-surface);border:1px solid var(--ck-border);padding:24px 28px">
+      <div style="font-family:var(--ck-font-mono);font-size:28px;color:var(--ck-emerald-lt);letter-spacing:.08em">Nerd Font</div>
+      <div style="font-size:30px;color:var(--ck-fg1)">Icon glyphs for prompts and TUIs</div>
+      <div style="font-size:28px;color:var(--ck-fg2)">any patched family · or none, plain text</div>
+    </div>
+    <div style="display:grid;grid-template-columns:340px 1fr 1fr;gap:32px;align-items:center;background:var(--ck-raised);border:1px solid var(--ck-border);padding:24px 28px">
+      <div style="font-family:var(--ck-font-mono);font-size:28px;color:var(--ck-blonde);letter-spacing:.08em">tmux</div>
+      <div style="font-size:30px;color:var(--ck-fg1)">Sessions that outlive the window</div>
+      <div style="font-size:28px;color:var(--ck-fg2)">Zellij · screen · native tabs</div>
+    </div>
+    <div style="display:grid;grid-template-columns:340px 1fr 1fr;gap:32px;align-items:center;background:var(--ck-surface);border:1px solid var(--ck-border);padding:24px 28px">
+      <div style="font-family:var(--ck-font-mono);font-size:28px;color:var(--ck-emerald-lt);letter-spacing:.08em">an editor</div>
+      <div style="font-size:30px;color:var(--ck-fg1)">Survival editing when git opens one</div>
+      <div style="font-size:28px;color:var(--ck-fg2)">nano · micro · nvim · your IDE</div>
+    </div>
+  </div>
+  <div style="flex:1;justify-content:center;font-size:30px;color:var(--ck-fg3);margin-top:36px">Only the tmux row earns an argument. The rest is preference.</div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>map</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">03 / 14</span>
+  </div>
+</section>
+
+<section data-label="Emulator" data-screen-label="04 Emulator" data-speaker-notes="So first, separate the emulator from the shell. The emulator basically just renders text and forwards keys. I use Ghostty because it is native, GPU-rendered, and starts fast, which matters when you open windows all day." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">04 · Emulator</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">The emulator is not the shell.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:24px">
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Draws text, passes keys. Not the shell.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">GPU-rendered and native. Smooth under heavy output.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">No config file is created. Empty is valid.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">No Windows build yet. WezTerm or Windows Terminal there.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:24px">
+      <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid;border-image:linear-gradient(90deg,#1a8a6a,#1c3d7a,#583090) 1;padding:26px 30px;box-shadow:3px 3px 0 rgba(0,0,0,.7)"><pre style="margin:0;font-family:var(--ck-font-mono);font-size:26px;line-height:1.6;color:var(--ck-fg1)"><span style="color:var(--ck-fg3);font-style:italic"># macOS
+</span>brew install --cask ghostty
+
+<span style="color:var(--ck-fg3);font-style:italic"># Windows stand-in
+</span>winget install wez.wezterm
+
+mkdir -p ~/.config/ghostty
+touch ~/.config/ghostty/config</pre></div>
+      <div style="font-size:30px;color:var(--ck-fg2);line-height:1.4">Keep it in your dotfiles. Reload in place.</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>emulator</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">04 / 14</span>
+  </div>
+</section>
+
+<section data-label="Config keys" data-screen-label="05 Config keys" data-speaker-notes="So five options carry most of the value. The important one is font-family, it has to match the installed name exactly. If it does not, Ghostty falls back to a font with no glyphs, and then you spend an hour blaming starship for nothing." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">05 · Config</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">Five keys carry most of it.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1.1fr 1fr;gap:56px;align-items:start">
+    <div style="background:var(--ck-abyss);border:1px solid var(--ck-border);padding:30px 34px;box-shadow:3px 3px 0 rgba(0,0,0,.7)"><pre style="margin:0;font-family:var(--ck-font-mono);font-size:28px;line-height:1.7;color:var(--ck-fg1)">font-family       = <span style="color:var(--ck-emerald-lt)">"JetBrainsMono Nerd Font"
+</span>font-size         = <span style="color:var(--ck-blonde-lt)">13
+</span>theme             = <span style="color:var(--ck-emerald-lt)">catppuccin-mocha
+</span>background-opacity = <span style="color:var(--ck-blonde-lt)">0.96
+</span>keybind = cmd+shift+enter=new_split:right</pre></div>
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <div style="font-size:30px;color:var(--ck-fg1);line-height:1.4"><span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">font-family</span> must match exactly. A missing space falls back silently.</div>
+      <div style="font-size:30px;color:var(--ck-fg1);line-height:1.4"><span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">font-size</span> goes up for screen sharing. Raise it before a demo.</div>
+      <div style="font-size:30px;color:var(--ck-fg1);line-height:1.4"><span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">keybind</span> takes one binding per line.</div>
+      <div style="font-size:30px;color:var(--ck-fg1);line-height:1.4">Key equals value. No JSON, no settings panel.</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>config</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">05 / 14</span>
+  </div>
+</section>
+
+<section data-label="Glyph patching" data-screen-label="06 Glyph patching" data-speaker-notes="So patching is basically a build step. A script merges the icon sets into unused code points of a base font, and then you get a drop-in replacement with the same text metrics." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">06 · Fonts</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">Patching is a build step.</h2>
+  <div style="display:flex;align-items:stretch;font-family:var(--ck-font-mono);font-size:28px;color:var(--ck-fg1);margin-bottom:40px">
+    <div style="background:#14664e;clip-path:polygon(0 0, calc(100% - 16px) 0, 100% 100%, 0 100%);padding:26px 36px;flex:1">base font</div>
+    <div style="background:#122858;clip-path:polygon(0 0, 100% 0, calc(100% - 16px) 100%, 16px 100%);padding:26px 36px 26px 46px;margin-left:-16px;flex:1.2">+ Font Awesome · Devicons · Powerline</div>
+    <div style="background:#3a2068;clip-path:polygon(16px 0, calc(100% - 16px) 0, 100% 100%, 0 100%);padding:26px 36px 26px 46px;margin-left:-16px;flex:1.1">merged into private-use code points</div>
+    <div style="background:#FBB13C;color:#0f1117;clip-path:polygon(16px 0, 100% 0, 100% 100%, 0 100%);padding:26px 36px 26px 46px;margin-left:-16px;flex:0.9;font-weight:700">one font file</div>
+  </div>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:22px">
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Same metrics. A drop-in replacement, not a new face.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">The tool emits a code point, the font supplies the picture.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">One family everywhere. Mixed families hide missing glyphs.</div>
+    </div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid #1a8a6a;padding:26px 30px;box-shadow:3px 3px 0 rgba(0,0,0,.7)"><pre style="margin:0;font-family:var(--ck-font-mono);font-size:26px;line-height:1.6;color:var(--ck-fg1)"><span style="color:var(--ck-fg3);font-style:italic"># macOS
+</span>brew install --cask \
+  font-jetbrains-mono-nerd-font
+
+<span style="color:var(--ck-fg3);font-style:italic"># Arch
+</span>sudo pacman -S ttf-jetbrains-mono-nerd
+
+<span style="color:var(--ck-fg3);font-style:italic"># Windows
+</span>winget install DEVCOM.JetBrainsMonoNerdFont</pre></div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>fonts</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">06 / 14</span>
+  </div>
+</section>
+
+<section data-label="Tofu" data-screen-label="07 Tofu" data-speaker-notes="So this is the single most common question I get. People edit starship.toml for an hour, and the actual fix is one line in the terminal emulator config. I think if you learn this shortcut early, you save yourself a lot of pain." style="background:var(--ck-abyss);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">07 · Failure mode</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 40px">Tofu boxes: one cause, one fix.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:0.9fr 1fr;gap:64px;align-items:center">
+    <div>
+      <div style="font-family:var(--ck-font-mono);font-size:120px;color:var(--ck-fg3);letter-spacing:.1em;line-height:1.1">□ □ □<br/>□ □ □</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4;margin-top:24px;max-width:560px">Empty boxes in a prompt or TUI. One cause.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid var(--ck-error-lt);padding:26px 30px;box-shadow:3px 3px 0 rgba(0,0,0,.7);font-size:30px;color:var(--ck-fg1);line-height:1.4">The terminal font is not a patched Nerd Font.</div>
+      <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid var(--ck-blonde);padding:26px 30px;box-shadow:3px 3px 0 rgba(0,0,0,.7);font-size:30px;color:var(--ck-fg1);line-height:1.4">The trap: <span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">starship.toml</span> and <span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">.p10k.zsh</span> are usually already correct.</div>
+      <div style="background:var(--ck-raised);border:1px solid var(--ck-border);border-top:3px solid #1a8a6a;padding:26px 30px;box-shadow:3px 3px 0 rgba(0,0,0,.7);font-size:30px;color:var(--ck-fg1);line-height:1.4">Fix <span style="font-family:var(--ck-font-mono);color:var(--ck-emerald-lt)">font-family</span> in the emulator. Then verify with <span style="font-family:var(--ck-font-mono);color:var(--ck-emerald-lt)">eza --icons</span>.</div>
+      <div style="font-size:30px;color:var(--ck-fg2);line-height:1.4">Check this before debugging any shell script.</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>tofu</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">07 / 14</span>
+  </div>
+</section>
+
+<section data-label="tmux model" data-screen-label="08 tmux model" data-speaker-notes="So tmux has a server, sessions, windows and panes. Windows behave like tabs, and then panes split a window. Every command starts with the prefix: you tap it, release, and then press the key. New users tend to hold it down, that does not work." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">08 · tmux</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">Server, session, window, pane.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:22px">
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Windows are tabs. Panes are a grid.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Prefix first: tap, release, press. Do not hold it.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Name your sessions. <span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">tmux ls</span> is useful only when the names mean something.</div>
+    </div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid;border-image:linear-gradient(90deg,#1a8a6a,#1c3d7a,#583090) 1;padding:26px 30px;box-shadow:3px 3px 0 rgba(0,0,0,.7)"><pre style="margin:0;font-family:var(--ck-font-mono);font-size:26px;line-height:1.65;color:var(--ck-fg1)">tmux new -s work
+tmux ls
+tmux kill-session -t work
+
+Ctrl-a c   <span style="color:var(--ck-fg3);font-style:italic"># new window
+</span>Ctrl-a n   <span style="color:var(--ck-fg3);font-style:italic"># next window
+</span>Ctrl-a %   <span style="color:var(--ck-fg3);font-style:italic"># split vertical
+</span>Ctrl-a "   <span style="color:var(--ck-fg3);font-style:italic"># split horizontal</span></pre></div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>tmux</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">08 / 14</span>
+  </div>
+</section>
+
+<section data-label="Persistence" data-screen-label="09 Persistence" data-speaker-notes="So this is the payoff slide. Without tmux, the SSH drops, the remote shell exits, the agent exits with it, and then hours of work are just gone. With tmux the shell lives on the server, so the link does not matter." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">09 · The payoff</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">Detach is not close.</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start">
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid var(--ck-error-lt);padding:28px 32px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:16px">
+      <div style="font-family:var(--ck-font-mono);font-size:26px;letter-spacing:.16em;text-transform:uppercase;color:var(--ck-error-lt)">Without tmux</div>
+      <div style="font-size:30px;color:var(--ck-fg1);line-height:1.45">SSH drops → shell exits → agent dies. Three hours gone.</div>
+    </div>
+    <div style="background:var(--ck-raised);border:1px solid var(--ck-border);border-top:3px solid #1a8a6a;padding:28px 32px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:16px">
+      <div style="font-family:var(--ck-font-mono);font-size:26px;letter-spacing:.16em;text-transform:uppercase;color:var(--ck-emerald-lt)">With tmux</div>
+      <div style="font-size:30px;color:var(--ck-fg1);line-height:1.45">Runs on the server. Reattach anywhere, same panes.</div>
+    </div>
+  </div>
+  <div style="flex:1;justify-content:center;background:var(--ck-abyss);border:1px solid var(--ck-border);padding:28px 32px;margin-top:36px;box-shadow:3px 3px 0 rgba(0,0,0,.7)"><pre style="margin:0;font-family:var(--ck-font-mono);font-size:28px;line-height:1.7;color:var(--ck-fg1)">Ctrl-a d                 <span style="color:var(--ck-fg3);font-style:italic"># detach, session keeps running
+</span>tmux attach -t claude    <span style="color:var(--ck-emerald-lt)"># from any terminal, any machine</span></pre></div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>persistence</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">09 / 14</span>
+  </div>
+</section>
+
+<section data-label="tmux.conf" data-screen-label="10 tmux.conf" data-speaker-notes="So keep the config small. Prefix on Ctrl-a, mouse on so a new user can just click a pane instead of memorising prefix o, vi keys in copy mode, and then a reload binding. Plugins can come later, or honestly never." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">10 · Config</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">A small .tmux.conf.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1.15fr 1fr;gap:56px;align-items:start">
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid;border-image:linear-gradient(90deg,#1a8a6a,#1c3d7a,#583090) 1;padding:26px 30px;box-shadow:3px 3px 0 rgba(0,0,0,.7)"><pre style="margin:0;font-family:var(--ck-font-mono);font-size:26px;line-height:1.65;color:var(--ck-fg1)"><span style="color:var(--ck-fg3);font-style:italic"># ~/.tmux.conf
+</span>unbind C-b
+set -g prefix C-a
+bind C-a send-prefix
+
+set -g mouse on
+setw -g mode-keys vi
+
+bind r source-file ~/.tmux.conf \; \
+  display <span style="color:var(--ck-emerald-lt)">"Config reloaded"</span></pre></div>
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <div style="font-size:30px;color:var(--ck-fg1);line-height:1.4">Ctrl-a sits closer to the home row. That is the whole reason.</div>
+      <div style="font-size:30px;color:var(--ck-fg1);line-height:1.4"><span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">mouse on</span> lets a new user click a pane instead of memorising prefix-o.</div>
+      <div style="font-size:30px;color:var(--ck-fg1);line-height:1.4">tmux-resurrect and -continuum persist across a reboot.</div>
+      <div style="font-size:30px;color:var(--ck-fg3);line-height:1.4">Add an option when you miss it, not before.</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>tmux.conf</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">10 / 14</span>
+  </div>
+</section>
+
+<section data-label="Editors" data-screen-label="11 Editors" data-speaker-notes="So git opens an editor whether you planned for one or not: commit messages, rebases, merge conflicts. I will be honest, I am bad at nvim myself. You basically just need survival level, not mastery. Learn the four escape commands and keep your IDE." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">11 · Editors</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">Survival-level editing.</h2>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px">
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid #1a8a6a;padding:26px 30px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:14px">
+      <div style="font-family:var(--ck-font-mono);font-size:28px;color:var(--ck-emerald-lt)">nano</div>
+      <div style="font-size:28px;color:var(--ck-fg1);line-height:1.4">Shortcuts at the bottom. No modes.</div>
+      <div style="font-size:26px;color:var(--ck-fg3);line-height:1.4">The safe default.</div>
+    </div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid #197278;padding:26px 30px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:14px">
+      <div style="font-family:var(--ck-font-mono);font-size:28px;color:var(--ck-teal-lt)">micro</div>
+      <div style="font-size:28px;color:var(--ck-fg1);line-height:1.4">Ctrl+S, Ctrl+Q. Mouse and highlighting.</div>
+      <div style="font-size:26px;color:var(--ck-fg3);line-height:1.4">Desktop-editor parity.</div>
+    </div>
+    <div style="background:var(--ck-raised);border:1px solid var(--ck-border);border-top:3px solid #FBB13C;padding:26px 30px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:14px">
+      <div style="font-family:var(--ck-font-mono);font-size:28px;color:var(--ck-blonde)">nvim</div>
+      <div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-fg1);line-height:1.7">i &nbsp;→ insert mode<br/>Esc → normal mode<br/>:wq → save and quit<br/>:q! → quit, discard</div>
+      <div style="font-size:26px;color:var(--ck-fg3);line-height:1.4">Four keys cover an accidental session.</div>
+    </div>
+  </div>
+  <div style="flex:1;justify-content:center;font-size:32px;color:var(--ck-fg1);margin-top:40px;max-width:1500px;line-height:1.45;text-wrap:pretty">Keep your IDE. Nvim mastery is a hobby, not a requirement.</div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>editors</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">11 / 14</span>
+  </div>
+</section>
+
+<section data-label="Stack vs stock" data-screen-label="12 Stack vs stock" data-speaker-notes="So I will go through this table slowly. Each row is a difference you can verify yourself in five minutes. Basically, the composable stack trades convenience for control, and then a stock terminal picks the tradeoffs for you." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">12 · Comparison</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 34px">The stack versus the stock terminal.</h2>
+  <div style="flex:1;align-content:center;display:flex;flex-direction:column;gap:2px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;font-family:var(--ck-font-mono);font-size:24px;letter-spacing:.16em;text-transform:uppercase;color:var(--ck-fg3)">
+      <div style="padding:16px 24px;background:var(--ck-abyss)">Axis</div>
+      <div style="padding:16px 24px;background:var(--ck-abyss);color:var(--ck-emerald-lt)">Stack</div>
+      <div style="padding:16px 24px;background:var(--ck-abyss);color:var(--ck-fg2)">Stock terminal</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;font-size:28px;color:var(--ck-fg1)">
+      <div style="padding:20px 24px;background:var(--ck-surface)">Setup time</div>
+      <div style="padding:20px 24px;background:var(--ck-surface)">15 to 30 minutes</div>
+      <div style="padding:20px 24px;background:var(--ck-surface);color:var(--ck-fg2)">Instant</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;font-size:28px;color:var(--ck-fg1)">
+      <div style="padding:20px 24px;background:var(--ck-surface)">Session persistence</div>
+      <div style="padding:20px 24px;background:var(--ck-surface)">Survives window close and SSH drop</div>
+      <div style="padding:20px 24px;background:var(--ck-surface);color:var(--ck-fg2)">Dies with the process</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;font-size:28px;color:var(--ck-fg1)">
+      <div style="padding:20px 24px;background:var(--ck-surface)">Remote work</div>
+      <div style="padding:20px 24px;background:var(--ck-surface)">One session, reattach anywhere</div>
+      <div style="padding:20px 24px;background:var(--ck-surface);color:var(--ck-fg2)">One SSH connection per tab</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;font-size:28px;color:var(--ck-fg1)">
+      <div style="padding:20px 24px;background:var(--ck-surface)">Customization</div>
+      <div style="padding:20px 24px;background:var(--ck-surface)">Swap any layer alone</div>
+      <div style="padding:20px 24px;background:var(--ck-surface);color:var(--ck-fg2)">Bundled together</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;font-size:28px;color:var(--ck-fg1)">
+      <div style="padding:20px 24px;background:var(--ck-raised)">Learning curve</div>
+      <div style="padding:20px 24px;background:var(--ck-raised);color:var(--ck-blonde)">A prefix key and its commands</div>
+      <div style="padding:20px 24px;background:var(--ck-raised);color:var(--ck-fg2)">None</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>comparison</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">12 / 14</span>
+  </div>
+</section>
+
+<section data-label="When stock wins" data-screen-label="13 When stock wins" data-speaker-notes="I want to close this honestly. This stack is not a prerequisite for competent terminal work. I recommend it against a specific friction you feel, not as a default install for every new developer." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">13 · Honest limits</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">When the stock terminal is right.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:22px">
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">A one-off local task, nothing to reconnect to.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Still learning the shell. Fewer bindings at once.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">A locked-down machine that blocks custom installs.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">GNOME Terminal already gives tabs and splits.</div>
+    </div>
+    <div style="background:var(--ck-raised);border:1px solid var(--ck-border);border-top:3px solid;border-image:linear-gradient(90deg,#1a8a6a,#1c3d7a,#583090) 1;padding:30px 34px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:18px">
+      <div style="font-family:var(--ck-font-mono);font-size:26px;letter-spacing:.16em;text-transform:uppercase;color:var(--ck-blonde)">Migration path</div>
+      <div style="font-size:30px;color:var(--ck-fg1);line-height:1.45"><span style="font-family:var(--ck-font-mono);color:var(--ck-emerald-lt)">01</span> &nbsp;tmux first. It solves the loudest pain.</div>
+      <div style="font-size:30px;color:var(--ck-fg1);line-height:1.45"><span style="font-family:var(--ck-font-mono);color:var(--ck-emerald-lt)">02</span> &nbsp;A Nerd Font next. Five minutes.</div>
+      <div style="font-size:30px;color:var(--ck-fg1);line-height:1.45"><span style="font-family:var(--ck-font-mono);color:var(--ck-emerald-lt)">03</span> &nbsp;The emulator last, if rendering feels slow.</div>
+      <div style="font-size:28px;color:var(--ck-fg3);line-height:1.4">One change at a time, or you cannot tell which broke it.</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>limits</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">13 / 14</span>
+  </div>
+</section>
+
+<section data-label="Takeaways" data-screen-label="14 Takeaways" data-speaker-notes="So, three lines to remember, and then we go back to the master deck. If you only keep one, keep tmux, because it protects work you already paid for. Okay, that is it for this one." style="background:var(--ck-abyss);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="position:absolute;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,#14664e,#122858,#3a2068)"></div>
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-blonde)">14 · Take away</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:20px 0 44px">Three lines to keep.</h2>
+  <div style="display:flex;flex-direction:column;gap:24px;max-width:1500px">
+    <div style="display:flex;gap:28px;align-items:baseline"><span style="font-family:var(--ck-font-mono);font-size:30px;color:var(--ck-fg3)">01</span><span style="font-size:36px;color:var(--ck-fg1);line-height:1.35">tmux protects work you already paid for. Learn it first.</span></div>
+    <div style="display:flex;gap:28px;align-items:baseline"><span style="font-family:var(--ck-font-mono);font-size:30px;color:var(--ck-fg3)">02</span><span style="font-size:36px;color:var(--ck-fg1);line-height:1.35">Tofu boxes are a terminal font setting. Never the tool.</span></div>
+    <div style="display:flex;gap:28px;align-items:baseline"><span style="font-family:var(--ck-font-mono);font-size:30px;color:var(--ck-fg3)">03</span><span style="font-size:36px;color:var(--ck-fg1);line-height:1.35">Adopt a layer against a friction you felt this week.</span></div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>terminal layer</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span><a href="Agentic Workflow - Master Deck.dc.html" style="color:var(--ck-teal-lt)">back to master deck</a></span>
+    <span style="color:var(--ck-blonde)">14 / 14</span>
+  </div>
+</section>
+
+</x-import>
+</x-dc>
+</body>
+</html>

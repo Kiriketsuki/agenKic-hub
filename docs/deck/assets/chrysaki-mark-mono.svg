@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" aria-label="Chrysaki mark — monochrome">
+  <polygon points="32,4 56.25,18 56.25,46 32,60 7.75,46 7.75,18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="miter"></polygon>
+  <path d="M32,32 L32,4 M32,32 L56.25,18 M32,32 L56.25,46 M32,32 L32,60 M32,32 L7.75,46 M32,32 L7.75,18" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" opacity=".5"></path>
+  <polygon points="32,28 36,32 32,36 28,32" fill="currentColor"></polygon>
+</svg>

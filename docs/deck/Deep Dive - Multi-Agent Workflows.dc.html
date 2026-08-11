@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="colors_and_type.css"/>
+<link rel="icon" type="image/svg+xml" href="assets/chrysaki-favicon.svg"/>
+<style>
+html,body{margin:0;background:#000;color:#e6e8f0;font-family:Inter,system-ui,sans-serif;overflow:hidden}
+a{color:#1a8a6a;text-decoration:none;border-bottom:1px solid #14664e}
+a:hover{color:#FBB13C;border-bottom-color:#FBB13C}
+@keyframes ckflow{from{background-position:0 50%}to{background-position:200% 50%}}
+</style>
+</helmet>
+<x-import component-from-global-scope="deck-stage" from="./deck-stage.js" width="1920" height="1080" hint-size="100%,100%">
+
+<section data-label="Title" data-screen-label="01 Title" data-speaker-notes="So this is the part of the stack I actually care most about. Councils that argue with citations, and then loops that build a whole spec in parallel waves. Everything here is optional too, but I think this is where the leverage is." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="position:absolute;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,#14664e,#122858,#3a2068)"></div>
+  <div style="position:absolute;left:0;right:0;top:4px;height:1px;background:linear-gradient(90deg,#1a8a6a,#1c3d7a,#583090,#1a8a6a);background-size:200% 100%;animation:ckflow 4s linear infinite;opacity:.6"></div>
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-blonde)">Deep dive · band 02</div>
+  <h1 style="font-size:96px;font-weight:800;color:var(--ck-fg1);letter-spacing:-0.02em;line-height:1;margin:28px 0 0;max-width:1500px">Multi-agent<br/><span style="color:var(--ck-emerald-lt)">workflows.</span></h1>
+  <div style="flex:1;justify-content:center;font-size:34px;color:var(--ck-fg2);margin-top:28px;max-width:1200px;line-height:1.45;text-wrap:pretty">Councils that argue with citations. Loops that build in parallel waves.</div>
+  <img src="assets/chrysaki-mark.svg" alt="" style="position:absolute;right:100px;bottom:130px;width:210px;height:210px;opacity:.92"/>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>workflows</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span><a href="Agentic Workflow - Master Deck.dc.html" style="color:var(--ck-teal-lt)">master deck</a></span>
+    <span style="color:var(--ck-blonde)">01 / 14</span>
+  </div>
+</section>
+
+<section data-label="Pure coordinator" data-screen-label="02 Pure coordinator" data-speaker-notes="So this is the one structural rule I keep. A workflow script sequences agent, parallel and workflow calls, and that is it. It never touches the world itself. Every file write, shell command and API call happens inside an agent prompt, which basically keeps the script testable and the permissions in one place." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">02 · The rule</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">A script coordinates. Agents act.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:22px">
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">A workflow is a <span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">.mjs</span> script that sequences three calls: <span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">agent()</span>, <span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">parallel()</span>, <span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">workflow()</span>.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Every world-touching action lives in an agent prompt.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Agents return schemas. The next stage reads structure, not prose.</div>
+      <div style="font-size:30px;color:var(--ck-fg3);line-height:1.4">A smoke script syntax-checks every one.</div>
+    </div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid;border-image:linear-gradient(90deg,#1a8a6a,#1c3d7a,#583090) 1;padding:26px 30px;box-shadow:3px 3px 0 rgba(0,0,0,.7)"><pre style="margin:0;font-family:var(--ck-font-mono);font-size:26px;line-height:1.6;color:var(--ck-fg1)"><span style="color:var(--ck-blonde-lt)">const</span> plan = <span style="color:var(--ck-blonde-lt)">await</span> <span style="color:var(--ck-teal-lt)">agent</span>(planPrompt, {
+  schema: PLAN, model: <span style="color:var(--ck-emerald-lt)">'top'</span> })
+
+<span style="color:var(--ck-blonde-lt)">const</span> built = <span style="color:var(--ck-blonde-lt)">await</span> <span style="color:var(--ck-teal-lt)">parallel</span>(
+  plan.leaves.map(l =&gt; () =&gt;
+    <span style="color:var(--ck-teal-lt)">agent</span>(build(l), {schema: DIFF,
+                    model: <span style="color:var(--ck-emerald-lt)">'mid'</span>})))
+
+<span style="color:var(--ck-blonde-lt)">await</span> <span style="color:var(--ck-teal-lt)">workflow</span>(<span style="color:var(--ck-emerald-lt)">'council-loop'</span>, {branch})</pre></div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>coordinator</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">02 / 14</span>
+  </div>
+</section>
+
+<section data-label="Catalog" data-screen-label="03 Catalog" data-speaker-notes="So, twelve scripts, three families: review, build, and then the applied data pipelines. Nobody adopts all twelve, honestly. Just read the middle column and take the one that matches a loop you already run by hand." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">03 · Catalog</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 32px">Twelve scripts, three families.</h2>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px">
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid #1a8a6a;padding:26px 28px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:16px">
+      <div style="font-family:var(--ck-font-mono);font-size:26px;letter-spacing:.14em;text-transform:uppercase;color:var(--ck-emerald-lt)">Review</div>
+      <div style="font-size:28px;color:var(--ck-fg1);line-height:1.45"><span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">council-loop</span> drives a branch to an unconditional FOR.</div>
+      <div style="font-size:28px;color:var(--ck-fg1);line-height:1.45"><span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">autofix-swarm</span> diagnose, fan out, gate against gaming, promote a champion.</div>
+    </div>
+    <div style="background:var(--ck-raised);border:1px solid var(--ck-border);border-top:3px solid #583090;padding:26px 28px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:16px">
+      <div style="font-family:var(--ck-font-mono);font-size:26px;letter-spacing:.14em;text-transform:uppercase;color:var(--ck-teal-lt)">Build</div>
+      <div style="font-size:28px;color:var(--ck-fg1);line-height:1.45"><span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">spec-loop</span> whole spec to DAG to parallel waves.</div>
+      <div style="font-size:28px;color:var(--ck-fg1);line-height:1.45"><span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">feature-loop</span> one feature end to end.</div>
+      <div style="font-size:28px;color:var(--ck-fg1);line-height:1.45"><span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">ultracode-fix</span> and <span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">-implement</span>, tiered pipelines, fixed model per stage.</div>
+    </div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid #197278;padding:26px 28px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:16px">
+      <div style="font-family:var(--ck-font-mono);font-size:26px;letter-spacing:.14em;text-transform:uppercase;color:var(--ck-teal-lt)">Applied</div>
+      <div style="font-size:28px;color:var(--ck-fg1);line-height:1.45"><span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">ai-co-scientist</span> hypothesis generation, Elo tournament.</div>
+      <div style="font-size:28px;color:var(--ck-fg1);line-height:1.45"><span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">financial-data-pipeline</span> plus two spending crawlers.</div>
+    </div>
+  </div>
+  <div style="flex:1;justify-content:center;font-size:32px;color:var(--ck-fg1);margin-top:38px;max-width:1550px;line-height:1.45;text-wrap:pretty">Nobody adopts twelve. Take the loop you already run by hand.</div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>catalog</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">03 / 14</span>
+  </div>
+</section>
+
+<section data-label="Council roles" data-screen-label="04 Council roles" data-speaker-notes="So there are four roles. The questioner is the piece people skip, and I think it is the piece that actually does the work. It asks why at any claim that skipped its reasoning chain, in parallel, without blocking the debate." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">04 · Council</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">Four roles debate a motion.</h2>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:24px">
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid #1a8a6a;padding:28px 32px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:14px"><div style="font-family:var(--ck-font-mono);font-size:28px;letter-spacing:.14em;color:var(--ck-emerald-lt)">ADVOCATE</div><div style="font-size:30px;color:var(--ck-fg1);line-height:1.4">Argues for the motion. Never drifts to early consensus.</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid var(--ck-error-lt);padding:28px 32px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:14px"><div style="font-family:var(--ck-font-mono);font-size:28px;letter-spacing:.14em;color:var(--ck-error-lt)">CRITIC</div><div style="font-size:30px;color:var(--ck-fg1);line-height:1.4">Argues against. Softens only with a cited reason.</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid #583090;padding:28px 32px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:14px"><div style="font-family:var(--ck-font-mono);font-size:28px;letter-spacing:.14em;color:var(--ck-teal-lt)">QUESTIONER</div><div style="font-size:30px;color:var(--ck-fg1);line-height:1.4">Fires "why?" at any claim that skipped its reasoning. Never blocking.</div></div>
+    <div style="background:var(--ck-raised);border:1px solid var(--ck-border);border-top:3px solid #FBB13C;padding:28px 32px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:14px"><div style="font-family:var(--ck-font-mono);font-size:28px;letter-spacing:.14em;color:var(--ck-blonde)">ARBITER</div><div style="font-size:30px;color:var(--ck-fg1);line-height:1.4">Records concessions. Issues FOR, AGAINST or CONDITIONAL, cited.</div></div>
+  </div>
+  <div style="flex:1;justify-content:center;font-size:32px;color:var(--ck-fg1);margin-top:36px;max-width:1550px;line-height:1.45;text-wrap:pretty"> Code motions: every agent reads the files first.</div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>roles</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">04 / 14</span>
+  </div>
+</section>
+
+<section data-label="Real agents" data-screen-label="05 Real agents" data-speaker-notes="So this is basically the axiom of the whole pattern. A single model writing ADVOCATE and CRITIC headers is one context arguing with itself, and it converges early because agreement is cheaper than conflict. Separate agents with separate contexts do not do that." style="background:var(--ck-abyss);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">05 · Axiom</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 44px">Real spawned agents, or nothing.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start">
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid var(--ck-error-lt);padding:32px 36px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:18px">
+      <div style="font-family:var(--ck-font-mono);font-size:26px;letter-spacing:.16em;text-transform:uppercase;color:var(--ck-error-lt)">Role-played prose</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.45">One model writes both headers, agrees with itself, reports consensus.</div>
+      <div style="font-size:30px;color:var(--ck-fg3);line-height:1.4">It reads like a debate. It found nothing.</div>
+    </div>
+    <div style="background:var(--ck-raised);border:1px solid var(--ck-border);border-top:3px solid #1a8a6a;padding:32px 36px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:18px">
+      <div style="font-family:var(--ck-font-mono);font-size:26px;letter-spacing:.16em;text-transform:uppercase;color:var(--ck-emerald-lt)">Separate contexts</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.45">Separate context, separate reading. Disagreement survives.</div>
+      <div style="font-size:30px;color:var(--ck-fg3);line-height:1.4">This costs more tokens. That cost is the product.</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>axiom</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">05 / 14</span>
+  </div>
+</section>
+
+<section data-label="Round protocol" data-screen-label="06 Round protocol" data-speaker-notes="So three mechanical rules keep the rounds readable: one role header per message, address the previous turn first, and then stay inside the round's scope. Rebuttals name the agent and quote the claim verbatim, no paraphrasing." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">06 · Protocol</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">Every message follows three rules.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1fr 1.05fr;gap:56px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:22px">
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4"><span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">01</span> &nbsp;Exactly one header, the agent's role name.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4"><span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">02</span> &nbsp;Address the previous turn first.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4"><span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">03</span> &nbsp;Stay in the round's scope. A rebuttal is not a new argument.</div>
+      <div style="font-size:30px;color:var(--ck-fg2);line-height:1.4;margin-top:8px">A conceded point cannot be re-argued.</div>
+    </div>
+    <div style="background:var(--ck-abyss);border:1px solid var(--ck-border);padding:30px 34px;box-shadow:3px 3px 0 rgba(0,0,0,.7);font-family:var(--ck-font-mono);font-size:28px;line-height:1.65;color:var(--ck-fg1)">
+      <div style="color:var(--ck-error-lt)">## CRITIC</div>
+      <div style="margin-top:10px">@ADVOCATE: <span style="color:var(--ck-emerald-lt)">"The cache layer adds</span></div>
+      <div><span style="color:var(--ck-emerald-lt)">no latency"</span></div>
+      <div style="margin-top:10px">Counter: profiler output at</div>
+      <div><span style="color:var(--ck-blonde)">cache.ts:142</span> shows 12ms overhead</div>
+      <div>under load.</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>protocol</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">06 / 14</span>
+  </div>
+</section>
+
+<section data-label="Evidence" data-screen-label="07 Evidence" data-speaker-notes="So the citation requirements differ by motion type. Code motions need file and line plus an excerpt or test output. General motions need a named source. And then the arbiter rejects any finding it cannot confirm, which is basically what stops invented thoroughness." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">07 · Evidence</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">A claim without a citation is a question.</h2>
+  <div style="display:flex;flex-direction:column;gap:2px;margin-bottom:38px">
+    <div style="display:grid;grid-template-columns:340px 1fr;gap:2px;font-family:var(--ck-font-mono);font-size:24px;letter-spacing:.16em;text-transform:uppercase;color:var(--ck-fg3)">
+      <div style="padding:16px 26px;background:var(--ck-abyss)">Motion type</div>
+      <div style="padding:16px 26px;background:var(--ck-abyss)">Citation required</div>
+    </div>
+    <div style="display:grid;grid-template-columns:340px 1fr;gap:2px;font-size:30px;color:var(--ck-fg1)">
+      <div style="padding:22px 26px;background:var(--ck-surface);font-family:var(--ck-font-mono);color:var(--ck-blonde)">code</div>
+      <div style="padding:22px 26px;background:var(--ck-surface)">file:line, plus a verbatim excerpt or test output</div>
+    </div>
+    <div style="display:grid;grid-template-columns:340px 1fr;gap:2px;font-size:30px;color:var(--ck-fg1)">
+      <div style="padding:22px 26px;background:var(--ck-surface);font-family:var(--ck-font-mono);color:var(--ck-blonde)">general</div>
+      <div style="padding:22px 26px;background:var(--ck-surface)">a named source: doc URL, RFC, benchmark, prior art</div>
+    </div>
+  </div>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1fr 1fr;gap:56px">
+    <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">The arbiter rejects what it cannot confirm.</div>
+    <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">It never invents a finding to look thorough.</div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>evidence</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">07 / 14</span>
+  </div>
+</section>
+
+<section data-label="Scope discipline" data-screen-label="08 Scope discipline" data-speaker-notes="So without this gate, a council basically turns into a wishlist. Every finding must be about the motion and must not pre-date it. Out-of-scope findings survive only at a security, data-loss or compliance bar, and even then they are informational, not fix targets." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">08 · Scope</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 34px">Two tests, then a high bar.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid #1a8a6a;padding:24px 28px;box-shadow:3px 3px 0 rgba(0,0,0,.7);font-size:30px;color:var(--ck-fg1);line-height:1.4">The finding is directly about the motion.</div>
+      <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid #1a8a6a;padding:24px 28px;box-shadow:3px 3px 0 rgba(0,0,0,.7);font-size:30px;color:var(--ck-fg1);line-height:1.4">The concern does not pre-date the motion.</div>
+      <div style="font-size:30px;color:var(--ck-fg2);line-height:1.4">Fail either and it is dropped. No wishlists.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:grid;grid-template-columns:220px 1fr;gap:20px;align-items:center;background:var(--ck-raised);border:1px solid var(--ck-border);padding:20px 26px"><span style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-error-lt);letter-spacing:.12em">SECURITY</span><span style="font-size:28px;color:var(--ck-fg1)">OWASP Top 10 or equivalent</span></div>
+      <div style="display:grid;grid-template-columns:220px 1fr;gap:20px;align-items:center;background:var(--ck-raised);border:1px solid var(--ck-border);padding:20px 26px"><span style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-error-lt);letter-spacing:.12em">DATA LOSS</span><span style="font-size:28px;color:var(--ck-fg1)">corruption, silent deletion, no rollback</span></div>
+      <div style="display:grid;grid-template-columns:220px 1fr;gap:20px;align-items:center;background:var(--ck-raised);border:1px solid var(--ck-border);padding:20px 26px"><span style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-error-lt);letter-spacing:.12em">COMPLIANCE</span><span style="font-size:28px;color:var(--ck-fg1)">a legal or regulatory blocker</span></div>
+      <div style="font-size:28px;color:var(--ck-fg3);line-height:1.4;margin-top:6px">Not performance, quality, style, debt or ideas. A critical find is a note.</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>scope</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">08 / 14</span>
+  </div>
+</section>
+
+<section data-label="Supervision" data-screen-label="09 Supervision" data-speaker-notes="So a long debate stalls, that just happens. council-supervisor wraps it with heartbeats, stall detection, checkpoints and agent replacement, so one dead agent does not hang the round. And then council-fix chains the whole thing into a prioritised fix plan on one command." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">09 · Supervision</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">Long debates need a supervisor.</h2>
+  <div style="display:flex;align-items:stretch;font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-fg1);margin-bottom:40px">
+    <div style="background:#14664e;clip-path:polygon(0 0, calc(100% - 16px) 0, 100% 100%, 0 100%);padding:24px 34px;flex:1">adversarial-council</div>
+    <div style="background:#122858;clip-path:polygon(0 0, 100% 0, calc(100% - 16px) 100%, 16px 100%);padding:24px 34px 24px 44px;margin-left:-16px;flex:1.1">+ council-supervisor</div>
+    <div style="background:#3a2068;clip-path:polygon(16px 0, calc(100% - 16px) 0, 100% 100%, 0 100%);padding:24px 34px 24px 44px;margin-left:-16px;flex:1">council-fix</div>
+    <div style="background:#FBB13C;color:#0f1117;clip-path:polygon(16px 0, 100% 0, 100% 100%, 0 100%);padding:24px 34px 24px 44px;margin-left:-16px;flex:1.1;font-weight:700">prioritised fix plan</div>
+  </div>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Heartbeats and stall detection. One dead agent cannot hang a round.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Checkpoints between rounds. Replacement on no response.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Structured results out. No transcript parsing downstream.</div>
+    </div>
+    <div style="background:var(--ck-raised);border:1px solid var(--ck-border);border-top:3px solid #FBB13C;padding:30px 34px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:16px">
+      <div style="font-family:var(--ck-font-mono);font-size:26px;letter-spacing:.16em;text-transform:uppercase;color:var(--ck-blonde)">Then: parallel-fix</div>
+      <div style="font-size:30px;color:var(--ck-fg1);line-height:1.45">Findings fan out to isolated worktrees, one strategy each.</div>
+      <div style="font-size:30px;color:var(--ck-fg1);line-height:1.45">Smallest passing diff wins. Losers are removed, not merged.</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>supervision</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">09 / 14</span>
+  </div>
+</section>
+
+<section data-label="spec-loop" data-screen-label="10 spec-loop" data-speaker-notes="So this is the largest loop. Decompose the spec into a routed dependency DAG, build the leaves in parallel worktree waves, council every pull request, merge, and then start the next wave. Basically the DAG is what makes the parallelism safe." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">10 · spec-loop</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">A spec becomes a DAG.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:grid;grid-template-columns:150px 1fr;gap:20px;align-items:center;background:var(--ck-surface);border:1px solid var(--ck-border);border-left:0;padding:20px 26px"><span style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-blonde)">wave 1</span><span style="font-size:28px;color:var(--ck-fg1)">schema · config · types</span></div>
+      <div style="display:grid;grid-template-columns:150px 1fr;gap:20px;align-items:center;background:var(--ck-surface);border:1px solid var(--ck-border);padding:20px 26px"><span style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-blonde)">wave 2</span><span style="font-size:28px;color:var(--ck-fg1)">repository · service · adapters</span></div>
+      <div style="display:grid;grid-template-columns:150px 1fr;gap:20px;align-items:center;background:var(--ck-surface);border:1px solid var(--ck-border);padding:20px 26px"><span style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-blonde)">wave 3</span><span style="font-size:28px;color:var(--ck-fg1)">handlers · UI · integration tests</span></div>
+      <div style="font-size:30px;color:var(--ck-fg2);line-height:1.4;margin-top:8px">Unblocked leaves run together. The next wave waits on its inputs.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:22px">
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Routed first: agent type, model tier, worktree.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">Every PR faces a council. Unconditional FOR, not a green suite.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4"><span style="font-family:var(--ck-font-mono);color:var(--ck-blonde)">feature-loop</span> trades breadth for depth: one feature, end to end.</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>spec-loop</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">10 / 14</span>
+  </div>
+</section>
+
+<section data-label="Tiering" data-screen-label="11 Tiering" data-speaker-notes="So this rule came from me messing up. I ran a 33-agent workflow that inherited the top model everywhere, burned about 2 million subagent tokens, and then hit the session limit. Fan-out on the mid tier is way cheaper, and on YAML and config work I honestly could not see a quality difference." style="background:var(--ck-abyss);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">11 · Cost</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 40px">Assign a tier per role.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:0.8fr 1fr;gap:64px;align-items:center">
+    <div>
+      <div style="font-family:var(--ck-font-mono);font-size:150px;font-weight:800;color:var(--ck-blonde);line-height:0.95;letter-spacing:-0.03em">33</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4;margin-top:18px;max-width:540px">agents all inherited the top model. 2M tokens later, the session died.</div>
+      <div style="font-size:30px;color:var(--ck-fg3);line-height:1.4;margin-top:20px">Spend concentrates in fan-out. The top model does not belong there.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:grid;grid-template-columns:1fr 190px;gap:20px;align-items:center;background:var(--ck-surface);border:1px solid var(--ck-border);padding:20px 26px"><span style="font-size:29px;color:var(--ck-fg1)">Thinker · design, hard root-causing</span><span style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-blonde);letter-spacing:.12em">TOP</span></div>
+      <div style="display:grid;grid-template-columns:1fr 190px;gap:20px;align-items:center;background:var(--ck-surface);border:1px solid var(--ck-border);padding:20px 26px"><span style="font-size:29px;color:var(--ck-fg1)">Orchestrator · plans, arbiters</span><span style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-blonde);letter-spacing:.12em">TOP / MID</span></div>
+      <div style="display:grid;grid-template-columns:1fr 190px;gap:20px;align-items:center;background:var(--ck-raised);border:1px solid var(--ck-border);padding:20px 26px"><span style="font-size:29px;color:var(--ck-fg1)">Implementer · appliers, porters</span><span style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-emerald-lt);letter-spacing:.12em">MID</span></div>
+      <div style="display:grid;grid-template-columns:1fr 190px;gap:20px;align-items:center;background:var(--ck-surface);border:1px solid var(--ck-border);padding:20px 26px"><span style="font-size:29px;color:var(--ck-fg1)">Reviewer · lenses, verification</span><span style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-teal-lt);letter-spacing:.12em">DEPENDS</span></div>
+      <div style="font-size:28px;color:var(--ck-fg3);line-height:1.4;margin-top:6px">Escalate for a root cause that survived mid tier. Never for N lenses.</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>tiering</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">11 / 14</span>
+  </div>
+</section>
+
+<section data-label="Gaming gate" data-screen-label="12 Gaming gate" data-speaker-notes="So an agent optimising for a green test will just delete the test, I have seen it. autofix-swarm gates every candidate before promotion: the fix must not weaken the assertion it satisfies. I think this is the one slide the security-minded people always ask about." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">12 · autofix-swarm</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">Competing fixes need a gate.</h2>
+  <div style="display:flex;align-items:stretch;font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-fg1);margin-bottom:40px">
+    <div style="background:#14664e;clip-path:polygon(0 0, calc(100% - 16px) 0, 100% 100%, 0 100%);padding:24px 34px;flex:1">diagnose</div>
+    <div style="background:#122858;clip-path:polygon(0 0, 100% 0, calc(100% - 16px) 100%, 16px 100%);padding:24px 34px 24px 44px;margin-left:-16px;flex:1.2">fan out competing worktree fixes</div>
+    <div style="background:#8C2F39;clip-path:polygon(16px 0, calc(100% - 16px) 0, 100% 100%, 0 100%);padding:24px 34px 24px 44px;margin-left:-16px;flex:1">gate against gaming</div>
+    <div style="background:#3a2068;clip-path:polygon(16px 0, calc(100% - 16px) 0, 100% 100%, 0 100%);padding:24px 34px 24px 44px;margin-left:-16px;flex:1">promote a champion</div>
+    <div style="background:#FBB13C;color:#0f1117;clip-path:polygon(16px 0, 100% 0, 100% 100%, 0 100%);padding:24px 34px 24px 44px;margin-left:-16px;flex:0.9;font-weight:700">council</div>
+  </div>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:22px">
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">An agent optimising for green weakens the assertion. It passes.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">The gate reads the diff against its test before promotion.</div>
+      <div style="font-size:32px;color:var(--ck-fg1);line-height:1.4">The champion still faces a council.</div>
+    </div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid var(--ck-error-lt);padding:30px 34px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:16px">
+      <div style="font-family:var(--ck-font-mono);font-size:26px;letter-spacing:.16em;text-transform:uppercase;color:var(--ck-error-lt)">Gaming, in practice</div>
+      <div style="font-size:30px;color:var(--ck-fg1);line-height:1.45">Delete the assertion. Widen the tolerance. Swallow the exception.</div>
+      <div style="font-size:30px;color:var(--ck-fg2);line-height:1.45">All four: green run, broken product.</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>gate</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">12 / 14</span>
+  </div>
+</section>
+
+<section data-label="Steal this" data-screen-label="13 Steal this" data-speaker-notes="So this one is for people who will never install a workflow runner, which is fine. Four habits from this band that work with one plain agent session and no scripts at all." style="background:var(--ck-base);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-teal-lt)">13 · Portable</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:18px 0 36px">Steal these without the scripts.</h2>
+  <div style="flex:1;align-content:center;display:grid;grid-template-columns:1fr 1fr;gap:24px">
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid #1a8a6a;padding:28px 32px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:14px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-emerald-lt)">Ask for the citation</div><div style="font-size:30px;color:var(--ck-fg1);line-height:1.4">"Which file and line?" Kills most confident guesses.</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid #1a8a6a;padding:28px 32px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:14px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-emerald-lt)">Run the critic separately</div><div style="font-size:30px;color:var(--ck-fg1);line-height:1.4">A second session that only argues against it.</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid #1a8a6a;padding:28px 32px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:14px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-emerald-lt)">Name the tier out loud</div><div style="font-size:30px;color:var(--ck-fg1);line-height:1.4">Decide the model by role, before the task.</div></div>
+    <div style="background:var(--ck-surface);border:1px solid var(--ck-border);border-top:3px solid #1a8a6a;padding:28px 32px;box-shadow:3px 3px 0 rgba(0,0,0,.7);display:flex;flex-direction:column;gap:14px"><div style="font-family:var(--ck-font-mono);font-size:26px;color:var(--ck-emerald-lt)">Check the test, not the run</div><div style="font-size:30px;color:var(--ck-fg1);line-height:1.4">Read what the assertion became, not that it passed.</div></div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>portable</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span style="color:var(--ck-blonde)">13 / 14</span>
+  </div>
+</section>
+
+<section data-label="Takeaways" data-screen-label="14 Takeaways" data-speaker-notes="So, three lines, and then we go back to the master deck. If you keep one, keep this: separate contexts are the product. Everything else in this band is basically plumbing around that. Okay, that is it from me." style="background:var(--ck-abyss);color:var(--ck-fg1);padding:88px 100px 96px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;font-family:var(--ck-font-ui);overflow:hidden">
+  <div style="position:absolute;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,#14664e,#122858,#3a2068)"></div>
+  <div style="font-family:var(--ck-font-mono);font-size:24px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ck-blonde)">14 · Take away</div>
+  <h2 style="font-size:64px;font-weight:700;color:var(--ck-emerald-lt);letter-spacing:-0.02em;line-height:1.05;margin:20px 0 44px">Three lines to keep.</h2>
+  <div style="display:flex;flex-direction:column;gap:24px;max-width:1520px">
+    <div style="display:flex;gap:28px;align-items:baseline"><span style="font-family:var(--ck-font-mono);font-size:30px;color:var(--ck-fg3)">01</span><span style="font-size:36px;color:var(--ck-fg1);line-height:1.35">Separate contexts are the product. Prose roles converge on nothing.</span></div>
+    <div style="display:flex;gap:28px;align-items:baseline"><span style="font-family:var(--ck-font-mono);font-size:30px;color:var(--ck-fg3)">02</span><span style="font-size:36px;color:var(--ck-fg1);line-height:1.35">No confirmable citation, no finding.</span></div>
+    <div style="display:flex;gap:28px;align-items:baseline"><span style="font-family:var(--ck-font-mono);font-size:30px;color:var(--ck-fg3)">03</span><span style="font-size:36px;color:var(--ck-fg1);line-height:1.35">Never put the top model on a fan-out stage.</span></div>
+  </div>
+  <div style="position:absolute;left:100px;right:100px;bottom:44px;display:flex;align-items:center;gap:16px;font-family:var(--ck-font-mono);font-size:24px;color:var(--ck-fg3)">
+    <span style="color:var(--ck-emerald-lt)">⬢</span><span>workflows</span>
+    <div style="flex:1;height:1px;background:var(--ck-border)"></div>
+    <span><a href="Agentic Workflow - Master Deck.dc.html" style="color:var(--ck-teal-lt)">back to master deck</a></span>
+    <span style="color:var(--ck-blonde)">14 / 14</span>
+  </div>
+</section>
+
+</x-import>
+</x-dc>
+</body>
+</html>
