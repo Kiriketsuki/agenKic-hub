@@ -53,4 +53,6 @@ nav:
       - Model tiering: patterns/model-tiering.md
       - Council patterns: patterns/council-patterns.md
       - Gherkin and specs: patterns/gherkin-and-specs.md
+      - Claude Code hooks: patterns/hooks.md
+      - Authoring workflows: patterns/authoring-workflows.md
       - Clip-path borders: patterns/clip-path-borders.md
