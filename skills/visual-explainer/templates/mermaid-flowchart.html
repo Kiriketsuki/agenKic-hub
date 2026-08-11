@@ -592,11 +592,18 @@
 
         const id = 'diagram-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
         const { svg } = await mermaid.render(id, code);
-        // F-10 fix: use DOMParser instead of innerHTML to avoid script injection
-        const parser = new DOMParser();
-        const svgDoc = parser.parseFromString(svg, 'image/svg+xml');
-        canvas.innerHTML = '';
-        canvas.appendChild(canvas.ownerDocument.importNode(svgDoc.documentElement, true));
+        // Parse with the lenient HTML parser, not 'image/svg+xml'.
+        // Mermaid 10+ emits HTML inside <foreignObject> labels, including
+        // unclosed tags such as <br>. The strict XML parser can silently
+        // truncate labels or edges. The HTML parser accepts the label
+        // markup and preserves the SVG namespace.
+        const parsed = new DOMParser().parseFromString(svg, 'text/html');
+        const parsedSvg = parsed.body.querySelector('svg');
+        if (!parsedSvg) {
+          label.textContent = 'Error: No SVG';
+          return;
+        }
+        canvas.replaceChildren(document.adoptNode(parsedSvg));
 
         const svgNode = canvas.querySelector('svg');
         if (!svgNode) {

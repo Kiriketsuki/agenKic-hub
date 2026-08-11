@@ -4,7 +4,7 @@ description: Generate beautiful, self-contained HTML pages that visually explain
 license: MIT
 metadata:
   author: nicobailon
-  version: "0.6.3-local"
+  version: "0.6.4-local, mermaid SVG-insertion ported from upstream 0.8.1"
   upstream: "https://github.com/nicobailon/visual-explainer"
   adapted-by: "kiriketsuki"
 ---
@@ -110,7 +110,7 @@ Vary the choice each time. If the last diagram was dark and technical, make the 
 
 **Mermaid layout direction:** Prefer `flowchart TD` (top-down) over `flowchart LR` (left-to-right) for complex diagrams. LR spreads horizontally and makes labels unreadable when there are many nodes. Use LR only for simple 3-4 node linear flows. See `./references/libraries.md` "Layout Direction: TD vs LR".
 
-**Mermaid line breaks in flowchart labels:** Do NOT use `<br/>` in labels -- Mermaid converts it to `<br>` inside SVG `<foreignObject>`, which is invalid XML and causes parse errors in browsers. Keep labels single-line instead. If a label is too long, shorten the text or split into multiple connected nodes.
+**Mermaid line breaks in flowchart labels:** Use `<br/>` in quoted flowchart labels for multi-line text. Do not use escaped `\n` labels -- Mermaid does not treat them as line breaks. The `diagram-shell` render code inserts Mermaid's SVG via the lenient HTML parser (`DOMParser(..., 'text/html')`), which accepts the `<br>` markup Mermaid emits inside `<foreignObject>` labels. Never insert Mermaid output with the strict `image/svg+xml` parser or `canvas.innerHTML` -- see "Mermaid SVG insertion" in `./references/css-patterns.md`.
 
 **Mermaid CSS class collision constraint:** Never define `.node` as a page-level CSS class. Mermaid.js uses `.node` internally on SVG `<g>` elements with `transform: translate(x, y)` for positioning. Page-level `.node` styles (hover transforms, box-shadows) leak into diagrams and break layout. Use the namespaced `.ve-card` class for card components instead. The only safe way to style Mermaid's `.node` is scoped under `.mermaid` (e.g., `.mermaid .node rect`).
 
