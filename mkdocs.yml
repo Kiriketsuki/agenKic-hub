@@ -45,6 +45,8 @@ nav:
       - Install: setup/install.md
       - Manual symlinks: setup/symlinks.md
       - Harnesses: setup/harnesses.md
+  - Guide:
+      - Terminal + Claude Code deck: guide/terminal-claude-code-deck.md
   - Skills: skills/index.md
   - Workflows: workflows/index.md
   - Patterns:

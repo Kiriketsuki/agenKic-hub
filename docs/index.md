@@ -34,3 +34,5 @@ A public hub of reusable material for agentic coding. It collects skills, workfl
 3. Pick the components you want. The installer symlinks them into place.
 
 See [Install](setup/install.md) for details, [Skills](skills/index.md) for the catalog, and [Patterns](patterns/index.md) for the written guides.
+
+New to the terminal or to Claude Code? Start with the [guide slide deck](guide/terminal-claude-code-deck.md). It covers the full stack: Ghostty, Nerd Fonts, tmux, lazygit, prompt styling, then Claude Code with hooks, context management, MCP, and worktrees.
