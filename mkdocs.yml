@@ -1,0 +1,56 @@
+site_name: agenKic sKills
+site_description: A public hub of agent skills, workflows, harness configs, and patterns.
+site_url: https://kiriketsuki.github.io/agenKic-sKills/
+repo_url: https://github.com/Kiriketsuki/agenKic-sKills
+repo_name: Kiriketsuki/agenKic-sKills
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+
+nav:
+  - Home: index.md
+  - Setup:
+      - Install: setup/install.md
+      - Manual symlinks: setup/symlinks.md
+      - Harnesses: setup/harnesses.md
+  - Skills: skills/index.md
+  - Workflows: workflows/index.md
+  - Patterns:
+      - Overview: patterns/index.md
+      - Debugging protocol: patterns/debugging-protocol.md
+      - Model tiering: patterns/model-tiering.md
+      - Council patterns: patterns/council-patterns.md
+      - Gherkin and specs: patterns/gherkin-and-specs.md
+      - Clip-path borders: patterns/clip-path-borders.md
