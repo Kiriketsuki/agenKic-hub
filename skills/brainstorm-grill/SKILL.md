@@ -37,7 +37,7 @@ Create a task for each item and complete them in order:
 
 1. **Explore project context** — files, docs, recent commits, existing patterns. Answer everything you can from the repo before opening your mouth.
 2. **Scope check** — if the request is really several independent subsystems, say so before grilling. Help decompose, then grill the first sub-project.
-3. **Grill the decision tree** — one question at a time, each with a recommended answer, walking every branch and resolving dependencies between decisions.
+3. **Grill the decision tree** — round by round along the frontier, each question with a recommended answer, walking every branch and resolving dependencies between decisions.
 4. **Present design** — in sections scaled to complexity, get approval after each section.
 5. **Hand off to feature-spec** — invoke the feature-spec skill to formalize the approved design.
 
@@ -72,9 +72,11 @@ digraph brainstorm_grill {
 
 ## The Grilling Protocol
 
-**Map the decision tree first.** Before the first question, build (in your head, or out loud if it helps) the set of decisions this plan requires and how they depend on each other. Grill in dependency order: a decision that constrains others comes first, because its answer prunes branches downstream.
+**Map the decision tree first.** Before the first question, build (in your head, or out loud if it helps) the set of decisions this plan requires and how they depend on each other. The **frontier** is the set of decisions whose prerequisites are all settled. Grill the frontier round by round: each settled answer prunes branches downstream and pushes the frontier outward.
 
-**One question at a time, always with a recommendation — asked through AskUserQuestion.** Do not grill in plain prose. Each open decision becomes one AskUserQuestion call:
+**Dispatch fact-finding async.** When a frontier question depends on an environment fact (does the repo use X, what does the schema look like), spawn a subagent to find it and keep grilling the rest of the frontier. Do not block the round on a lookup you can run in the background.
+
+**Every question carries a recommendation — asked through AskUserQuestion.** Do not grill in plain prose. Each open decision becomes one AskUserQuestion question:
 
 - `question` — the specific decision, framed concretely.
 - `header` — a short tag for the decision (max 12 chars), e.g. "Storage", "Auth", "Scope".
@@ -83,7 +85,7 @@ digraph brainstorm_grill {
 
 The user can accept your recommendation, pick an alternative, or use the automatic "Other" choice to override or argue. For open-ended decisions ("what does 'works' mean here?"), make option 1 the recommended testable definition and the others plausible variants — never leave it as a blank prose prompt. When the fork is between concrete artifacts (competing layouts, API shapes, code snippets), put a short mockup of each in the option's `preview` field so the user compares them side by side.
 
-Default to **one question per call** — grill mode walks the decision tree in dependency order, and batching breaks that (a later answer may prune an earlier question). Put more than one question in a single AskUserQuestion call only when the decisions are provably independent — no dependency edge between them — and you are clearing a flat cluster at the same level (the tool takes up to 4). Never ask without recommending.
+Ask the **current frontier as one round** — every decision whose prerequisites are settled goes into the same AskUserQuestion call (the tool takes up to 4; larger frontiers split into consecutive calls, most constraining decisions first). Never batch a question with one of its own prerequisites — a later answer must not be able to invalidate an earlier question in the same round. Never ask without recommending.
 
 **Resolve dependencies before descending.** When an answer opens sub-decisions, walk those sub-branches to resolution before returning to siblings. Track what is settled so you never re-litigate a closed branch and never leave one dangling.
 
@@ -118,7 +120,7 @@ Then invoke the feature-spec skill. brainstorm-grill ends here — feature-spec 
 
 ## Key Principles
 
-- **One question at a time** — one AskUserQuestion call per open decision; batch only provably independent decisions.
+- **Grill the frontier round by round** — batch decisions whose prerequisites are all settled; never batch a decision with its own prerequisite.
 - **Every question carries your recommendation** — ask via AskUserQuestion, recommendation as option 1, no bare questions.
 - **Resolve dependencies in order** — settle constraining decisions first.
 - **No vagueness survives** — convert hand-waves into testable statements immediately.
