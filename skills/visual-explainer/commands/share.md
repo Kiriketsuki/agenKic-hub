@@ -26,7 +26,7 @@ Upload a generated HTML file to the AutoConnect docs server, organized by reposi
 
 2. **Determine the repo.** In priority order:
    - Use `--repo` flag if provided
-   - Detect from `$PWD` — if the current directory is under `~/workdev/Aurrigo/<RepoName>`, use that repo name
+   - Detect from `$PWD` — if the current directory is under your work repos root (for example `~/work/<RepoName>`), use that repo name
    - If neither works, ask the user which repo this belongs to
 
 3. **Upload via SCP.** Transfer the file to the per-repo directory:
@@ -97,7 +97,7 @@ The root `index.html` dynamically reads each repo's directory listing and presen
 ## Example
 
 ```
-> cd ~/workdev/Aurrigo/AutoConnect-MEC-Miki
+> cd ~/work/<RepoName>
 > /visual-explainer:generate-web-diagram "gRPC migration phases"
 # ... generates /tmp/visual-explainer/grpc-migration.html
 

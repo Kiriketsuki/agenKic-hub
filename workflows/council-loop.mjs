@@ -23,7 +23,7 @@
  * does NOT resolve ~/.claude/workflows/*.mjs (only built-ins), so `{ name: "council-loop" }` errors.
  * An absolute path resolves the same from any cwd/OS (a RELATIVE one would resolve against the
  * project cwd and break):
- *   Workflow({ scriptPath: "/home/kiriketsuki/.claude/workflows/council-loop.mjs", args: <TARGET> })
+ *   Workflow({ scriptPath: "/absolute/path/to/.claude/workflows/council-loop.mjs", args: <TARGET> })
  *
  * TARGET = {
  *   title,                                    // what's under review (1 line)

@@ -1,6 +1,6 @@
 ---
 name: release-notes-enricher
-description: "Enrich git-cliff release notes with detailed prose summaries by fetching and summarizing linked PRs, issues, and commits from GitHub. Use this skill whenever the user asks to 'enrich release notes', 'add detail to release notes', 'expand release notes', 'detailed release notes', 'summarize PRs in release', or wants a richer version of existing git-cliff output. Also trigger when the user says 'cliff notes detail', 'explain the release', or 'what actually happened in this release'. ALSO handles the Aurrigo dashboards' in-app release-notes.json: trigger on 'update the in-app release notes', 'backfill release notes', 'monthly release notes', or any request to refresh what the dashboards' Release Notes modal shows — this mode UPDATES the JSON file end-to-end (generate entries, insert, test, ship)."
+description: "Enrich git-cliff release notes with detailed prose summaries by fetching and summarizing linked PRs, issues, and commits from GitHub. Use this skill whenever the user asks to 'enrich release notes', 'add detail to release notes', 'expand release notes', 'detailed release notes', 'summarize PRs in release', or wants a richer version of existing git-cliff output. Also trigger when the user says 'cliff notes detail', 'explain the release', or 'what actually happened in this release'. ALSO handles an in-app release-notes.json: trigger on 'update the in-app release notes', 'backfill release notes', 'monthly release notes', or any request to refresh what a dashboard's Release Notes modal shows — this mode UPDATES the JSON file end-to-end (generate entries, insert, test, ship)."
 ---
 
 # Release Notes Enricher
@@ -163,29 +163,28 @@ Produce all three outputs:
 - **Large threads** — if a PR has >50 comments, summarize the first 20 and last 10, noting "... [N comments omitted for brevity]".
 - **Cross-repo references** — if a PR references an issue in a different repo, follow it if the user has access.
 
-## Mode: Aurrigo In-App Release Notes (release-notes.json)
+## Mode: In-App Release Notes (release-notes.json) — worked example
 
-The Aurrigo dashboards (FleetManagement, BHAManagement, StandManagement — RemoteSupervisor
-has no release-notes UI) ship an in-app Release Notes modal reading `src/release-notes.json`.
-CI's git-cliff pipeline only feeds GitHub Releases; the in-app JSON is updated by THIS skill.
-When the user asks to update/backfill the in-app notes, run this mode end-to-end — it does
-the updating, not just the prose. First run shipped 2026-07-23 (Fleet #147, BHA #201,
-Stand #284), covering through July 2026.
+This mode is a worked example for dashboards that ship an in-app Release Notes modal
+reading `src/release-notes.json`. CI's git-cliff pipeline only feeds GitHub Releases; the
+in-app JSON is updated by THIS skill. When the user asks to update/backfill the in-app
+notes, run this mode end-to-end — it does the updating, not just the prose.
 
-Repos live under `/home/kiriketsuki/workdev/Aurrigo/AutoConnect-SIM-Sora/int-doni/<Repo>/`.
-`gh auth switch --user Jovian-Aurrigo` first. Run per-repo steps from each repo's own dir.
+Configuration: set `<REPOS_ROOT>` to the directory holding the dashboard repo checkouts,
+`<ORG>` to the GitHub org, and switch to the right `gh` account first
+(`gh auth switch --user <WORK_ACCOUNT>`). Run per-repo steps from each repo's own dir.
 
 ### 1. Gather (per repo)
 
 - Find the newest entry in `src/release-notes.json` — its date is the window start.
-- List merged PRs: `gh api 'repos/aurrigo-software-dev/<Repo>/pulls?state=closed&base=main&per_page=100' --paginate` filtered to `merged_at > start`; drop ci-bump noise (`ci: release version`, `chore: bump version`).
+- List merged PRs: `gh api 'repos/<ORG>/<Repo>/pulls?state=closed&base=main&per_page=100' --paginate` filtered to `merged_at > start`; drop ci-bump noise (`ci: release version`, `chore: bump version`).
 - Thin/empty PR bodies → fetch the linked issue body (`Closes #N`). Skip comment threads unless the body is empty.
 
 ### 2. Compose entries
 
 - **One entry per calendar month**, newest first. Skip empty months.
 - `version` = the `ci: bump version to X` commit immediately after that month's last included merge — VERIFY each version string exists in `git log origin/main` before emitting.
-- Schema (match the file's existing conventions for `repo` — "Fleet"/"BHA"/"Stand" — and use only ReleaseFlat-accepted types: feature, bugfix, hotfix, breaking, chore, revert):
+- Schema (match the file's existing conventions for `repo` short names, and use only the UI-accepted types: feature, bugfix, hotfix, breaking, chore, revert):
   ```json
   { "version": "...", "date": "<ISO of month's last merge>", "type": "monthly",
     "summaryOps": "1-3 plain-language sentences — what operators notice",
@@ -202,21 +201,21 @@ Repos live under `/home/kiriketsuki/workdev/Aurrigo/AutoConnect-SIM-Sora/int-don
 - Prepend entries to `releases` (file is newest-first). Assert: no duplicate versions, all required fields present, ISO dates, no `&amp;`. Preserve the file's indent. (Reference script pattern: parse existing file, `data["releases"] = new + old`, dump with detected indent.)
 - Do this on the issue auto-branch: file one `[Task] Backfill release notes ...` issue per repo (label `task`), wait ~15-30s for the auto-branch, check it out.
 
-### 4. Ship (established Aurrigo train)
+### 4. Ship (example release train)
 
 - Gates per repo: `npx vitest run` and `npm run build` green.
 - Commit `docs: backfill release notes ...` with `Closes #N`; push; `gh pr ready <PR>`; `gh pr merge <PR> --squash` (hook-gated); wait for the `ci: bump version` commit on main.
-- int-doni: update submodule checkouts to main, commit gitlink bump, `git pull --rebase` before push.
-- Deploy: `cd ~/workdev/Aurrigo/AutoConnect-DEP-Cloud && ./tools/act-deploy.sh deploy --role frontend --branch main --force --yes`; record the manifest.
+- If a superproject tracks the repos as submodules: update checkouts to main, commit the gitlink bump, `git pull --rebase` before push.
+- Deploy with your project's frontend deploy command; record the manifest.
 - Cadence: monthly, ~month end. The modal's fallback banner tolerates patch-drift between runs (the merge itself bumps the version past the newest entry — expected).
 
 ## Example Invocations
 
 ```
-"Enrich the release notes for v26.0.0.0 in RouteVisualiser"
+"Enrich the release notes for v26.0.0.0 in <Repo>"
 "Add detailed summaries to this release" [pastes cliff notes]
-"Generate detailed release notes for the latest tag in AutoConnect-MEC-Miki"
+"Generate detailed release notes for the latest tag in <Repo>"
 "Expand the release notes in ./RELEASE-NOTES.md"
-"Update the in-app release notes for the dashboards"   → Aurrigo JSON mode, end-to-end
-"Do the monthly release notes"                          → Aurrigo JSON mode, end-to-end
+"Update the in-app release notes for the dashboards"   → JSON mode, end-to-end
+"Do the monthly release notes"                          → JSON mode, end-to-end
 ```

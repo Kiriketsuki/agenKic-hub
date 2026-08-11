@@ -7,13 +7,19 @@ description: >
   The skill copies the HTML report and creates a structured companion markdown note.
 ---
 
+## Configuration
+
+Set `$INSIGHTS_ARCHIVE_DIR` to the vault folder that holds the archived reports, for
+example `~/vault/Areas/Tooling/Claude-Code/`. Every path below uses this variable.
+Substitute your own absolute path wherever the variable appears.
+
 ## Context
 
 After running `/insights`, the HTML report lands at `~/.claude/usage-data/report.html` and
 the full insights JSON is present in the conversation context. This skill archives both to:
 
 ```
-~/dev/obKidian/300-Areas-of-Responsibility/390-Tooling-and-Productivity/Claude-Code/
+$INSIGHTS_ARCHIVE_DIR
 ```
 
 ## Step 1: Determine the file name
@@ -28,7 +34,7 @@ To find the start date, list existing `.html` files in the vault folder, pick th
 recent one, and extract its end date. Use today's date as the end date.
 
 ```bash
-ls "/home/kiriketsuki/dev/obKidian/300-Areas-of-Responsibility/390-Tooling-and-Productivity/Claude-Code/"*.html
+ls "$INSIGHTS_ARCHIVE_DIR/"*.html
 ```
 
 Example: if the latest file is `Claude Code Insights — Mar-07 to Mar-14 2026.html`,
@@ -40,7 +46,7 @@ Format dates as `Mon-DD` (e.g., `Mar-21`). Year goes at the end.
 
 ```bash
 cp ~/.claude/usage-data/report.html \
-  "/home/kiriketsuki/dev/obKidian/300-Areas-of-Responsibility/390-Tooling-and-Productivity/Claude-Code/<FILENAME>.html"
+  "$INSIGHTS_ARCHIVE_DIR/<FILENAME>.html"
 ```
 
 ## Step 3: Create the markdown note
@@ -61,7 +67,7 @@ tags:
 period: "<start-date YYYY-MM-DD> to <end-date YYYY-MM-DD>"
 sessions: <number from insights data>
 messages: <number from insights data>
-report-html: "/home/kiriketsuki/dev/obKidian/300-Areas-of-Responsibility/390-Tooling-and-Productivity/Claude-Code/<FILENAME>.html"
+report-html: "$INSIGHTS_ARCHIVE_DIR/<FILENAME>.html"
 ---
 ```
 
@@ -139,15 +145,14 @@ One paragraph from fun_ending.
 
 ## Step 4: Create the vault symlink (if missing)
 
-If `000-System/Skills/insights-to-vault` does not already exist as a symlink, skip — this
-step is only needed when installing the skill fresh. The skill directory is already live at
-`~/.claude/skills/agenKic-sKills/insights-to-vault/`.
+If your vault links skills by symlink, ensure the vault-side symlink for this skill
+exists. Skip this step otherwise.
 
 ## Guidelines
 
 - No emojis anywhere in the markdown output.
 - Pull every number and example directly from the insights JSON — never invent stats.
-- The `report-html` path in frontmatter uses the absolute Linux path (not `~`).
+- The `report-html` path in frontmatter uses the resolved absolute path (not `~`).
 - If the insights data is not in the conversation context, ask the user to run `/insights` first.
 - After creating both files, confirm: "Archived to vault as `<FILENAME>`."
 - Sign with your current model's Clault Kiper signature per 000-System/Agents/AGENTS.md (Sonnet KiperS 4.6, Opus KiperO 4.8, Haiku KiperH 4.5) — derive from the model you are running as; never hardcode.

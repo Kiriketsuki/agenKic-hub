@@ -1,6 +1,9 @@
-# Jovian's voice — cover letter card
+# Voice card — cover letter (WORKED EXAMPLE)
 
-Distilled from `710-Voice-and-Persona/` references and the OGP letter. Read this before drafting; check the draft against it after.
+This file is a worked example of a personal voice card. Replace the name, email,
+examples, and fixed elements with your own before first use.
+
+Distilled from the author's past letters and voice references. Read this before drafting; check the draft against it after.
 
 ## The register
 
@@ -33,9 +36,9 @@ Warm, direct, a little playful, never corporate. Sounds like a capable engineer 
 
 - Opener: "I am applying for [role] on/at [team/company]." then the "I love building things" line, adapted, not copied verbatim every time.
 - Pivot: "The resume covers my work history, and I would love to talk more about it anytime. Nonetheless, let me talk about why [this role/this team] in particular."
-- Closer: "Happy to talk anytime, and thank you for reading." then "Best Regards, / Jovian".
-- Product name: **Auto-Connect**. Email: **limzh.jovian@gmail.com**. Sign as **Jovian**.
+- Closer: "Happy to talk anytime, and thank you for reading." then "Best Regards, / [Your Name]".
+- Product name: **[Your Product]** (spell it consistently). Email: **[your.email@example.com]**. Sign as **[Your Name]**.
 
 ## Self-check before showing the user
 
-Read the draft aloud mentally. For each paragraph ask: would Jovian text this to a peer? If a sentence sounds like it belongs in a LinkedIn post or a McKinsey deck, rewrite it plainer. At least one line should carry a small smile (a self-aware aside or a dry observation), and no line should carry a bow tie.
+Read the draft aloud mentally. For each paragraph ask: would you text this to a peer? If a sentence sounds like it belongs in a LinkedIn post or a McKinsey deck, rewrite it plainer. At least one line should carry a small smile (a self-aware aside or a dry observation), and no line should carry a bow tie.

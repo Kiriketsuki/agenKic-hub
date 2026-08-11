@@ -1,6 +1,6 @@
 # kilint - build spec
 
-`kilint` is Jovian's own anti-slop prose linter. It is inspired by the ASD-STE100
+`kilint` is a personal anti-slop prose linter. It is inspired by the ASD-STE100
 experiment in `reference/` but it is not that tool and must not copy its code. The
 reference implementation is a 120-line heuristic script; kilint is a configurable,
 testable package with profiles, path routing, suppression, comment-aware source
@@ -14,7 +14,7 @@ regexes verbatim, or its output format.
 ## Design goals
 
 1. **Configurable, not opinionated by hardcode.** Every word list, threshold, and
-   severity is overridable in TOML. The defaults encode Jovian's house style.
+   severity is overridable in TOML. The defaults encode the author's house style.
 2. **The delta is the signal.** A single absolute score is weak evidence. First-class
    support for scoring two texts and reporting the change.
 3. **No false-positive tax.** A linter that cries wolf on his daily notes gets

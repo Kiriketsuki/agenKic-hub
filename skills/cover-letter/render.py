@@ -34,7 +34,7 @@ def main() -> int:
 
     # Anchor at the "Dear ...," greeting (skips any leading heading/letterhead),
     # take everything after it, then strip the trailing valediction + signature
-    # block. The template supplies its own "Best Regards, Jovian" sign-off, so the
+    # block. The template supplies its own "Best Regards" sign-off, so the
     # body must end at the last real paragraph regardless of how the source closed.
     m = re.search(r"^(Dear .+?,)\n(.*)", md, re.S | re.M)
     if not m:
@@ -44,7 +44,8 @@ def main() -> int:
     sig = re.compile(
         r"^\s*(best regards,?|best wishes,?|kind regards,?|regards,?|"
         r"sincerely,?|yours sincerely,?|yours faithfully,?|"
-        r"jovian.*|lim zhe hong.*|limzh\.jovian@gmail\.com)\s*$",
+        # Customize: add your own name and email variants so a source sign-off strips.
+        r"your name.*|your\.email@example\.com)\s*$",
         re.I,
     )
     lines = rest.rstrip().split("\n")

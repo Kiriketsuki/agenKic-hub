@@ -3,6 +3,16 @@ name: feature-spec
 description: Use when the user wants to create a new feature specification, start speccing a feature, or fill out a feature spec sheet. Triggers: "Spec a feature", "New feature spec", "Create spec", "/spec", "Start feature spec", "spec this out". Always invoke this skill when the user wants to define what a feature should do before building it — even casual phrasings like "let's spec this out", "write up the spec", "plan this feature", "define the feature", or just "spec it" should trigger this. The skill enters plan mode immediately, interviews the user conversationally section by section, and produces a filled feature_spec.md in the target repo's docs/specs/todo/ directory.
 ---
 
+## Configuration
+
+Two optional variables personalize the daily-note step (Step 5):
+
+- `$VAULT_PATH`: absolute path to your Obsidian vault root, for example `~/vault`.
+- `$DAILY_NOTE_PATH`: path pattern for today's daily note, for example
+  `$VAULT_PATH/Daily/[YYYY]/[MMM]-[DD].md`.
+
+When neither is set, skip Step 5. The rest of the skill needs no configuration.
+
 ## Purpose
 
 Produce a filled `[feature-name]-spec.md` in the target repo's `docs/specs/todo/` directory — the repo is the current working directory by default, or a path the caller/handoff specifies (e.g. a brand-new repo created for the feature); create `docs/specs/todo/` if missing — by interviewing the user section-by-section. Enter plan mode at the start and stay there — this is a planning exercise from first question to final file.
@@ -188,10 +198,10 @@ Rules:
 
 Spawn a **background** subagent — fire and forget, do not await it. **Resolve two things yourself first** and substitute them as literals (do not make the subagent guess):
 
-- **Link form** — check whether the spec file lives inside the vault (`/home/kiriketsuki/dev/obKidian/...`):
+- **Link form** — check whether the spec file lives inside the vault (`$VAULT_PATH/...`, see Configuration):
   - Inside the vault → use an Obsidian wikilink: `[[<feature-name>-spec]]`.
   - Outside the vault (e.g. a separate code repo) → a wikilink would dangle, so reference the spec by absolute path in backticks, and link a related in-vault note if one exists (e.g. `` `~/dev/Personal/foo/foo-spec.md` · see [[Some Related Note]] ``).
-- **Today's daily note path**: `/home/kiriketsuki/dev/obKidian/500-Chronological-Logs/510-Personal/[YYYY]/[MMM]-[DD].md`.
+- **Today's daily note path**: `$DAILY_NOTE_PATH` (see Configuration). Skip Step 5 entirely when no daily-note path is configured.
 
 Pass the subagent this task (substitute real values):
 
