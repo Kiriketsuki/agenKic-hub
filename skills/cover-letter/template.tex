@@ -1,0 +1,49 @@
+% Cover letter template — clean and simple.
+% Compile: tectonic letter.tex
+% Placeholders (double-brace): DATE, RECIPIENT, ROLE, BODY — see SKILL.md.
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[a4paper,margin=2.5cm,top=2cm,bottom=2.5cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{parskip}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+
+\definecolor{rule}{HTML}{888888}
+
+\pagestyle{empty}
+\setlength{\parskip}{0.7em}
+\linespread{1.12}
+
+\begin{document}
+
+% ---------- Header ----------
+% Customize: your name, location, and email.
+{\LARGE\bfseries Your Name}\\[2pt]
+{\small\color{rule}%
+Your City \textbullet{}
+\href{mailto:your.email@example.com}{your.email@example.com}}
+
+\vspace{4pt}
+{\color{rule}\hrule height 0.6pt}
+\vspace{14pt}
+
+% ---------- Meta ----------
+{{DATE}}
+
+{{RECIPIENT}}\\
+Re: {{ROLE}}
+
+\vspace{6pt}
+
+% ---------- Body ----------
+{{BODY}}
+
+\vspace{10pt}
+Best Regards,\\[2pt]
+Your Name
+
+\end{document}

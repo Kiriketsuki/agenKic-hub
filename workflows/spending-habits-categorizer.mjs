@@ -1,3 +1,21 @@
+/**
+ * spending-habits-categorizer.mjs — WORKED EXAMPLE workflow.
+ *
+ * What it does: finds bank statement files (PDF/CSV) exported to Google Drive,
+ * parses each statement's transactions, categorizes them, and merges everything
+ * into a year-long spending-habits report.
+ *
+ * This file is a worked example built around OCBC (a Singapore bank). Before you
+ * run it, customize:
+ *   - args.issuer / args.statementType : your bank name and 'debit' or 'credit'
+ *   - args.folderHint : the Drive folder holding your statements
+ *   - args.files      : optionally pass explicit Drive file objects to skip discovery
+ *   - args.password   : statement PDF password, if any (pass via args, never hardcode)
+ *   - CATEGORIES and the merchant-cue examples in the parse prompt: they reference
+ *     Singapore merchants (NTUC, Grab, Singtel, ...) — swap in your own
+ * Credentials: Drive access comes from the `gws` CLI's own auth (`gws auth login`).
+ */
+
 export const meta = {
   name: 'spending-habits-categorizer',
   description: 'Crawl OCBC statements in Google Drive, parse transactions, and categorize a year of spending into a habits report',
