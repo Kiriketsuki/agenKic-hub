@@ -1,28 +1,7 @@
-aurrigo-act-weekly/
-aurrigo-ads-weekly/
-aurrigo-daily-standup/
-meeting-prepper/
 .claude/
 *.stackdump
-
-# Vault-specific skills (obKidian only)
-core-capture/
-core-engager/
-core-organizer/
-core-reviewer/
-daily-summarizer/
-doc-sync/
-dream-logger/
-git-sync/
-idea-extractor/
-inbox-capture/
-manhwa-logger/
-obsidian-daily-journal/
-proposal-drafter/
-repo-scaffolder/
-spatial-logger/
-task-scaffolder/
-todo-capture/
-todo-gcal-sync/
-smart-linker/
 __pycache__/
+site/
+
+# Private skills synced alongside this repo stay untracked
+skills/private-*/

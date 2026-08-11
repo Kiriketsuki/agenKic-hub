@@ -1,3 +1,17 @@
+/**
+ * ai-co-scientist.mjs — research hypothesis generation workflow.
+ *
+ * What it does: a distilled port of Google's AI co-scientist loop. It generates
+ * candidate hypotheses from diverse strategies, reviews them, ranks them in an
+ * Elo tournament, dedups near-duplicates, and evolves the survivors over rounds.
+ *
+ * What to customize (all via args, no paths or credentials involved):
+ *   - args.goal       : REQUIRED, the research goal in plain language
+ *   - args.rounds     : improvement cycles (default 3)
+ *   - args.generators : generation strategies per round (default 4)
+ *   - args.topK, args.pairCap, args.minBudget : tournament and budget tuning
+ */
+
 export const meta = {
   name: 'ai-co-scientist',
   description: 'Distilled Google AI co-scientist: generate -> review -> Elo tournament -> proximity dedup -> evolve, looped with a meta-review feedback overview',

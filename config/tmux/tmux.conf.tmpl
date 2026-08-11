@@ -1,0 +1,32 @@
+# agentic-hub tmux starter config.
+# STARTER TEMPLATE. This awaits the real port from the author's Linux machine.
+# Rendered by setup/setup.sh or setup/setup.ps1 into ~/.config/tmux/tmux.conf.
+
+# Prefix: C-a is easier to reach than the default C-b.
+unbind C-b
+set -g prefix C-a
+bind C-a send-prefix
+
+# Mouse support for pane resize and scroll.
+set -g mouse on
+
+# Truecolor. The overrides line tells tmux the outer terminal supports RGB.
+set -g default-terminal "tmux-256color"
+set -ga terminal-overrides ",*256col*:Tc"
+
+# Sane defaults.
+set -g base-index 1
+setw -g pane-base-index 1
+set -g renumber-windows on
+set -g history-limit 50000
+set -sg escape-time 10
+set -g focus-events on
+
+# Minimal status line with the hub accent color.
+set -g status-style "bg=default,fg={{accent_color}}"
+set -g status-left "#[bold] {{user_name}} #[default]| "
+set -g status-right "#[fg={{accent_color_secondary}}]%Y-%m-%d %H:%M"
+
+# Chrysaki theme include. Uncomment after the theme is installed.
+# The theme lives in the author's dots repo as a submodule.
+# source-file ~/.config/tmux/chrysaki/chrysaki.tmux

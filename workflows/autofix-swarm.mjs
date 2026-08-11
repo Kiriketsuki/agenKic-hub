@@ -30,8 +30,8 @@
  *    one level deep, merge:false. The name registry does NOT resolve ~/.claude/workflows/*.mjs.
  *
  * ─── INVOKE (top-level, by absolute scriptPath) ──────────────────────────────────────────
- *   Workflow({ scriptPath: "/home/kiriketsuki/.claude/workflows/autofix-swarm.mjs",
- *              args: { ...<ARGS>, workflowsDir: "/home/kiriketsuki/.claude/workflows" } })
+ *   Workflow({ scriptPath: "/absolute/path/to/.claude/workflows/autofix-swarm.mjs",
+ *              args: { ...<ARGS>, workflowsDir: "/absolute/path/to/.claude/workflows" } })
  *
  * ─── ARGS SHAPE (arrives as a JSON string — parsed defensively) ──────────────────────────
  *   {
@@ -50,12 +50,12 @@
  *     branchType,                  // naming-hook type; derived from mode if absent
  *     issue,                       // issue number for the branch name (optional)
  *     minBudget,                   // stop-before-iteration budget floor in tokens (default 60000)
- *     workflowsDir,                // abs dir holding council-loop.mjs (default /home/kiriketsuki/.claude/workflows)
+ *     workflowsDir,                // abs dir holding council-loop.mjs (default /absolute/path/to/.claude/workflows)
  *     model: { diagnosis, fix, gate, arbiter, reviewer, ledger }, // per-role overrides
  *   }
  *
  * Arch note for the agents this workflow spawns: node is lazy-loaded; use the absolute path
- *   /home/kiriketsuki/.nvm/versions/node/v24.14.1/bin/node when a step needs node directly.
+ *   the absolute path to your node binary when a step needs node directly.
  */
 
 export const meta = {
@@ -91,7 +91,8 @@ if (args && typeof args === 'object') {
 // The driver passes workflowsDir so the path is OS-correct without hardcoding the vault root;
 // fall back to the Arch default. (Absolute path is unambiguous — a relative one would resolve
 // against the project cwd, i.e. the target repo, not the vault.)
-const WF_DIR = (A.workflowsDir || '/home/kiriketsuki/.claude/workflows').replace(/\/+$/, '')
+// Default: <home>/.claude/workflows. Pass args.workflowsDir to override.
+const WF_DIR = (A.workflowsDir || ((typeof process !== 'undefined' && process.env && (process.env.HOME || process.env.USERPROFILE)) || '') + '/.claude/workflows').replace(/\/+$/, '')
 
 // ─── Config (all derived from A) ─────────────────────────────────────────────────────────
 const TASK = A.task || A.bug || A.description || '(no task description provided)'
@@ -118,7 +119,7 @@ const MODELS = Object.assign(
 const STRATEGIES = ['minimal-patch', 'targeted-refactor', 'alternative-root-cause']
 
 // Arch-box reminder injected into every spawned agent that runs shell.
-const ARCH_NOTE = 'Arch Linux note: node is lazy-loaded; if you need node directly use the absolute path /home/kiriketsuki/.nvm/versions/node/v24.14.1/bin/node.'
+const ARCH_NOTE = 'Environment note: node may be lazy-loaded (nvm). If a step needs node directly, use the absolute path to your node binary.'
 const REPO_NOTE = `Operate inside the repository at the absolute path: ${REPO}. ${ARCH_NOTE}`
 const NOWRITE = 'STRICT: do NOT write to the .autofix/ run dir, champion.md, or any ledger file — the orchestrator is the sole writer of shared state via dedicated promote/ledger agents.'
 

@@ -1,0 +1,80 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/explore-suggest.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/gh-check-before-create.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/pre-push-auth.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/lint-precommit.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/large-file-check.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Agent|TeamCreate",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/agent-route-suggest.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/context7-suggest.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/submodule-check.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/python-syntax-check.sh"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/preflight-check.sh\""
+          }
+        ]
+      }
+    ]
+  }
+}

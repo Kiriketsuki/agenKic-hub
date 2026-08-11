@@ -27,7 +27,7 @@
  *
  * FEATURE = {
  *   key, issue, branch, parentRef, pr,        // identity (parentRef e.g. "origin/epic/1-..."; pr optional, used for the merge)
- *   workflowsDir,                             // optional: abs dir holding council-loop.mjs (default /home/kiriketsuki/.claude/workflows)
+ *   workflowsDir,                             // optional: abs dir holding council-loop.mjs (default /absolute/path/to/.claude/workflows)
  *   title, scopeTasks, briefing,              // what to build (scopeTasks e.g. "T6, T6.1")
  *   agentType, model,                         // implement routing (default Senior Developer / sonnet)
  *   domain,                                   // optional: when agentType/model are omitted, this is hybrid-routed via the ROUTE table (e.g. "backend", "frontend", "database")
@@ -166,10 +166,11 @@ const REVIEW = (F.review === 'budget' || F.review === 'none') ? F.review : 'coun
 // passes workflowsDir so the path is OS-correct without hardcoding the vault root; fall back to
 // the Arch default. (An absolute path is unambiguous — unlike a relative one, it never resolves
 // against the project cwd.)
-const WF_DIR = (F.workflowsDir || '/home/kiriketsuki/.claude/workflows').replace(/\/+$/, '')
+// Default: <home>/.claude/workflows. Pass args.workflowsDir to override.
+const WF_DIR = (F.workflowsDir || ((typeof process !== 'undefined' && process.env && (process.env.HOME || process.env.USERPROFILE)) || '') + '/.claude/workflows').replace(/\/+$/, '')
 // Warn when the Arch-specific default path is used: a cross-platform caller that omits workflowsDir
 // will get a downstream council-loop-not-found error. Surface it early so it is easy to diagnose.
-if (!F.workflowsDir) log(`feature-loop: workflowsDir not supplied — falling back to Arch default ${WF_DIR}; pass workflowsDir explicitly for portability across platforms`)
+if (!F.workflowsDir) log(`feature-loop: workflowsDir not supplied — falling back to default ${WF_DIR}; pass workflowsDir explicitly for portability across platforms`)
 
 // --- limit-aware retry + resumable stop ----------------------------------------------------
 // Backs off on transient blips (529/overloaded/timeout) but BAILS FAST on a hard usage/rate

@@ -27,8 +27,8 @@ Invoke by **absolute scriptPath** — the name registry does NOT resolve `~/.cla
 
 ```
 Workflow({
-  scriptPath: "/home/kiriketsuki/.claude/workflows/spec-loop.mjs",
-  args: { ...<ARGS>, workflowsDir: "/home/kiriketsuki/.claude/workflows" }
+  scriptPath: "/absolute/path/to/.claude/workflows/spec-loop.mjs",
+  args: { ...<ARGS>, workflowsDir: "/absolute/path/to/.claude/workflows" }
 })
 ```
 
@@ -44,7 +44,7 @@ Workflow({
   // project config — NO hardcoding; pass yours
   "project": { "name": "<Project>", "specFile": "<spec>.md", "buildCmd": "npm run build", "testCmd": "npm test", "repo": "owner/repo" },
 
-  "workflowsDir": "/home/kiriketsuki/.claude/workflows",  // abs dir holding council-loop.mjs
+  "workflowsDir": "/absolute/path/to/.claude/workflows",  // abs dir holding council-loop.mjs
 
   // autonomy
   "autonomous": true,            // default; false → plan-only gate (returns the plan, resumable)
@@ -115,8 +115,8 @@ Inspect the routed wave plan before spending any build compute:
 
 ```
 Workflow({
-  scriptPath: "/home/kiriketsuki/.claude/workflows/spec-loop.mjs",
-  args: { epic, project, workflowsDir: "/home/kiriketsuki/.claude/workflows", planOnly: true }
+  scriptPath: "/absolute/path/to/.claude/workflows/spec-loop.mjs",
+  args: { epic, project, workflowsDir: "/absolute/path/to/.claude/workflows", planOnly: true }
 })
 ```
 
@@ -152,8 +152,8 @@ from the stopped run:
 
 ```
 Workflow({
-  scriptPath: "/home/kiriketsuki/.claude/workflows/spec-loop.mjs",
-  args: { ...<ARGS>, workflowsDir: "/home/kiriketsuki/.claude/workflows" },
+  scriptPath: "/absolute/path/to/.claude/workflows/spec-loop.mjs",
+  args: { ...<ARGS>, workflowsDir: "/absolute/path/to/.claude/workflows" },
   resumeFromRunId: "<runId from the stopped run>"
 })
 ```

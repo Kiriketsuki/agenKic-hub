@@ -426,7 +426,8 @@ const ROUTE_OVERRIDES = (A.routeOverrides && typeof A.routeOverrides === 'object
 // ~/.claude/workflows/*.mjs (only built-ins), so workflow('council-loop') errors. The driver
 // passes workflowsDir so the path is OS-correct without hardcoding the vault root; fall back to
 // the Arch default. (An absolute path is unambiguous — a relative one resolves against project cwd.)
-const WF_DIR = (A.workflowsDir || '/home/kiriketsuki/.claude/workflows').replace(/\/+$/, '')
+// Default: <home>/.claude/workflows. Pass args.workflowsDir to override.
+const WF_DIR = (A.workflowsDir || ((typeof process !== 'undefined' && process.env && (process.env.HOME || process.env.USERPROFILE)) || '') + '/.claude/workflows').replace(/\/+$/, '')
 // Warn when the Arch-specific default path is used: a cross-platform caller that omits workflowsDir
 // will get a downstream council-loop-not-found error. Surface it early so it is easy to diagnose.
 // Hardening options (LOW — the Arch default covers the owner's box; all known callers pass workflowsDir):
@@ -435,7 +436,7 @@ const WF_DIR = (A.workflowsDir || '/home/kiriketsuki/.claude/workflows').replace
 //   (c) Derive portably: detect vault root via `git rev-parse --show-toplevel` from a one-shot agent — but that requires an agent() call at the top of orchestration, before any phase().
 // Current behaviour (c): log the warning and continue; the downstream workflow() call will surface a
 // clear "file not found" error if the default path is wrong, which is diagnosable from the run log.
-if (!A.workflowsDir) log(`spec-loop: workflowsDir not supplied — falling back to Arch default ${WF_DIR}; pass workflowsDir explicitly for portability across platforms`)
+if (!A.workflowsDir) log(`spec-loop: workflowsDir not supplied — falling back to default ${WF_DIR}; pass workflowsDir explicitly for portability across platforms`)
 
 // per-role model overrides (opus where the spec mandates deepest reasoning; sonnet default otherwise).
 // NOTE: 'build' and 'validate' are intentionally absent — build agents use leaf.model (from routing),
