@@ -6,33 +6,43 @@ repo_name: Kiriketsuki/agenKic-sKills
 
 theme:
   name: material
+  logo: assets/chrysaki-mark.svg
+  favicon: assets/chrysaki-favicon.svg
   palette:
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: indigo
-      accent: indigo
-      toggle:
-        icon: material/weather-night
-        name: Switch to dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      primary: indigo
-      accent: indigo
-      toggle:
-        icon: material/weather-sunny
-        name: Switch to light mode
+    scheme: chrysaki
+  font:
+    text: Inter
+    code: JetBrains Mono
   features:
+    - navigation.tabs
+    - navigation.tabs.sticky
     - navigation.sections
     - navigation.top
     - search.highlight
     - search.suggest
     - content.code.copy
 
+extra_css:
+  - stylesheets/chrysaki.css
+
+copyright: agenKic sKills · MIT · built by Kiriketsuki
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Kiriketsuki/agenKic-sKills
+      name: agenKic-sKills
+    - icon: fontawesome/solid/hexagon-nodes
+      link: https://github.com/Kiriketsuki/chrysaki
+      name: chrysaki design system
+
 plugins:
   - search
 
 markdown_extensions:
   - admonition
+  - attr_list
+  - md_in_html
   - tables
   - toc:
       permalink: true
