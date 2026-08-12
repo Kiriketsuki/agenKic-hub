@@ -1,6 +1,6 @@
 # Gherkin and specs
 
-The repo's [feature-spec skill](https://github.com/Kiriketsuki/agenKic-sKills/blob/main/skills/feature-spec/SKILL.md) produces feature specifications that use two conventions: Gherkin for acceptance scenarios and MoSCoW for scope. This article explains both, for a reader who has never seen either.
+The repo's [feature-spec skill](https://github.com/Kiriketsuki/agenKic-hub/blob/main/skills/feature-spec/SKILL.md) produces feature specifications that use two conventions: Gherkin for acceptance scenarios and MoSCoW for scope. This article explains both, for a reader who has never seen either.
 
 ## What Gherkin is
 
@@ -105,4 +105,4 @@ The skill interviews the user section by section and fills a template. A finishe
 3. Read the Gherkin scenarios as the test plan. Each scenario should trace to at least one automated test.
 4. Treat Won't-Have and out-of-scope entries as binding. Work that touches them needs a new spec.
 
-The [implement-spec skill](https://github.com/Kiriketsuki/agenKic-sKills/blob/main/skills/implement-spec/SKILL.md) consumes these specs and turns the scenarios into tasks for subagents.
+The [implement-spec skill](https://github.com/Kiriketsuki/agenKic-hub/blob/main/skills/implement-spec/SKILL.md) consumes these specs and turns the scenarios into tasks for subagents.

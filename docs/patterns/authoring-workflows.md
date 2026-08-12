@@ -1,8 +1,8 @@
 # Authoring Workflow scripts
 
-The Workflow tool runs a plain JavaScript orchestration script in a sandboxed loop. The script sequences subagents, checks their structured returns, and loops until a convergence condition holds. This article distills the authoring patterns from the scripts in this repo's [`workflows/`](https://github.com/Kiriketsuki/agenKic-sKills/tree/main/workflows) directory.
+The Workflow tool runs a plain JavaScript orchestration script in a sandboxed loop. The script sequences subagents, checks their structured returns, and loops until a convergence condition holds. This article distills the authoring patterns from the scripts in this repo's [`workflows/`](https://github.com/Kiriketsuki/agenKic-hub/tree/main/workflows) directory.
 
-Read alongside: [`council-loop.mjs`](https://github.com/Kiriketsuki/agenKic-sKills/blob/main/workflows/council-loop.mjs), [`feature-loop.mjs`](https://github.com/Kiriketsuki/agenKic-sKills/blob/main/workflows/feature-loop.mjs), [`ultracode-fix.mjs`](https://github.com/Kiriketsuki/agenKic-sKills/blob/main/workflows/ultracode-fix.mjs), and [`autofix-swarm.mjs`](https://github.com/Kiriketsuki/agenKic-sKills/blob/main/workflows/autofix-swarm.mjs).
+Read alongside: [`council-loop.mjs`](https://github.com/Kiriketsuki/agenKic-hub/blob/main/workflows/council-loop.mjs), [`feature-loop.mjs`](https://github.com/Kiriketsuki/agenKic-hub/blob/main/workflows/feature-loop.mjs), [`ultracode-fix.mjs`](https://github.com/Kiriketsuki/agenKic-hub/blob/main/workflows/ultracode-fix.mjs), and [`autofix-swarm.mjs`](https://github.com/Kiriketsuki/agenKic-hub/blob/main/workflows/autofix-swarm.mjs).
 
 ## The runtime contract
 

@@ -7,7 +7,7 @@ The examples link the `skills/` directory into a Claude Code skills folder. Adju
 ## Linux and macOS
 
 ```bash
-ln -s "$HOME/agenKic-sKills/skills" "$HOME/.claude/skills/agenKic-sKills"
+ln -s "$HOME/agenKic-hub/skills" "$HOME/.claude/skills/agenKic-hub"
 ```
 
 - The source path must be absolute. A relative source resolves against the link's directory, not your shell's directory.
@@ -17,8 +17,8 @@ ln -s "$HOME/agenKic-sKills/skills" "$HOME/.claude/skills/agenKic-sKills"
 
 ```powershell
 New-Item -ItemType SymbolicLink `
-  -Path "$env:USERPROFILE\.claude\skills\agenKic-sKills" `
-  -Target "$env:USERPROFILE\agenKic-sKills\skills"
+  -Path "$env:USERPROFILE\.claude\skills\agenKic-hub" `
+  -Target "$env:USERPROFILE\agenKic-hub\skills"
 ```
 
 !!! note "Developer Mode"
@@ -30,8 +30,8 @@ If you cannot enable Developer Mode, use a directory junction. Junctions need no
 
 ```powershell
 New-Item -ItemType Junction `
-  -Path "$env:USERPROFILE\.claude\skills\agenKic-sKills" `
-  -Target "$env:USERPROFILE\agenKic-sKills\skills"
+  -Path "$env:USERPROFILE\.claude\skills\agenKic-hub" `
+  -Target "$env:USERPROFILE\agenKic-hub\skills"
 ```
 
 ### Copy fallback
@@ -40,18 +40,18 @@ As a last resort, copy the files. A copy does not track repository updates, so r
 
 ```powershell
 Copy-Item -Recurse `
-  "$env:USERPROFILE\agenKic-sKills\skills" `
-  "$env:USERPROFILE\.claude\skills\agenKic-sKills"
+  "$env:USERPROFILE\agenKic-hub\skills" `
+  "$env:USERPROFILE\.claude\skills\agenKic-hub"
 ```
 
 ## Removing a link
 
 ```bash
 # Linux / macOS
-rm "$HOME/.claude/skills/agenKic-sKills"
+rm "$HOME/.claude/skills/agenKic-hub"
 ```
 
 ```powershell
 # Windows: removes the link or junction, not the target
-Remove-Item "$env:USERPROFILE\.claude\skills\agenKic-sKills"
+Remove-Item "$env:USERPROFILE\.claude\skills\agenKic-hub"
 ```

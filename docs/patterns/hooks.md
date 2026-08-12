@@ -2,7 +2,7 @@
 
 Claude Code hooks are shell commands the harness runs around tool calls. They give you deterministic guard rails that do not depend on the model remembering an instruction. This article covers how hooks work, the design philosophy behind the hooks in this repo, and how to install them.
 
-The scripts described here live in [`harnesses/claude-code/hooks/`](https://github.com/Kiriketsuki/agenKic-sKills/tree/main/harnesses/claude-code/hooks).
+The scripts described here live in [`harnesses/claude-code/hooks/`](https://github.com/Kiriketsuki/agenKic-hub/tree/main/harnesses/claude-code/hooks).
 
 ## How hooks work
 
@@ -83,7 +83,7 @@ The source environment also runs hooks that are too personal to publish: vault s
 
 2. Edit `pre-push-auth.sh` and fill in your own remote-owner-to-account mapping. Skip the file entirely when you only use one GitHub account.
 
-3. Merge the fragment in [`harnesses/claude-code/settings.hooks.example.json`](https://github.com/Kiriketsuki/agenKic-sKills/blob/main/harnesses/claude-code/settings.hooks.example.json) into your `~/.claude/settings.json`. The fragment wires each script to its event and matcher.
+3. Merge the fragment in [`harnesses/claude-code/settings.hooks.example.json`](https://github.com/Kiriketsuki/agenKic-hub/blob/main/harnesses/claude-code/settings.hooks.example.json) into your `~/.claude/settings.json`. The fragment wires each script to its event and matcher.
 
 4. Restart Claude Code. Hooks load at session start.
 
