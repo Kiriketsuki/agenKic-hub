@@ -65,7 +65,7 @@ checkout used by Claude Code, Codex, and OpenCode:
 ```bash
 KILINT_BIN="$(command -v kilint 2>/dev/null || true)"
 if [ -z "$KILINT_BIN" ]; then
-  AGENKIC_SKILLS_ROOT="${AGENKIC_SKILLS_ROOT:-$HOME/.claude/skills/agenKic-sKills}"
+  AGENKIC_SKILLS_ROOT="${AGENKIC_SKILLS_ROOT:-$HOME/.claude/skills/agenKic-hub}"
   KILINT_BIN="$AGENKIC_SKILLS_ROOT/kilint/bin/kilint"
 fi
 test -x "$KILINT_BIN"

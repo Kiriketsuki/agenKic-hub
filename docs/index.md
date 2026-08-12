@@ -15,7 +15,7 @@ hide:
 <a class="ck-btn" href="setup/install/">⬢ Install</a>
 <a class="ck-btn ck-btn--ghost" href="skills/">Browse skills →</a>
 </div>
-<div class="ck-clone"><code>git clone https://github.com/Kiriketsuki/agenKic-sKills && ./setup/setup.sh</code></div>
+<div class="ck-clone"><code>git clone https://github.com/Kiriketsuki/agenKic-hub && ./setup/setup.sh</code></div>
 </div>
 
 <span class="ck-kicker">01 · The stack</span>
