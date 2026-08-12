@@ -56,16 +56,12 @@ The council is the spine of this repo. Advocates argue for the change, critics a
 <a class="ck-card" href="patterns/authoring-workflows/"><div class="ck-card__kicker">Pattern 06</div><div class="ck-card__title">Authoring workflows</div><div class="ck-card__desc">How to write Workflow tool scripts: meta, schemas, tiering, budget, and patterns.</div></a>
 </div>
 
-<span class="ck-kicker">04 · The rest of the family</span>
-<h2 class="ck-h2">Same palette, <em>other surfaces.</em></h2>
+<span class="ck-kicker">04 · Companions</span>
+<h2 class="ck-h2">Tools that <em>ride along.</em></h2>
 
-This repo is one node in a set. The statusline reads the same tokens the bar draws, and the bar sits above the terminal the skills run in. Siblings ship their own palettes on purpose.
+Two sibling repos plug into the same agentic setup: the statusline the harness renders, and the Pi harness theme that pairs with the scaffolds here.
 
 <div class="ck-grid ck-grid--3">
-<a class="ck-card" href="https://github.com/Kiriketsuki/chrysaki"><div class="ck-card__kicker">⬢ design system</div><div class="ck-card__title">chrysaki</div><div class="ck-card__desc">The palette, the tiling spec, the manga-ink direction, and every themed port.</div></a>
-<a class="ck-card ck-card--blonde" href="https://github.com/Kiriketsuki/claude-statusKine"><div class="ck-card__kicker">◆ statusline</div><div class="ck-card__title">claude-statusKine</div><div class="ck-card__desc">Three-line Claude Code statusline. Chrysaki tokens rendered in unicode geometry.</div></a>
-<a class="ck-card ck-card--amethyst" href="https://github.com/Kiriketsuki/chrysaki-pi"><div class="ck-card__kicker">▰ harness port</div><div class="ck-card__title">chrysaki-pi</div><div class="ck-card__desc">The Pi harness dressed in the same dark glass. Pairs with the harness scaffolds here.</div></a>
-<a class="ck-card ck-card--blue" href="https://github.com/Kiriketsuki/kiex-status"><div class="ck-card__kicker">▱ desktop bar</div><div class="ck-card__title">kiex-status</div><div class="ck-card__desc">AGS bar. Trapezoid tiles, interlocking base-tile architecture, Cairo-drawn pips.</div></a>
-<a class="ck-card ck-card--teal" href="https://github.com/Kiriketsuki/seeKi"><div class="ck-card__kicker">◇ sibling brand</div><div class="ck-card__title">seeKi</div><div class="ck-card__desc">Rust + Svelte database viewer. Its own light palette, not Chrysaki, by design.</div></a>
-<a class="ck-card ck-card--error" href="https://github.com/Kiriketsuki/TrKixel"><div class="ck-card__kicker">△ sibling brand</div><div class="ck-card__title">TrKixel</div><div class="ck-card__desc">Triangle-pixel art engine. Also its own visual language.</div></a>
+<a class="ck-card ck-card--blonde" href="https://github.com/Kiriketsuki/claude-statusKine"><div class="ck-card__kicker">◆ statusline</div><div class="ck-card__title">claude-statusKine</div><div class="ck-card__desc">Three-line Claude Code statusline: model, context percent, git state.</div></a>
+<a class="ck-card ck-card--amethyst" href="https://github.com/Kiriketsuki/chrysaki-pi"><div class="ck-card__kicker">▰ harness port</div><div class="ck-card__title">chrysaki-pi</div><div class="ck-card__desc">The Pi harness theme. Pairs with the harness scaffolds here.</div></a>
 </div>
