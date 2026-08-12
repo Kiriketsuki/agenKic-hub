@@ -3,15 +3,15 @@
 A public agentic hub: Claude Code skills, multi-agent workflows, harness setups, and
 terminal configs, with an installer that adapts them to your machine.
 
-Docs site: https://kiriketsuki.github.io/agenKic-sKills/
+Docs site: https://kiriketsuki.github.io/agenKic-hub/
 
-[![One hub, in layers](docs/assets/readme/deck-title.png)](https://kiriketsuki.github.io/agenKic-sKills/decks/agentic-workflow/)
+[![One hub, in layers](docs/assets/readme/deck-title.png)](https://kiriketsuki.github.io/agenKic-hub/decks/agentic-workflow/)
 
 ## Quick start
 
 ```bash
-git clone https://github.com/Kiriketsuki/agenKic-sKills
-cd agenKic-sKills
+git clone https://github.com/Kiriketsuki/agenKic-hub
+cd agenKic-hub
 ./setup/setup.sh          # Linux / macOS / Git Bash
 ```
 
@@ -33,7 +33,7 @@ depends on a specific tool below it.
 
 Prefer slides? The same tour exists as a presentable deck:
 [docs/decks/agentic-workflow/](docs/decks/agentic-workflow/), served at
-https://kiriketsuki.github.io/agenKic-sKills/decks/agentic-workflow/. Arrow keys
+https://kiriketsuki.github.io/agenKic-hub/decks/agentic-workflow/. Arrow keys
 navigate. Print to PDF gives one page per slide.
 
 | Band | Covers | Buys you |

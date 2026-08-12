@@ -1,8 +1,8 @@
 site_name: agenKic sKills
 site_description: A public hub of agent skills, workflows, harness configs, and patterns.
-site_url: https://kiriketsuki.github.io/agenKic-sKills/
-repo_url: https://github.com/Kiriketsuki/agenKic-sKills
-repo_name: Kiriketsuki/agenKic-sKills
+site_url: https://kiriketsuki.github.io/agenKic-hub/
+repo_url: https://github.com/Kiriketsuki/agenKic-hub
+repo_name: Kiriketsuki/agenKic-hub
 
 theme:
   name: material
@@ -30,8 +30,8 @@ copyright: agenKic sKills · MIT · built by Kiriketsuki
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/Kiriketsuki/agenKic-sKills
-      name: agenKic-sKills
+      link: https://github.com/Kiriketsuki/agenKic-hub
+      name: agenKic-hub
     - icon: fontawesome/solid/hexagon-nodes
       link: https://github.com/Kiriketsuki/chrysaki
       name: chrysaki design system
