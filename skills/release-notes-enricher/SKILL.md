@@ -170,9 +170,18 @@ reading `src/release-notes.json`. CI's git-cliff pipeline only feeds GitHub Rele
 in-app JSON is updated by THIS skill. When the user asks to update/backfill the in-app
 notes, run this mode end-to-end — it does the updating, not just the prose.
 
+**This mode is part of the monthly release cycle, not a separate ask.** An
+enrichment run sometimes covers one of the dashboard repos. That happens on a
+monthly cut, on a `release: <Month>` tag, or on any invocation that enriches a
+dashboard's GitHub release. In every such run, ALSO run this in-app mode for
+those repos in the same invocation. A monthly cut that updates the GitHub
+releases but leaves `src/release-notes.json` stale is incomplete. Operators
+read the modal, not GitHub.
+
 Configuration: set `<REPOS_ROOT>` to the directory holding the dashboard repo checkouts,
 `<ORG>` to the GitHub org, and switch to the right `gh` account first
-(`gh auth switch --user <WORK_ACCOUNT>`). Run per-repo steps from each repo's own dir.
+(`gh auth switch --user <WORK_ACCOUNT>`). If a local checkout is dirty, work from a
+fresh clone in the session scratchpad instead. Run per-repo steps from each repo's own dir.
 
 ### 1. Gather (per repo)
 
