@@ -1,6 +1,6 @@
 ---
 name: context-handoff
-description: Use when the user asks to prepare a handoff, switch context, create a plan for session continuity, or when context is getting long. Manually invoked.
+description: "Use when the user asks to prepare a handoff, switch context, create a plan for session continuity, or when context is getting long. Manually invoked."
 ---
 
 # Context Handoff
@@ -21,25 +21,42 @@ The user asks to:
 
 A good handoff orients a *fresh reader* who has never seen this conversation. Provide pointers to files (not summaries of file contents) and preserve decisions with their reasoning.
 
-## Primary Mechanism: Plan Mode
+## Primary Mechanism: Handoff File
 
-Enter plan mode and write the plan file. The plan file is the handoff document. A fresh session loads this plan and has everything needed to continue.
+Write the handoff file directly. The file is the continuity plan that a fresh session loads. If the active harness provides a real plan mode, it may be used while drafting, but plan mode is not required and must not be assumed.
 
-For complex situations where the plan file isn't large enough, write overflow to `{handoffs-dir}/overflow-{slug}.md` and reference it from the plan. This is the exception, not the norm.
+For complex situations where the main file is not large enough, write overflow to `{handoffs-dir}/overflow-{slug}.md` and reference it from the handoff. This is the exception, not the norm.
+
+## Harness Resolution
+
+Resolve the active **agent harness**, not the model or provider. For example, Pi using an OpenAI Codex model is still Pi and must use Pi paths.
+
+Use the first matching row:
+
+| Harness detection | Project directory | Global directory |
+|---|---|---|
+| `PI_CODING_AGENT=true` or `AI_AGENT=pi` | `{git-root}/.pi/handoffs/` | `${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}/handoffs/` |
+| `AI_AGENT` starts with `codex` or `CODEX_THREAD_ID` is set | `{git-root}/.codex/handoffs/` | `${CODEX_HOME:-$HOME/.codex}/handoffs/` |
+| `AI_AGENT` starts with `claude`, `CLAUDE_CODE_ENTRYPOINT` is set, or `CLAUDE_CONFIG_DIR` is set | `{git-root}/.claude/handoffs/` | `${CLAUDE_CONFIG_DIR:-$HOME/.claude}/handoffs/` |
+| No harness detected | `{git-root}/.agents/handoffs/` | `${AGENT_HOME:-$HOME/.agents}/handoffs/` |
+
+Do not choose `.claude` merely because it already exists. Do not choose a path from the selected model name or provider.
 
 ## File Location
 
-Write the handoff file to the first location that resolves:
+After resolving the harness, write the handoff file to:
 
-1. `{git-root}/.claude/handoffs/YYYY-MM-DD-HHhMM-{slug}.md`
-2. `~/.claude/handoffs/YYYY-MM-DD-HHhMM-{slug}.md` (global fallback, no git repo)
+1. The harness's project directory when inside a Git repository
+2. The harness's global directory when no Git repository is available
+
+Filename: `YYYY-MM-DD-HHhMM-{slug}.md`
 
 **Slug**: short kebab-case label derived from current task (e.g., `feature-152-db-consolidation`, `fix-auth-timeout`).
 **Timestamp format**: `2026-02-27-14h30` — lexicographic sort equals chronological sort.
 
-Create the directory if it does not exist.
+Create the directory if it does not exist. New handoffs must only be written to the resolved harness directory; other harness directories are compatibility sources for resume, not write targets.
 
-Append a brief entry to `progress.txt` in the same directory after writing the plan file.
+Append a brief entry to `progress.txt` in the same directory after writing the handoff file.
 
 ## Plan Structure for Handoff
 
@@ -145,13 +162,13 @@ If the situation requires more (large refactor, many interrelated decisions), wr
 
 ```
 ## Extended Context
-See `.claude/handoffs/overflow-{slug}.md` for detailed architectural notes that
+See `{handoffs-dir}/overflow-{slug}.md` for detailed architectural notes that
 exceed what fits here.
 ```
 
 ## Quality Checklist
 
-Before exiting plan mode, verify:
+Before finishing, verify:
 
 - [ ] A fresh context can start working without asking what to do
 - [ ] Settled decisions documented with reasoning
