@@ -450,7 +450,7 @@
 }
 .ck-hero__hex {
   position: absolute;
-  right: -40px;
+  right: 48px;
   top: 50%;
   transform: translateY(-50%);
   width: 300px;
@@ -622,13 +622,26 @@ a.ck-card:hover { background: var(--ck-raised); }
   flex-wrap: wrap;
   margin: 24px 0 8px;
 }
+/* A border on a clip-path element gets cut away. Outer layer carries the
+   border color, an inset ::before carries the fill (wrapper-fill pattern). */
 .ck-loop__step {
+  position: relative;
   flex: 1;
   min-width: 170px;
-  background: var(--ck-surface);
-  border: 1px solid var(--ck-border);
+  background: var(--ck-border);
   padding: 18px 16px 20px;
   clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 100%, 16px 100%);
+}
+.ck-loop__step::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--ck-surface);
+  clip-path: polygon(2px 1px, calc(100% - 17px) 1px, calc(100% - 2px) calc(100% - 1px), 17px calc(100% - 1px));
+}
+.ck-loop__step > * {
+  position: relative;
+  z-index: 1;
 }
 .ck-loop__step + .ck-loop__step {
   margin-left: -16px;
@@ -655,7 +668,7 @@ a.ck-card:hover { background: var(--ck-raised); }
 }
 
 @media (max-width: 1250px) {
-  .ck-hero__hex { width: 200px; height: 200px; right: -50px; opacity: 0.45; }
+  .ck-hero__hex { width: 180px; height: 180px; right: 24px; opacity: 0.45; }
 }
 @media (max-width: 900px) {
   .ck-hero { padding: 40px 24px 44px; }
