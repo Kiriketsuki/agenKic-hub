@@ -33,8 +33,8 @@ extra:
       link: https://github.com/Kiriketsuki/agenKic-hub
       name: agenKic-hub
     - icon: fontawesome/solid/hexagon-nodes
-      link: https://github.com/Kiriketsuki/claude-statusKine
-      name: claude-statusKine
+      link: https://github.com/Kiriketsuki/chrysaki-claude
+      name: chrysaki-claude
 
 plugins:
   - search

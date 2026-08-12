@@ -62,6 +62,6 @@ The council is the spine of this repo. Advocates argue for the change, critics a
 Two sibling repos plug into the same agentic setup: the statusline the harness renders, and the Pi harness theme that pairs with the scaffolds here.
 
 <div class="ck-grid ck-grid--3">
-<a class="ck-card ck-card--blonde" href="https://github.com/Kiriketsuki/claude-statusKine"><div class="ck-card__kicker">◆ statusline</div><div class="ck-card__title">claude-statusKine</div><div class="ck-card__desc">Three-line Claude Code statusline: model, context percent, git state.</div></a>
+<a class="ck-card ck-card--blonde" href="https://github.com/Kiriketsuki/chrysaki-claude"><div class="ck-card__kicker">◆ statusline</div><div class="ck-card__title">chrysaki-claude</div><div class="ck-card__desc">Four-line Claude Code statusline on chrysaki-core tokens: model, usage, context, git state.</div></a>
 <a class="ck-card ck-card--amethyst" href="https://github.com/Kiriketsuki/chrysaki-pi"><div class="ck-card__kicker">▰ harness port</div><div class="ck-card__title">chrysaki-pi</div><div class="ck-card__desc">The Pi harness theme. Pairs with the harness scaffolds here.</div></a>
 </div>
