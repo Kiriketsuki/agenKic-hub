@@ -1,28 +1,29 @@
-# Statusline (scaffold)
+# Statusline (external)
 
-STARTER SCAFFOLD. No scripts live here yet. The real statusline scripts await a
-port from the author's Linux machine. This README describes what will land here,
-so the installer and the docs stay honest until the port happens.
+The Claude Code statusline lives in its own repository:
+[chrysaki-claude](https://github.com/Kiriketsuki/chrysaki-claude). It renders a
+four-line status bar from chrysaki-core tokens, plus a stats fetcher and a
+session cost exporter.
 
-## Planned contents
+## Install
 
-- `statusline-command.sh.tmpl`: the Claude Code statusline entry point. It reads
-  the active account from the working directory and renders model, context, and
-  usage information.
-- `fetch-usage.sh.tmpl`: a helper that refreshes a per-account usage cache file
-  so the statusline stays fast.
+```bash
+git clone https://github.com/Kiriketsuki/chrysaki-claude ~/.claude/statusline
+```
 
-## Design notes for the port
+Then point `statusLine` in `~/.claude/settings.json` at it:
 
-- Per-account usage caches prevent cross-account bleed. One cache file per
-  config directory.
-- The scripts read the account from `$PWD`, not from `CLAUDE_CONFIG_DIR`,
-  because statusline subprocesses do not inherit session env vars.
-- All paths are absolute. No `~` inside scripts.
-- No secrets in the scripts. Tokens come from the harness credential files.
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/statusline/statusline-command.sh"
+  }
+}
+```
 
 ## Installer behavior
 
-The `config-statusline` component targets `~/.claude/statusline`. While only
-this README exists, the installer prints a "nothing installable yet" message
-and does nothing.
+The `config-statusline` component targets `~/.claude/statusline`. Because the
+scripts live in an external repository, the installer prints this pointer and
+does nothing else.
