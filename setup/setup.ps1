@@ -112,6 +112,15 @@ function Run-Component([string]$ConfPath, [hashtable]$Answers) {
     $srcDir = Join-Path $RepoDir $m.source
     $tgtDir = Expand-Home $m.target
     Write-Host "== $($m.name)"
+    if ($m.type -eq "external") {
+        # TODO: port the type=external handler from setup.sh. It clones repo=
+        # into clone_to=, then runs run= (method=script) or stow (method=stow).
+        # stow has no Windows equivalent, so the port needs a link strategy.
+        # Until then this guard stops the install branch from copying the repo.
+        Write-Host "  type=external is not supported on Windows yet, skipped"
+        Write-Host "  install it by hand: git clone https://github.com/$($m.repo) $(Expand-Home $m.clone_to)"
+        return
+    }
     if (-not (Test-Path -LiteralPath $srcDir)) {
         Write-Host "  source missing, skipped: $($m.source)"; return
     }

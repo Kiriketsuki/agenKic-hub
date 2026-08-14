@@ -22,6 +22,7 @@ is_windows() {
 
 # Expand a leading ~ to $HOME. Targets in manifests use ~ for portability.
 expand_home() {
+    # shellcheck disable=SC2088  # The tilde is a case pattern, not a path.
     case "$1" in
         "~") printf '%s' "$HOME" ;;
         "~/"*) printf '%s' "$HOME/${1#\~/}" ;;
@@ -117,6 +118,106 @@ read_manifest_key() {
     sed -n "s/^$2=//p" "$1" | head -n 1
 }
 
+# Print the short HEAD sha of a git checkout. Prints "unknown" on failure.
+repo_head_sha() {
+    git -C "$1" rev-parse --short HEAD 2>/dev/null || printf 'unknown'
+}
+
+# Clone a repo, or pull it when the clone directory is already a git checkout.
+# gh is the preferred client. git over https is the fallback.
+clone_or_pull() {
+    local repo="$1" dest="$2"
+    if [ -d "$dest/.git" ]; then
+        [ "$DRY_RUN" = 1 ] && { log "  [dry] pull $dest"; return 0; }
+        if git -C "$dest" pull --ff-only >/dev/null 2>&1; then
+            log "  pulled $dest"
+        else
+            log "  pull failed, kept the existing checkout: $dest"
+            EXT_STALE=1
+        fi
+        return 0
+    fi
+    if [ -e "$dest" ]; then
+        log "  target exists and is not a git checkout, skipped: $dest"
+        return 1
+    fi
+    if [ "$DRY_RUN" = 1 ]; then
+        log "  [dry] clone $repo -> $dest"
+        log "  [dry]   gh repo clone $repo $dest"
+        log "  [dry]   fallback: git clone https://github.com/$repo $dest"
+        return 0
+    fi
+    mkdir -p "$(dirname "$dest")"
+    if command -v gh >/dev/null 2>&1 && gh repo clone "$repo" "$dest" >/dev/null 2>&1; then
+        log "  cloned $repo -> $dest"
+    elif git clone "https://github.com/$repo" "$dest" >/dev/null 2>&1; then
+        log "  cloned $repo -> $dest (git fallback)"
+    else
+        log "  clone failed: $repo"
+        return 1
+    fi
+    return 0
+}
+
+# Install one type=external component. Clones the sibling repo, then hands the
+# install to that repo's own installer or to stow.
+run_external() {
+    local conf="$1" name repo clone_to method run dest
+    EXT_STALE=0
+    name="$(read_manifest_key "$conf" name)"
+    repo="$(read_manifest_key "$conf" repo)"
+    clone_to="$(read_manifest_key "$conf" clone_to)"
+    method="$(read_manifest_key "$conf" method)"
+    run="$(read_manifest_key "$conf" run)"
+    [ -n "$repo" ] || { log "  manifest has no repo=, skipped"; return; }
+    [ -n "$clone_to" ] || { log "  manifest has no clone_to=, skipped"; return; }
+    dest="$(expand_home "$clone_to")"
+    log "  plan: clone $repo into $dest, then method=$method"
+    clone_or_pull "$repo" "$dest" || return
+    case "$method" in
+        script)
+            [ -n "$run" ] || { log "  method=script needs run=, skipped"; return; }
+            if [ "$DRY_RUN" = 1 ]; then
+                log "  [dry] run $dest/$run from $dest"
+            elif [ -f "$dest/$run" ]; then
+                ( cd "$dest" && bash "$run" ) \
+                    && log "  ran $run" \
+                    || log "  delegate installer failed: $run"
+            else
+                log "  delegate installer not found: $dest/$run"
+            fi
+            ;;
+        stow)
+            if ! command -v stow >/dev/null 2>&1; then
+                log "  stow not found, skipped. Install it: apt install stow, or brew install stow"
+                return
+            fi
+            if [ "$DRY_RUN" = 1 ]; then
+                log "  [dry] stow . from $dest, target $HOME"
+            else
+                ( cd "$dest" && stow --target "$HOME" . ) \
+                    && log "  stowed $dest into $HOME" \
+                    || log "  stow failed in $dest"
+            fi
+            ;;
+        clone)
+            log "  clone only, no delegate step"
+            ;;
+        *)
+            log "  unknown method: $method"
+            ;;
+    esac
+    if [ "$DRY_RUN" = 1 ]; then
+        log "  [dry] summary: $name at $dest"
+    else
+        if [ "$EXT_STALE" = 1 ]; then
+            log "  summary: $name at $dest, HEAD $(repo_head_sha "$dest") (stale, pull failed)"
+        else
+            log "  summary: $name at $dest, HEAD $(repo_head_sha "$dest")"
+        fi
+    fi
+}
+
 # Install one component from its manifest file.
 run_component() {
     local conf="$1" name type source target src_dir tgt_dir
@@ -127,6 +228,10 @@ run_component() {
     src_dir="$REPO_DIR/$source"
     tgt_dir="$(expand_home "$target")"
     log "== $name"
+    if [ "$type" = "external" ]; then
+        run_external "$conf"
+        return
+    fi
     [ -d "$src_dir" ] || { log "  source missing, skipped: $source"; return; }
     if [ "$type" = "link_children" ]; then
         local child found=0

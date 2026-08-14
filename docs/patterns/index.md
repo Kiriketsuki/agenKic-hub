@@ -12,4 +12,4 @@ Written guides for the practices behind the skills and workflows in this repo.
 | [Authoring workflows](authoring-workflows.md) | How to write Workflow tool scripts: meta, schemas, tiering, budget, and the design patterns behind the repo's workflows. |
 | [Clip-path borders](clip-path-borders.md) | CSS technique for visible borders on clip-path elements. |
 
-For the prose style used across this repo, see the [ste-writing skill](https://github.com/Kiriketsuki/agenKic-hub/tree/main/skills/ste-writing): short sentences, active voice, no filler.
+For the prose style used across this repo, see the [ste-writing skill](https://github.com/Kiriketsuki/agenKic-hub/tree/main/skills/writing/ste-writing): short sentences, active voice, no filler.
