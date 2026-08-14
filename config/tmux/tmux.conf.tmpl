@@ -27,6 +27,23 @@ set -g status-style "bg=default,fg={{accent_color}}"
 set -g status-left "#[bold] {{user_name}} #[default]| "
 set -g status-right "#[fg={{accent_color_secondary}}]%Y-%m-%d %H:%M"
 
-# Chrysaki theme include. Uncomment after the theme is installed.
-# The theme lives in the author's dots repo as a submodule.
-# source-file ~/.config/tmux/chrysaki/chrysaki.tmux
+# ===================================================================
+# SECTION 8: Command Palette -- fzf fuzzy picker (Prefix + Space)
+# ===================================================================
+# A floating popup with 51 searchable tmux actions. Type to filter,
+# Enter to execute, Esc to cancel. Requires fzf. When fzf is absent,
+# the script prints an install hint instead.
+bind Space display-popup \
+  -E \
+  -T " ⬢  Command Palette " \
+  -w 72% \
+  -h 60% \
+  -x C \
+  -y C \
+  -b heavy \
+  -S "fg={{accent_color}}" \
+  "~/.config/tmux/scripts/palette.sh"
+
+# Chrysaki theme include. The ext-tmux-theme component clones the theme.
+# The if-shell test keeps tmux quiet when the theme is absent.
+if-shell "test -f {{tmux_theme_conf}}" "source-file {{tmux_theme_conf}}"

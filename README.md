@@ -10,7 +10,7 @@ Docs site: https://kiriketsuki.github.io/agenKic-hub/
 ## Quick start
 
 ```bash
-git clone https://github.com/Kiriketsuki/agenKic-hub
+gh repo clone Kiriketsuki/agenKic-hub
 cd agenKic-hub
 ./setup/setup.sh          # Linux / macOS / Git Bash
 ```
@@ -19,11 +19,41 @@ cd agenKic-hub
 .\setup\setup.ps1         # Windows PowerShell
 ```
 
-The setup script asks which components you want (skills, workflows, harness configs,
-tmux, zsh, statusline), asks for your template variables, and symlinks everything into
-place. Pass `--profile setup/answers.example.yml` (copy and edit it first) for a
-non-interactive run. Manual per-OS symlink commands live in
+The setup script asks which components you want (skill groups, workflows, harness
+configs, tmux, zsh, statusline, external rice components). It asks for your template
+variables, then symlinks everything into place. Pass
+`--profile setup/answers.example.yml` (copy and edit it first) for a non-interactive
+run. Manual per-OS symlink commands live in
 [docs/setup/symlinks.md](docs/setup/symlinks.md).
+
+## Start here
+
+New to the hub? Follow [docs/WALKTHROUGH.md](docs/WALKTHROUGH.md). It gives a command
+and one expected outcome per step, in three tiers plus an extras section for the
+external rice components.
+
+| Tier | Gets you | Link |
+|:---|:---|:---|
+| Basics | Install, a durable tmux session, and one completed skill run | [docs/WALKTHROUGH.md#basics](docs/WALKTHROUGH.md#basics) |
+| Intermediate | Context handoffs, the full spec loop, guard-rail hooks, council and writing skills | [docs/WALKTHROUGH.md#intermediate](docs/WALKTHROUGH.md#intermediate) |
+| Advanced | Multi-agent workflow scripts, adversarial council, authoring a new skill | [docs/WALKTHROUGH.md#advanced](docs/WALKTHROUGH.md#advanced) |
+| Extras: the real rice | The statusline, tmux theme, and dots repos, installed through the same component path | [docs/WALKTHROUGH.md#extras-the-real-rice](docs/WALKTHROUGH.md#extras-the-real-rice) |
+
+On Linux or macOS, `setup/walkthrough.sh` runs the Basics tier interactively and
+checks each step for you. On Windows, run `setup.ps1` then follow the written
+walkthrough.
+
+### Skill groups and rice components, in short
+
+Skills sit under `skills/` in four groups, each with its own installer manifest.
+They are `core` (the spec-first loop), `council` (debate a change before it merges),
+`writing` (the prose house style and its linter), and `ops` (guard rails and repo
+maintenance). Three further components delegate to sibling repos instead of
+absorbing their content: `ext-statusline` (Kiriketsuki/chrysaki-claude),
+`ext-tmux-theme` (Kiriketsuki/chrysaki), and `ext-dots` (Kiriketsuki/dots). The full
+skills table sits under [Skills](#skills) below. The walkthrough's
+[four skill groups](docs/WALKTHROUGH.md#the-four-skill-groups) section spells out
+what each group buys you.
 
 ## The workflow, in layers
 
@@ -59,7 +89,7 @@ navigate. Print to PDF gives one page per slide.
 | # | Layer | The idea |
 |:--|:---|:---|
 | 05 | lazygit + gh | An agent stages files faster than a browser review can follow. lazygit gives hunk-level staging on single keys. `gh` is how the agent talks to GitHub at all: no `gh auth`, no pull requests. |
-| 06 | Worktrees | Two agents in one directory clobber each other. A worktree is a second working directory on the same object database. One agent per worktree, one branch per worktree, merge each result on its own. Used by [parallel-fix](skills/parallel-fix/). |
+| 06 | Worktrees | Two agents in one directory clobber each other. A worktree is a second working directory on the same object database. One agent per worktree, one branch per worktree, merge each result on its own. Used by [parallel-fix](skills/council/parallel-fix/). |
 
 ### Band 3: the agent core
 
@@ -67,12 +97,12 @@ navigate. Print to PDF gives one page per slide.
 |:--|:---|:---|
 | 07 | Harness | The runtime that holds the agent. This repo scaffolds five: Claude Code (primary, `~/.claude/`), Codex CLI (`~/.codex/`), OpenCode (`~/.config/opencode/`), Pi and Hermes (README-only scaffolds). Skills install separately. The harness only wires them. |
 | 08 | Project memory | `CLAUDE.md` loads every session. `AGENTS.md` is the cross-tool file. Import one from the other, never keep two copies. A few dozen lines: commands and hard rules. A long memory file competes with the task for attention. |
-| 09 | Context budget | Quality degrades before the window is full. 0-128k work freely, 128k-256k watch it, at 256k hand off. With `/compact` the summarizer decides what survives. With [context-handoff](skills/context-handoff/) → [context-resume](skills/context-resume/), you decide. |
+| 09 | Context budget | Quality degrades before the window is full. 0-128k work freely, 128k-256k watch it, at 256k hand off. With `/compact` the summarizer decides what survives. With [context-handoff](skills/core/context-handoff/) → [context-resume](skills/core/context-resume/), you decide. |
 | 10 | Hooks | A prompt asks the model to behave. A hook is a shell command the harness runs regardless. Exit 0 proceeds, exit 2 blocks and hands stderr back. If you stated a rule twice and the model still forgot it, that rule becomes a hook. |
 | 11 | Skills | 23 directories, each with a `SKILL.md` that says when to trigger. Independent: take brainstorm and leave the councils, or the reverse. Full table below. |
 | 12 | Adversarial council | Real spawned agents, not prose sections in one reply. One model writing both sides agrees with itself. Advocates argue cited, critics never soften without a reason, a questioner fires "why?" at uncited claims, an arbiter returns FOR, AGAINST, or CONDITIONAL. Concessions are permanent. |
 | 13 | spec-loop + model tiering | A spec decomposes into a dependency DAG. Unblocked leaves build in parallel worktree waves. Every PR faces a council and merges on unconditional FOR. The script only coordinates, only agents touch the world. Tiering: top model for design and hard root-causing, mid tier for the fan-out. One 33-agent run that inherited the top model everywhere burned 2M tokens. Escalate only after the mid tier failed. |
-| 14 | Prose as a build artifact | Agents write commits, PR bodies, and docs at volume, and left alone they drift into filler. [ste-writing](skills/ste-writing/) sets the house style, [kilint](skills/kilint/) measures it in a PostToolUse hook and in CI. Under 1.5 violations per 100 words is clean. Do not chase zero, and form linting cannot fix a wrong claim. |
+| 14 | Prose as a build artifact | Agents write commits, PR bodies, and docs at volume, and left alone they drift into filler. [ste-writing](skills/writing/ste-writing/) sets the house style, [kilint](skills/writing/kilint/) measures it in a PostToolUse hook and in CI. Under 1.5 violations per 100 words is clean. Do not chase zero, and form linting cannot fix a wrong claim. |
 
 ### Band 4: automation
 
@@ -117,29 +147,29 @@ Feel none of these? Install nothing.
 
 | Skill | What it does |
 |:---|:---|
-| [adversarial-council](skills/adversarial-council/) | Adversarial debate over a decision or plan: advocates, critics, questioner, arbiter |
-| [agent-route](skills/agent-route/) | Recommend the right subagent type for a task |
-| [brainstorm](skills/brainstorm/) | Collaborative design exploration before implementation, one question at a time |
-| [brainstorm-grill](skills/brainstorm-grill/) | The relentless variant: interrogates a plan along the decision-tree frontier |
-| [continuous-learning-v2](skills/continuous-learning-v2/) | Instinct-based learning system that observes sessions via hooks and evolves instincts into skills |
-| [context-handoff](skills/context-handoff/) | Write a session handoff before context runs out |
-| [context-resume](skills/context-resume/) | Resume work from a previous session handoff |
-| [council-fix](skills/council-fix/) | One-command council review pipeline that ends in a prioritized fix plan |
-| [council-supervisor](skills/council-supervisor/) | Supervised multi-round council with heartbeats, checkpoints, and agent replacement |
-| [cover-letter](skills/cover-letter/) | Cover letter from a job posting, rendered as a LaTeX-quality PDF |
-| [croc-send](skills/croc-send/) | Send files between machines with croc over tailscale |
-| [feature-spec](skills/feature-spec/) | Interview-driven feature spec with Gherkin acceptance scenarios |
-| [implement-spec](skills/implement-spec/) | Implement a written spec task by task |
-| [insights-to-vault](skills/insights-to-vault/) | Archive a Claude Code Insights report into a notes vault |
-| [kilint](skills/kilint/) | Prose linter for the STE house style |
-| [merge-next](skills/merge-next/) | Merge the current branch and advance to the next sibling |
-| [model-route](skills/model-route/) | Recommend the optimal model tier for a task |
-| [parallel-fix](skills/parallel-fix/) | Fan out independent fixes to parallel worktree agents |
-| [release-notes-enricher](skills/release-notes-enricher/) | Enrich git-cliff release notes with PR prose summaries |
-| [repo-hooks](skills/repo-hooks/) | Install and manage the repo's git hook conventions |
-| [security-scan](skills/security-scan/) | Audit Claude Code configuration for security risks with AgentShield |
-| [ste-writing](skills/ste-writing/) | Rewrite AI-flavored prose into a controlled house style |
-| [visual-explainer](skills/visual-explainer/) | Self-contained HTML pages that explain systems, diffs, and plans visually |
+| [adversarial-council](skills/council/adversarial-council/) | Adversarial debate over a decision or plan: advocates, critics, questioner, arbiter |
+| [agent-route](skills/core/agent-route/) | Recommend the right subagent type for a task |
+| [brainstorm](skills/core/brainstorm/) | Collaborative design exploration before implementation, one question at a time |
+| [brainstorm-grill](skills/core/brainstorm-grill/) | The relentless variant: interrogates a plan along the decision-tree frontier |
+| [continuous-learning-v2](skills/ops/continuous-learning-v2/) | Instinct-based learning system that observes sessions via hooks and evolves instincts into skills |
+| [context-handoff](skills/core/context-handoff/) | Write a session handoff before context runs out |
+| [context-resume](skills/core/context-resume/) | Resume work from a previous session handoff |
+| [council-fix](skills/council/council-fix/) | One-command council review pipeline that ends in a prioritized fix plan |
+| [council-supervisor](skills/council/council-supervisor/) | Supervised multi-round council with heartbeats, checkpoints, and agent replacement |
+| [cover-letter](skills/writing/cover-letter/) | Cover letter from a job posting, rendered as a LaTeX-quality PDF |
+| [croc-send](skills/ops/croc-send/) | Send files between machines with croc over tailscale |
+| [feature-spec](skills/core/feature-spec/) | Interview-driven feature spec with Gherkin acceptance scenarios |
+| [implement-spec](skills/core/implement-spec/) | Implement a written spec task by task |
+| [insights-to-vault](skills/ops/insights-to-vault/) | Archive a Claude Code Insights report into a notes vault |
+| [kilint](skills/writing/kilint/) | Prose linter for the STE house style |
+| [merge-next](skills/core/merge-next/) | Merge the current branch and advance to the next sibling |
+| [model-route](skills/core/model-route/) | Recommend the optimal model tier for a task |
+| [parallel-fix](skills/council/parallel-fix/) | Fan out independent fixes to parallel worktree agents |
+| [release-notes-enricher](skills/ops/release-notes-enricher/) | Enrich git-cliff release notes with PR prose summaries |
+| [repo-hooks](skills/ops/repo-hooks/) | Install and manage the repo's git hook conventions |
+| [security-scan](skills/ops/security-scan/) | Audit Claude Code configuration for security risks with AgentShield |
+| [ste-writing](skills/writing/ste-writing/) | Rewrite AI-flavored prose into a controlled house style |
+| [visual-explainer](skills/writing/visual-explainer/) | Self-contained HTML pages that explain systems, diffs, and plans visually |
 
 ## Workflows
 
@@ -150,9 +180,10 @@ carries a header comment stating what to customize. Catalog:
 
 ## Patterns
 
-Articles distilled from daily agentic use: the debugging protocol, workflow model
-tiering, council patterns, clip-path borders, and a Gherkin primer for reading the
-specs these skills produce. Start at [docs/patterns/index.md](docs/patterns/index.md).
+Articles distilled from daily agentic use: the debugging protocol, workflow
+model tiering, council patterns, and clip-path borders. A Gherkin primer
+covers how to read the specs these skills produce. Start at
+[docs/patterns/index.md](docs/patterns/index.md).
 
 ## License and attribution
 
