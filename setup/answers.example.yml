@@ -6,9 +6,11 @@
 
 # Components to install, as a comma list. Valid names match the files in
 # setup/components/ (without .conf):
-# skills, workflows, harness-claude-code, harness-codex, harness-opencode,
-# harness-pi, harness-hermes, config-tmux, config-zsh, config-statusline
-components: skills, config-tmux, config-zsh
+# skills-core, skills-council, skills-writing, skills-ops, workflows,
+# harness-claude-code, harness-codex, harness-opencode, harness-pi,
+# harness-hermes, config-tmux, config-zsh, config-statusline,
+# ext-statusline, ext-tmux-theme, ext-dots
+components: skills-core, config-tmux, config-zsh
 
 # --- Template variables ---
 # Every {{variable}} used by a .tmpl file is documented below.
@@ -28,6 +30,10 @@ node_path: /home/jane/.nvm/versions/node/v24.14.0/bin
 
 # Claude Code config directory. Default is ~/.claude.
 claude_config_dir: /home/jane/.claude
+
+# Path to the chrysaki tmux theme file. The ext-tmux-theme component clones the
+# theme into ~/.config/tmux/chrysaki. tmux sources this file only when it exists.
+tmux_theme_conf: ~/.config/tmux/chrysaki/tmux/chrysaki.conf
 
 # Theme accent colors, hex. Used by the tmux status line.
 accent_color: "#7aa2f7"
