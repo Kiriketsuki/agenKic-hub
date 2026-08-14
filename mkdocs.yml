@@ -66,3 +66,9 @@ nav:
       - Claude Code hooks: patterns/hooks.md
       - Authoring workflows: patterns/authoring-workflows.md
       - Clip-path borders: patterns/clip-path-borders.md
+  - Walkthrough: WALKTHROUGH.md
+  - Tips:
+      - CLAUDE.md curation: tips/claude-md-curation.md
+      - Hooks: tips/hooks.md
+      - Linters: tips/linters.md
+      - Multi-account setup: tips/multi-account.md

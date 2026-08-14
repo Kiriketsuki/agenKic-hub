@@ -7,23 +7,28 @@ session cost exporter.
 
 ## Install
 
+Select the `ext-statusline` component in the installer:
+
 ```bash
-git clone https://github.com/Kiriketsuki/chrysaki-claude ~/.claude/statusline
+./setup/setup.sh
 ```
 
-Then point `statusLine` in `~/.claude/settings.json` at it:
+That component clones `Kiriketsuki/chrysaki-claude` into
+`~/.local/share/chrysaki-claude`, then runs the repo's own `init.sh`. The
+delegate script installs the statusline and wires `statusLine` in
+`~/.claude/settings.json` for you. Restart Claude Code to see the bar.
 
-```json
-{
-  "statusLine": {
-    "type": "command",
-    "command": "bash ~/.claude/statusline/statusline-command.sh"
-  }
-}
+Run `./setup/setup.sh --dry-run` first to print the clone and delegate plan
+without a disk change.
+
+## Manual install
+
+```bash
+git clone https://github.com/Kiriketsuki/chrysaki-claude ~/.local/share/chrysaki-claude
+sh ~/.local/share/chrysaki-claude/init.sh
 ```
 
 ## Installer behavior
 
-The `config-statusline` component targets `~/.claude/statusline`. Because the
-scripts live in an external repository, the installer prints this pointer and
-does nothing else.
+`ext-statusline` owns the install. The older `config-statusline` component
+keeps this README as a pointer only. It writes no scripts.

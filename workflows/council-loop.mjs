@@ -44,7 +44,7 @@
  *     rounds,            // default 2 — debate depth per agent within one council
  *     maxLoops,          // default 10 — bounded cap on council convenings (fix→re-review iterations)
  *     requireUnconditional, // default true — converge ONLY on unconditional FOR
- *     applyNonBlockers,  // default true — fix non-blockers (cosmetic + follow-ups) in-loop too; converge on ZERO findings
+ *     applyNonBlockers,  // default true — fold non-blockers (cosmetic + follow-ups) into fix rounds that run anyway; they never gate convergence (an unconditional FOR with zero blockers converges, leftovers land in inPrFollowUps)
  *     model: { advocate, critic, questioner, arbiter, fixPlan, fix, fixReview, merge, verify }, // per-role model overrides
  *     effort: { advocate, critic, fixPlan, fix, fixReview },         // per-role reasoning effort overrides
  *   },
@@ -53,7 +53,7 @@
 
 export const meta = {
   name: 'council-loop',
-  description: 'Standalone adversarial council fix-loop over the working tree: review → fix in-PR + semantic commit/push → re-review until unconditional FOR with zero findings (default 1v1, no questioner, 2 debate rounds, bounded at 10 councils), then optionally squash-merge. Never files issues; commits/pushes per round.',
+  description: 'Standalone adversarial council fix-loop over the working tree: review → fix in-PR + semantic commit/push → re-review until unconditional FOR with zero BLOCKING findings (non-blockers ride fix rounds but never gate convergence; default 1v1, no questioner, 2 debate rounds, bounded at 10 councils), then optionally squash-merge. Never files issues; commits/pushes per round.',
   phases: [
     { title: 'Council', detail: 'advocate ∥ critic (∥ optional questioner) + arbiter; fix-then-review loop to unconditional FOR; each fix round commits semantically and pushes; follow-ups applied in-PR, never as issues' },
     { title: 'Verify', detail: 'build + tests on the final state; reports mergeable' },
@@ -302,12 +302,18 @@ ${sides.map((s, i) => `--- ${i + 1} ---\n${s}`).join('\n\n')}`,
   ]
   lastBlocking = blocking
   const verdictOk = verdict.verdict === 'FOR' && (!C.requireUnconditional || verdict.unconditional)
-  // converged = verdict passes AND ZERO blocking findings remain AND (when applyNonBlockers) the
-  // tree is fully clean. Council review F2 (2026-07-30): the !blocking.length term is load-bearing —
-  // without it, an arbiter that says "unconditional FOR" while still listing a non-cosmetic finding
-  // (or any plain FOR under requireUnconditional:false) converged PAST its own blocker and could
-  // auto-merge it. The council's findings outrank the arbiter's self-reported flag.
-  if (verdictOk && !blocking.length && (!C.applyNonBlockers || !nonBlocking.length)) { converged = true; break }
+  // converged = verdict passes AND ZERO blocking findings remain. Council review F2 (2026-07-30):
+  // the !blocking.length term is load-bearing — without it, an arbiter that says "unconditional FOR"
+  // while still listing a non-cosmetic finding (or any plain FOR under requireUnconditional:false)
+  // converged PAST its own blocker and could auto-merge it. The council's findings outrank the
+  // arbiter's self-reported flag.
+  // Ultracode fix (2026-08-13, #354 run wf_83839751): non-blockers no longer gate convergence. The
+  // old `(!C.applyNonBlockers || !nonBlocking.length)` term let the arbiter hold an unconditional
+  // FOR hostage by re-emitting a fresh "optional nit" follow-up every round — eight straight
+  // unconditional FORs churned to maxLoops and reported "did not converge". An unconditional FOR
+  // with zero blockers converges NOW; any remaining non-blockers are returned in inPrFollowUps for
+  // the caller to apply in-PR (never as issues).
+  if (verdictOk && !blocking.length) { converged = true; break }
 
   // when applyNonBlockers, drive non-blockers to zero too; otherwise only blockers feed the next round
   const toFix = C.applyNonBlockers ? [...blocking, ...nonBlocking] : blocking
@@ -397,7 +403,7 @@ const inPrFollowUps = [
   ...(((verdict && verdict.findings) || []).filter(f => isCosmetic(f.severity)).map(fmt)),
 ]
 const reason = converged
-  ? (C.applyNonBlockers ? 'unconditional FOR — zero findings remaining (blockers + non-blockers applied in-PR)' : 'unconditional FOR')
+  ? (inPrFollowUps.length ? 'unconditional FOR — zero blocking findings (remaining non-blockers returned as in-PR follow-ups)' : 'unconditional FOR — zero findings remaining')
   : stalled
     ? 'non-unconditional verdict with no actionable findings left — could not progress without re-litigating identical code'
     : `did not converge within ${C.maxLoops} council(s)`

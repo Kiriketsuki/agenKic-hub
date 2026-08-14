@@ -1,6 +1,6 @@
 # Council patterns
 
-The adversarial council is a review pattern built on real spawned agents, not role-played prose. This article describes the roles, the debate protocol, and the discipline that keeps findings honest. The repo's [adversarial-council skill](https://github.com/Kiriketsuki/agenKic-hub/blob/main/skills/adversarial-council/SKILL.md) implements it.
+The adversarial council is a review pattern built on real spawned agents, not role-played prose. This article describes the roles, the debate protocol, and the discipline that keeps findings honest. The repo's [adversarial-council skill](https://github.com/Kiriketsuki/agenKic-hub/blob/main/skills/council/adversarial-council/SKILL.md) implements it.
 
 ## The idea
 
@@ -74,6 +74,6 @@ Nothing else qualifies. That excludes performance, code quality, feature ideas, 
 
 ## Related skills
 
-- [council-supervisor](https://github.com/Kiriketsuki/agenKic-hub/blob/main/skills/council-supervisor/SKILL.md) adds heartbeat monitoring, stall detection, and checkpointing around the debate.
-- [council-fix](https://github.com/Kiriketsuki/agenKic-hub/blob/main/skills/council-fix/SKILL.md) chains the council into a prioritised fix plan.
-- [parallel-fix](https://github.com/Kiriketsuki/agenKic-hub/blob/main/skills/parallel-fix/SKILL.md) races competing fixes for the findings in isolated worktrees.
+- [council-supervisor](https://github.com/Kiriketsuki/agenKic-hub/blob/main/skills/council/council-supervisor/SKILL.md) adds heartbeat monitoring, stall detection, and checkpointing around the debate.
+- [council-fix](https://github.com/Kiriketsuki/agenKic-hub/blob/main/skills/council/council-fix/SKILL.md) chains the council into a prioritised fix plan.
+- [parallel-fix](https://github.com/Kiriketsuki/agenKic-hub/blob/main/skills/council/parallel-fix/SKILL.md) races competing fixes for the findings in isolated worktrees.
