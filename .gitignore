@@ -5,3 +5,4 @@ site/
 
 # Private skills synced alongside this repo stay untracked
 skills/private-*/
+.gitnexus
