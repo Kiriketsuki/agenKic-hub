@@ -1,3 +1,5 @@
+// This server is rung 3 of the visual ladder. Most brainstorms never start it.
+// Read ../visuals.md before reaching for this file.
 const crypto = require('crypto');
 const http = require('http');
 const fs = require('fs');
