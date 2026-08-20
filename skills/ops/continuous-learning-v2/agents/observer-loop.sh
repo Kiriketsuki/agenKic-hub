@@ -6,9 +6,19 @@ unset CLAUDECODE
 
 SLEEP_PID=""
 USR1_FIRED=0
+prompt_file=""
+
+# Self-exit guard. An orphaned loop must not run forever when the Stop hook
+# never fires (killed terminal, SIGKILL, crash). Default cap: 12 hours.
+START_EPOCH=$(date +%s)
+MAX_LIFETIME_SECONDS="${OBSERVER_MAX_LIFETIME_SECONDS:-43200}"
+case "$MAX_LIFETIME_SECONDS" in
+  ''|*[!0-9]*) MAX_LIFETIME_SECONDS=43200 ;;
+esac
 
 cleanup() {
   [ -n "$SLEEP_PID" ] && kill "$SLEEP_PID" 2>/dev/null
+  [ -n "$prompt_file" ] && rm -f "$prompt_file"
   if [ -f "$PID_FILE" ] && [ "$(cat "$PID_FILE" 2>/dev/null)" = "$$" ]; then
     rm -f "$PID_FILE"
   fi
@@ -16,7 +26,18 @@ cleanup() {
 }
 trap cleanup TERM INT
 
+rotate_log_if_large() {
+  # Cap the log at ~5 MB. A long-lived loop must not grow it without bound.
+  local size
+  size=$(wc -c < "$LOG_FILE" 2>/dev/null || echo 0)
+  if [ "$size" -gt 5242880 ] 2>/dev/null; then
+    mv "$LOG_FILE" "${LOG_FILE}.1" 2>/dev/null || true
+    : > "$LOG_FILE"
+  fi
+}
+
 analyze_observations() {
+  rotate_log_if_large
   if [ ! -f "$OBSERVATIONS_FILE" ]; then
     return
   fi
@@ -119,6 +140,7 @@ PROMPT
   done
   kill "$watchdog_pid" 2>/dev/null || true
   rm -f "$prompt_file"
+  prompt_file=""
 
   if [ "$exit_code" -ne 0 ]; then
     echo "[$(date)] Claude analysis failed (exit $exit_code)" >> "$LOG_FILE"
@@ -143,6 +165,13 @@ echo "$$" > "$PID_FILE"
 echo "[$(date)] Observer started for ${PROJECT_NAME} (PID: $$)" >> "$LOG_FILE"
 
 while true; do
+  # Self-exit when past the lifetime cap. This kills every future orphan
+  # even when the Stop hook never runs.
+  if [ $(( $(date +%s) - START_EPOCH )) -ge "$MAX_LIFETIME_SECONDS" ]; then
+    echo "[$(date)] Observer reached max lifetime (${MAX_LIFETIME_SECONDS}s), exiting" >> "$LOG_FILE"
+    cleanup
+  fi
+
   sleep "$OBSERVER_INTERVAL_SECONDS" &
   SLEEP_PID=$!
   wait "$SLEEP_PID" 2>/dev/null
