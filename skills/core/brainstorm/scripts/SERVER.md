@@ -1,36 +1,14 @@
-# Visual Companion Guide
+# Rung 3: the live visual server
 
-Browser-based visual brainstorming companion for showing mockups, diagrams, and options.
+Most brainstorms never start this. It exists for one loop shape: several rounds of iterate-and-click on the same surface, with push-reload and click capture. Read `../visuals.md` first and confirm rung 2 does not cover the need.
 
-## When to Use
-
-Decide per-question, not per-session. The test: **would the user understand this better by seeing it than reading it?**
-
-**Use the browser** when the content itself is visual:
-
-- **UI mockups** — wireframes, layouts, navigation structures, component designs
-- **Architecture diagrams** — system components, data flow, relationship maps
-- **Side-by-side visual comparisons** — comparing two layouts, two color schemes, two design directions
-- **Design polish** — when the question is about look and feel, spacing, visual hierarchy
-- **Spatial relationships** — state machines, flowcharts, entity relationships rendered as diagrams
-
-**Use the terminal** when the content is text or tabular:
-
-- **Requirements and scope questions** — "what does X mean?", "which features are in scope?"
-- **Conceptual A/B/C choices** — picking between approaches described in words
-- **Tradeoff lists** — pros/cons, comparison tables
-- **Technical decisions** — API design, data modeling, architectural approach selection
-- **Clarifying questions** — anything where the answer is words, not a visual preference
-
-A question *about* a UI topic is not automatically a visual question. "What kind of wizard do you want?" is conceptual — use the terminal. "Which of these wizard layouts feels right?" is visual — use the browser.
-
-## How It Works
+## How it works
 
 The server watches a directory for HTML files and serves the newest one to the browser. You write HTML content to `screen_dir`, the user sees it in their browser and can click to select options. Selections are recorded to `state_dir/events` that you read on your next turn.
 
 **Content fragments vs full documents:** If your HTML file starts with `<!DOCTYPE` or `<html`, the server serves it as-is (just injects the helper script). Otherwise, the server automatically wraps your content in the frame template — adding the header, CSS theme, selection indicator, and all interactive infrastructure. **Write content fragments by default.** Only write full documents when you need complete control over the page.
 
-## Starting a Session
+## Starting a session
 
 ```bash
 # Start server with persistence (mockups saved to project)
@@ -47,51 +25,27 @@ Save `screen_dir` and `state_dir` from the response. Tell user to open the URL.
 
 **Note:** Pass the project root as `--project-dir` so mockups persist in `.brainstorm/` and survive server restarts. Without it, files go to `/tmp` and get cleaned up. Remind the user to add `.brainstorm/` to `.gitignore` if it's not already there.
 
-**Launching the server by platform:**
+## Launching by platform
 
-**Claude Code (macOS / Linux):**
+**Claude Code on macOS or Linux:** run it. The script backgrounds the server itself.
+
 ```bash
-# Default mode works — the script backgrounds the server itself
 scripts/start-server.sh --project-dir /path/to/project
 ```
 
-**Claude Code (Windows):**
-```bash
-# Windows auto-detects and uses foreground mode, which blocks the tool call.
-# Use run_in_background: true on the Bash tool call so the server survives
-# across conversation turns.
-scripts/start-server.sh --project-dir /path/to/project
-```
-When calling this via the Bash tool, set `run_in_background: true`. Then read `$STATE_DIR/server-info` on the next turn to get the URL and port.
+**Everywhere else**, or wherever the harness reaps detached processes (Windows Git Bash, Codex, Gemini CLI): pass `--foreground` and launch the command with your harness background mechanism (for example `run_in_background: true` on the Bash tool). Then read `$STATE_DIR/server-info` on the next turn to get the URL and port. The script also auto-detects Codex (`CODEX_CI`) and Windows shells and switches to foreground on its own.
 
-**Codex:**
-```bash
-# Codex reaps background processes. The script auto-detects CODEX_CI and
-# switches to foreground mode. Run it normally — no extra flags needed.
-scripts/start-server.sh --project-dir /path/to/project
-```
-
-**Gemini CLI:**
-```bash
-# Use --foreground and set is_background: true on your shell tool call
-# so the process survives across turns
-scripts/start-server.sh --project-dir /path/to/project --foreground
-```
-
-**Other environments:** The server must keep running in the background across conversation turns. If your environment reaps detached processes, use `--foreground` and launch the command with your platform's background execution mechanism.
-
-If the URL is unreachable from your browser (common in remote/containerized setups), bind a non-loopback host:
+Remote or containerized host: when the printed URL is unreachable from the user's browser, bind a non-loopback host and control the printed hostname:
 
 ```bash
-scripts/start-server.sh \
-  --project-dir /path/to/project \
-  --host 0.0.0.0 \
-  --url-host localhost
+scripts/start-server.sh --project-dir /path/to/project --host 0.0.0.0 --url-host localhost
 ```
 
-Use `--url-host` to control what hostname is printed in the returned URL JSON.
+## Node resolution
 
-## The Loop
+The script resolves node itself: `$BRAINSTORM_NODE`, then PATH, then the highest NVM version, then common install paths. It logs the chosen binary to the session log. Set `BRAINSTORM_NODE` to override when the wrong version gets picked.
+
+## The loop
 
 1. **Check server is alive**, then **write HTML** to a new file in `screen_dir`:
    - Before each write, check that `$STATE_DIR/server-info` exists. If it doesn't (or `$STATE_DIR/server-stopped` exists), the server has shut down — restart it with `start-server.sh` before continuing. The server auto-exits after 30 minutes of inactivity.
@@ -125,7 +79,7 @@ Use `--url-host` to control what hostname is printed in the returned URL JSON.
 
 6. Repeat until done.
 
-## Writing Content Fragments
+## Writing content fragments
 
 Write just the content that goes inside the page. The server wraps it in the frame template automatically (header, theme CSS, selection indicator, and all interactive infrastructure).
 
@@ -155,7 +109,7 @@ Write just the content that goes inside the page. The server wraps it in the fra
 
 That's it. No `<html>`, no CSS, no `<script>` tags needed. The server provides all of that.
 
-## CSS Classes Available
+## CSS classes available
 
 The frame template provides these CSS classes for your content:
 
@@ -243,7 +197,7 @@ The frame template provides these CSS classes for your content:
 - `.section` — content block with bottom margin
 - `.label` — small uppercase label text
 
-## Browser Events Format
+## Browser events format
 
 When the user clicks options in the browser, their interactions are recorded to `$STATE_DIR/events` (one JSON object per line). The file is cleared automatically when you push a new screen.
 
@@ -257,23 +211,14 @@ The full event stream shows the user's exploration path — they may click multi
 
 If `$STATE_DIR/events` doesn't exist, the user didn't interact with the browser — use only their terminal text.
 
-## Design Tips
-
-- **Scale fidelity to the question** — wireframes for layout, polish for polish questions
-- **Explain the question on each page** — "Which layout feels more professional?" not just "Pick one"
-- **Iterate before advancing** — if feedback changes current screen, write a new version
-- **2-4 options max** per screen
-- **Use real content when it matters** — for a photography portfolio, use actual images (Unsplash). Placeholder content obscures design issues.
-- **Keep mockups simple** — focus on layout and structure, not pixel-perfect design
-
-## File Naming
+## File naming
 
 - Use semantic names: `platform.html`, `visual-style.html`, `layout.html`
 - Never reuse filenames — each screen must be a new file
 - For iterations: append version suffix like `layout-v2.html`, `layout-v3.html`
 - Server serves newest file by modification time
 
-## Cleaning Up
+## Cleaning up
 
 ```bash
 scripts/stop-server.sh $SESSION_DIR
@@ -285,3 +230,5 @@ If the session used `--project-dir`, mockup files persist in `.brainstorm/` for 
 
 - Frame template (CSS reference): `scripts/frame-template.html`
 - Helper script (client-side): `scripts/helper.js`
+- Maintenance note: an SSE rewrite would cut roughly 230 lines of `server.cjs`. Do it whenever someone opens that file for another reason.
+- Sunset check: if no session reaches rung 3 by 2027-02-20, delete `scripts/` rather than keep maintaining 860 lines.
