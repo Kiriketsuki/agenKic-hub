@@ -1,128 +1,77 @@
 ---
 name: brainstorm
-description: "Collaborative design exploration before implementation. Understands project context, asks clarifying questions one at a time, proposes 2-3 approaches with trade-offs, and converges on an approved design. Chains into feature-spec for structured output. Use before building features, components, or making significant changes."
+description: "Collaborative design exploration before implementation. Understands project context, asks the questions that matter, proposes approaches with trade-offs, and converges on an approved design. Chains into feature-spec for structured output. Use before building features, components, or making significant changes. Scales from a three-message sanity check to a full design session."
 attribution: "Adapted from the claude-plugins-official repository (https://github.com/anthropics/claude-plugins-official) by Anthropic."
 model: opus
 ---
 
 # Brainstorming Ideas Into Designs
 
-Help turn ideas into fully formed designs and specs through natural collaborative dialogue.
+Turn ideas into designs through collaborative dialogue. Understand the project first, then converge on a design the user agrees to.
 
-Start by understanding the current project context, then ask questions one at a time to refine the idea. Once you understand what you're building, present the design and get user approval.
+## Pick a depth first
 
-<HARD-GATE>
-Do NOT invoke any implementation skill, write any code, scaffold any project, or take any implementation action until you have presented a design and the user has approved it. This applies to EVERY project regardless of perceived simplicity.
-</HARD-GATE>
+Infer the depth from the request, state your pick in one line, and accept "go deeper" or "go faster" as an override at any point.
 
-## Anti-Pattern: "This Is Too Simple To Need A Design"
+| Depth | Use when | Shape |
+|---|---|---|
+| Quick | One decision, or the user already knows roughly what they want | Confirm the goal, name the one real fork, recommend a side, one-paragraph design, confirm, done. 3 to 5 messages. |
+| Standard (default) | A feature, a component, a change with real unknowns | Explore context, ask the questions that matter, 2 to 3 approaches, design in sections, confirm. |
+| Deep | New subsystem, migration, anything expensive to get wrong | Standard, plus decomposition, plus explicit error handling, testing and rollout sections, plus per-section confirmation. |
 
-Every project goes through this process. A todo list, a single-function utility, a config change — all of them. "Simple" projects are where unexamined assumptions cause the most wasted work. The design can be short (a few sentences for truly simple projects), but you MUST present it and get approval.
+## The one non-negotiable
 
-## Checklist
+State the design and get a yes before you write code or invoke an implementation skill. At Quick depth the design can be two sentences. The gate is on agreement, not on ceremony.
 
-You MUST create a task for each of these items and complete them in order:
+## The moves
 
-1. **Explore project context** — check files, docs, recent commits
-2. **Offer the visual companion just-in-time** — NOT upfront. The first time a question would genuinely be clearer shown than described, offer it then (its own message). If no visual question ever arises, never offer it. See the Visual Companion section below.
-3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
-4. **Propose 2-3 approaches** — with trade-offs and your recommendation
-5. **Present design** — in sections scaled to their complexity, get user approval after each section
-6. **Hand off to feature-spec** — invoke the feature-spec skill, which formalizes the approved design into a structured spec (written to the target repo's `docs/specs/todo/`)
+A menu, not a checklist. Quick uses moves 1, 4 and 5. Standard uses all but decomposition. Deep uses all six. Use TodoWrite at Deep depth only, or when the user asks to see the plan.
 
-## Process Flow
+1. **Explore project context** — files, docs, recent commits.
+2. **Decompose** — when the request spans several independent subsystems, split it before refining details. Brainstorm the first sub-project through the normal flow.
+3. **Ask clarifying questions** — purpose, constraints, success criteria.
+4. **Propose approaches** — trade-offs plus your recommendation.
+5. **State the design** — and get the yes.
+6. **Hand off** — see Finishing. YAGNI ruthlessly along the way: cut features the design does not need.
 
-```dot
-digraph brainstorm {
-    "Explore project context" [shape=box];
-    "Ask clarifying questions" [shape=box];
-    "Propose 2-3 approaches" [shape=box];
-    "Present design sections" [shape=box];
-    "User approves design?" [shape=diamond];
-    "Invoke feature-spec skill" [shape=doublecircle];
+## Questions
 
-    "Explore project context" -> "Ask clarifying questions";
-    "Ask clarifying questions" -> "Propose 2-3 approaches";
-    "Propose 2-3 approaches" -> "Present design sections";
-    "Present design sections" -> "User approves design?";
-    "User approves design?" -> "Present design sections" [label="no, revise"];
-    "User approves design?" -> "Invoke feature-spec skill" [label="yes"];
-}
-```
+AskUserQuestion is the default instrument for any closed-option choice. Fall back to prose when the option set exceeds four options, or when each option needs a paragraph to explain. One question per message is the default because it keeps answers clean. Batch two or three when they are independent and the user is moving fast.
 
-**The terminal state is invoking feature-spec.** Do NOT invoke any implementation skill. The ONLY skill you invoke after brainstorming is feature-spec.
+## Approaches
 
-## The Process
+Propose 2 to 3 approaches when a genuine fork exists. When one obvious way exists, say so, say why, and move on. A manufactured alternative wastes a turn. Lead with your recommendation and the reasoning.
 
-**Understanding the idea:**
+## Presenting the design
 
-- Check out the current project state first (files, docs, recent commits)
-- Before asking detailed questions, assess scope: if the request describes multiple independent subsystems (e.g., "build a platform with chat, file storage, billing, and analytics"), flag this immediately. Don't spend questions refining details of a project that needs to be decomposed first.
-- If the project is too large for a single spec, help the user decompose into sub-projects: what are the independent pieces, how do they relate, what order should they be built? Then brainstorm the first sub-project through the normal design flow. Each sub-project gets its own spec → plan → implementation cycle.
-- For appropriately-scoped projects, ask questions one at a time to refine the idea
-- Prefer multiple choice questions when possible, but open-ended is fine too
-- Only one question per message - if a topic needs more exploration, break it into multiple questions
-- Focus on understanding: purpose, constraints, success criteria
+Length follows stakes, not a template. At Standard and Deep depth, use plan mode and present the design as the plan, then use ExitPlanMode as the approval gate. The plan is the design document. At Quick depth, state the design inline and ask for a yes. Cover architecture, components, data flow, error handling and testing only where each one carries a real decision. Say which of them you skip and why, so the user can pull one back in.
 
-**Exploring approaches:**
-
-- Propose 2-3 different approaches with trade-offs
-- Present options conversationally with your recommendation and reasoning
-- Lead with your recommended option and explain why
-
-**Presenting the design:**
-
-- Once you believe you understand what you're building, present the design
-- Scale each section to its complexity: a few sentences if straightforward, up to 200-300 words if nuanced
-- Ask after each section whether it looks right so far
-- Cover: architecture, components, data flow, error handling, testing
-- Be ready to go back and clarify if something doesn't make sense
-
-**Design for isolation and clarity:**
+## Design for isolation and clarity
 
 - Break the system into smaller units that each have one clear purpose, communicate through well-defined interfaces, and can be understood and tested independently
 - For each unit, you should be able to answer: what does it do, how do you use it, and what does it depend on?
 - Can someone understand what a unit does without reading its internals? Can you change the internals without breaking consumers? If not, the boundaries need work.
 - Smaller, well-bounded units are also easier for you to work with - you reason better about code you can hold in context at once, and your edits are more reliable when files are focused. When a file grows large, that's often a signal that it's doing too much.
 
-**Working in existing codebases:**
+## Working in existing codebases
 
 - Explore the current structure before proposing changes. Follow existing patterns.
 - Where existing code has problems that affect the work (e.g., a file that's grown too large, unclear boundaries, tangled responsibilities), include targeted improvements as part of the design - the way a good developer improves code they're working in.
 - Don't propose unrelated refactoring. Stay focused on what serves the current goal.
 
-## After the Design Is Approved
+## Finishing
 
-Once the user approves the design, invoke the **feature-spec** skill to formalize it into a structured spec file. Pass along a summary of what was decided during brainstorming so feature-spec can pre-fill sections instead of re-interviewing:
+Three named exits. Ask which ending the user wants when it is not obvious.
 
-> "Design approved. Invoking feature-spec to formalize this into a structured spec."
+1. **Default:** hand the approved design to the feature-spec skill with a summary of what was decided, so it pre-fills instead of re-interviewing.
+2. **Build now:** the user wants to build immediately and the design is small. Say so and stop. The user invokes the implementation skill.
+3. **The brainstorm was the deliverable:** end with the decision written out in chat. No artifact is owed.
 
-Then invoke the feature-spec skill. The brainstorm skill ends here — feature-spec takes over for the structured output.
+## Visuals
 
-## Key Principles
-
-- **One question at a time** - Don't overwhelm with multiple questions
-- **Multiple choice preferred** - Easier to answer than open-ended when possible
-- **YAGNI ruthlessly** - Remove unnecessary features from all designs
-- **Explore alternatives** - Always propose 2-3 approaches before settling
-- **Incremental validation** - Present design, get approval before moving on
-- **Be flexible** - Go back and clarify when something doesn't make sense
-
-## Visual Companion
-
-A browser-based companion for showing mockups, diagrams, and visual options during brainstorming. Available as a tool — not a mode. Accepting the companion means it's available for questions that benefit from visual treatment; it does NOT mean every question goes through the browser.
-
-**Offering the companion (just-in-time):** Do NOT offer it upfront. Wait until a question would genuinely be clearer shown than told — a real mockup / layout / diagram question, not merely a UI *topic*. The first time that happens, offer it then, as its own message:
-> "This next part might be easier if I show you — I can put together mockups, diagrams, and comparisons in a browser tab as we go. It's still new and can be token-intensive. Want me to? I'll open it for you."
-
-**This offer MUST be its own message.** Only the offer — no clarifying question, summary, or other content. Wait for the user's response. If they accept, start the server with `--open` so their browser opens to the first screen automatically. If they decline, continue text-only and don't offer again unless they raise it.
-
-**Per-question decision:** Even after the user accepts, decide FOR EACH QUESTION whether to use the browser or the terminal. The test: **would the user understand this better by seeing it than reading it?**
-
-- **Use the browser** for content that IS visual — mockups, wireframes, layout comparisons, architecture diagrams, side-by-side visual designs
-- **Use the terminal** for content that is text — requirements questions, conceptual choices, tradeoff lists, A/B/C/D text options, scope decisions
-
-A question about a UI topic is not automatically a visual question. "What does personality mean in this context?" is a conceptual question — use the terminal. "Which wizard layout works better?" is a visual question — use the browser.
-
-If they agree to the companion, read the detailed guide before proceeding:
-`skills/core/brainstorm/visual-companion.md`
+When a question is genuinely about something visual, show it. Climb the cheapest rung that
+works: a mermaid fence or a markdown table inline in chat, an Artifact page when the user
+must see something rendered, the live server when the loop needs push-reload and click
+capture across several turns. Do not offer a visual companion as a formal choice and do not
+script the offer. Show the thing at the rung that fits and say what you are doing. Ask first
+before climbing to rung 3, because it starts a process. Details: `visuals.md`.

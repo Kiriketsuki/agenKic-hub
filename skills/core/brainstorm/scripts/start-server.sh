@@ -16,6 +16,37 @@
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+# Resolve node. Order: explicit override, PATH, highest NVM version, common
+# install paths. NVM lazy-loads in many shells, so PATH alone is not enough.
+resolve_node() {
+  if [[ -n "${BRAINSTORM_NODE:-}" && -x "${BRAINSTORM_NODE}" ]]; then
+    echo "$BRAINSTORM_NODE"; return 0
+  fi
+  if command -v node >/dev/null 2>&1; then
+    command -v node; return 0
+  fi
+  local nvm_root="${NVM_DIR:-$HOME/.nvm}"
+  if [[ -d "$nvm_root/versions/node" ]]; then
+    # Pick the highest version with sort -V. Glob order is not version order.
+    local best
+    best=$(ls -1 "$nvm_root/versions/node" 2>/dev/null | sort -V | tail -1)
+    if [[ -n "$best" && -x "$nvm_root/versions/node/$best/bin/node" ]]; then
+      echo "$nvm_root/versions/node/$best/bin/node"; return 0
+    fi
+  fi
+  local p
+  for p in /usr/local/bin/node /opt/homebrew/bin/node; do
+    [[ -x "$p" ]] && { echo "$p"; return 0; }
+  done
+  return 1
+}
+
+NODE_BIN="$(resolve_node)"
+if [[ -z "$NODE_BIN" ]]; then
+  echo '{"error": "node not found on PATH. Set BRAINSTORM_NODE to your node binary."}'
+  exit 1
+fi
+
 # Parse arguments
 PROJECT_DIR=""
 FOREGROUND="false"
@@ -59,17 +90,11 @@ if [[ -z "$URL_HOST" ]]; then
   fi
 fi
 
-# Some environments reap detached/background processes. Auto-foreground when detected.
-if [[ -n "${CODEX_CI:-}" && "$FOREGROUND" != "true" && "$FORCE_BACKGROUND" != "true" ]]; then
-  FOREGROUND="true"
-fi
-
-# Windows/Git Bash reaps nohup background processes. Auto-foreground when detected.
+# Some environments (Codex, Windows/Git Bash) reap detached background
+# processes. Auto-foreground when any of them is detected.
 if [[ "$FOREGROUND" != "true" && "$FORCE_BACKGROUND" != "true" ]]; then
-  case "${OSTYPE:-}" in
-    msys*|cygwin*|mingw*) FOREGROUND="true" ;;
-  esac
-  if [[ -n "${MSYSTEM:-}" ]]; then
+  if [[ -n "${CODEX_CI:-}${MSYSTEM:-}" ]] \
+    || [[ "${OSTYPE:-}" == msys* || "${OSTYPE:-}" == cygwin* || "${OSTYPE:-}" == mingw* ]]; then
     FOREGROUND="true"
   fi
 fi
@@ -105,18 +130,23 @@ cd "$SCRIPT_DIR"
 OWNER_PID="$(ps -o ppid= -p "$PPID" 2>/dev/null | tr -d ' ')"
 if [[ -z "$OWNER_PID" || "$OWNER_PID" == "1" ]]; then
   OWNER_PID="$PPID"
+  # The owner PID fell back to the ephemeral shell. Owner monitoring may be
+  # off, so the 30-minute idle timeout is the only reaper. Say so in the log.
+  echo "[$(date)] owner PID fell back to \$PPID ($PPID); owner monitoring may be off, idle timeout is the only reaper" >> "$LOG_FILE"
 fi
+
+echo "[$(date)] using node: $NODE_BIN" >> "$LOG_FILE"
 
 # Foreground mode for environments that reap detached/background processes.
 if [[ "$FOREGROUND" == "true" ]]; then
   echo "$$" > "$PID_FILE"
-  env BRAINSTORM_DIR="$SESSION_DIR" BRAINSTORM_HOST="$BIND_HOST" BRAINSTORM_URL_HOST="$URL_HOST" BRAINSTORM_OWNER_PID="$OWNER_PID" node server.cjs
+  env BRAINSTORM_DIR="$SESSION_DIR" BRAINSTORM_HOST="$BIND_HOST" BRAINSTORM_URL_HOST="$URL_HOST" BRAINSTORM_OWNER_PID="$OWNER_PID" "$NODE_BIN" server.cjs
   exit $?
 fi
 
 # Start server, capturing output to log file
 # Use nohup to survive shell exit; disown to remove from job table
-nohup env BRAINSTORM_DIR="$SESSION_DIR" BRAINSTORM_HOST="$BIND_HOST" BRAINSTORM_URL_HOST="$URL_HOST" BRAINSTORM_OWNER_PID="$OWNER_PID" node server.cjs > "$LOG_FILE" 2>&1 &
+nohup env BRAINSTORM_DIR="$SESSION_DIR" BRAINSTORM_HOST="$BIND_HOST" BRAINSTORM_URL_HOST="$URL_HOST" BRAINSTORM_OWNER_PID="$OWNER_PID" "$NODE_BIN" server.cjs > "$LOG_FILE" 2>&1 &
 SERVER_PID=$!
 disown "$SERVER_PID" 2>/dev/null
 echo "$SERVER_PID" > "$PID_FILE"
