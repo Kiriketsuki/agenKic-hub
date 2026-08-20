@@ -48,6 +48,39 @@ write_guard_sentinel() {
   printf '%s\n' 'observer paused: confirmation or permission prompt detected; rerun start-observer.sh --reset after reviewing observer.log' > "$SENTINEL_FILE"
 }
 
+# Global reaper. Bounds the total observer count across ALL projects.
+# Kills any observer-loop.sh past the lifetime cap, then kills the oldest
+# survivors beyond OBSERVER_MAX_CONCURRENT. Runs before every launch.
+reap_stale_observers() {
+  local max_concurrent="${OBSERVER_MAX_CONCURRENT:-3}"
+  local max_lifetime="${OBSERVER_MAX_LIFETIME_SECONDS:-43200}"
+  local own_pid=""
+  [ -f "$PID_FILE" ] && own_pid=$(cat "$PID_FILE" 2>/dev/null)
+
+  # etimes = elapsed seconds. Kill anything past the lifetime cap.
+  local survivors=""
+  local pid etimes
+  while read -r pid etimes; do
+    [ -z "$pid" ] && continue
+    if [ "$etimes" -ge "$max_lifetime" ] 2>/dev/null; then
+      echo "Reaping over-age observer (PID: $pid, age: ${etimes}s)"
+      kill "$pid" 2>/dev/null || true
+    else
+      survivors="${survivors}${etimes} ${pid}\n"
+    fi
+  done < <(pgrep -f 'agents/observer-loop\.sh' | xargs -r ps -o pid=,etimes= -p 2>/dev/null)
+
+  # Enforce the global concurrency cap, oldest first, sparing this project's own.
+  local excess
+  excess=$(printf '%b' "$survivors" | sort -rn | awk -v cap="$max_concurrent" -v own="$own_pid" '
+    $2 == own { next }
+    { n++; if (n > cap) print $2 }')
+  for pid in $excess; do
+    echo "Reaping excess observer (PID: $pid, cap: $max_concurrent)"
+    kill "$pid" 2>/dev/null || true
+  done
+}
+
 stop_observer_if_running() {
   if [ -f "$PID_FILE" ]; then
     pid=$(cat "$PID_FILE")
@@ -67,6 +100,36 @@ stop_observer_if_running() {
   echo "Observer not running."
   return 1
 }
+
+# Parse the action early. The stop and status paths must stay cheap: the
+# Stop hook wraps this script in a short timeout, and a python3 config
+# parse under load can eat the whole budget before the kill runs.
+ACTION="start"
+RESET_OBSERVER=false
+
+for arg in "$@"; do
+  case "$arg" in
+    start|stop|status)
+      ACTION="$arg"
+      ;;
+    --reset)
+      RESET_OBSERVER=true
+      ;;
+    *)
+      echo "Usage: $0 [start|stop|status] [--reset]"
+      exit 1
+      ;;
+  esac
+done
+
+if [ "$RESET_OBSERVER" = "true" ]; then
+  rm -f "$SENTINEL_FILE"
+fi
+
+if [ "$ACTION" = "stop" ]; then
+  stop_observer_if_running || true
+  exit 0
+fi
 
 # Read config values from config.json
 OBSERVER_INTERVAL_MINUTES=5
@@ -113,34 +176,7 @@ case "$UNAME_LOWER" in
   *mingw*|*msys*|*cygwin*) IS_WINDOWS=true ;;
 esac
 
-ACTION="start"
-RESET_OBSERVER=false
-
-for arg in "$@"; do
-  case "$arg" in
-    start|stop|status)
-      ACTION="$arg"
-      ;;
-    --reset)
-      RESET_OBSERVER=true
-      ;;
-    *)
-      echo "Usage: $0 [start|stop|status] [--reset]"
-      exit 1
-      ;;
-  esac
-done
-
-if [ "$RESET_OBSERVER" = "true" ]; then
-  rm -f "$SENTINEL_FILE"
-fi
-
 case "$ACTION" in
-  stop)
-    stop_observer_if_running || true
-    exit 0
-    ;;
-
   status)
     if [ -f "$PID_FILE" ]; then
       pid=$(cat "$PID_FILE")
@@ -176,10 +212,24 @@ case "$ACTION" in
       pid=$(cat "$PID_FILE")
       if kill -0 "$pid" 2>/dev/null; then
         echo "Observer already running for ${PROJECT_NAME} (PID: $pid)"
+        reap_stale_observers
         exit 0
       fi
       rm -f "$PID_FILE"
     fi
+
+    # Fallback guard: catch a live observer for this project whose PID file
+    # was lost. Matches on PROJECT_DIR, which appears in the process env.
+    for pid in $(pgrep -f 'agents/observer-loop\.sh'); do
+      if tr '\0' '\n' < "/proc/$pid/environ" 2>/dev/null | grep -qx "PROJECT_DIR=$PROJECT_DIR"; then
+        echo "Observer already running for ${PROJECT_NAME} (PID: $pid, recovered without PID file)"
+        echo "$pid" > "$PID_FILE"
+        reap_stale_observers
+        exit 0
+      fi
+    done
+
+    reap_stale_observers
 
     echo "Starting observer agent for ${PROJECT_NAME}..."
 
@@ -203,6 +253,7 @@ case "$ACTION" in
       PROJECT_ID="$PROJECT_ID" \
       MIN_OBSERVATIONS="$MIN_OBSERVATIONS" \
       OBSERVER_INTERVAL_SECONDS="$OBSERVER_INTERVAL_SECONDS" \
+      OBSERVER_MAX_LIFETIME_SECONDS="${OBSERVER_MAX_LIFETIME_SECONDS:-43200}" \
       CLV2_IS_WINDOWS="$IS_WINDOWS" \
       CLV2_OBSERVER_PROMPT_PATTERN="$CLV2_OBSERVER_PROMPT_PATTERN" \
       "$OBSERVER_LOOP_SCRIPT" >> "$LOG_FILE" 2>&1 &
