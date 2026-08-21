@@ -1,0 +1,2123 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A public hub of agent skills, workflows, harness configs, and patterns.">
+      
+      
+      
+        <link rel="canonical" href="https://kiriketsuki.github.io/agenKic-hub/WALKTHROUGH/">
+      
+      
+        <link rel="prev" href="../patterns/clip-path-borders/">
+      
+      
+        <link rel="next" href="../tips/claude-md-curation/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/chrysaki-favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Walkthrough - agenKic sKills</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/chrysaki.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="chrysaki" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#walkthrough" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="agenKic sKills" class="md-header__button md-logo" aria-label="agenKic sKills" data-md-component="logo">
+      
+  <img src="../assets/chrysaki-mark.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            agenKic sKills
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Walkthrough
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Kiriketsuki/agenKic-hub" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Kiriketsuki/agenKic-hub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../setup/install/" class="md-tabs__link">
+          
+  
+  
+  Setup
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../skills/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Skills
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../workflows/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Workflows
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../patterns/" class="md-tabs__link">
+          
+  
+  
+  Patterns
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Walkthrough
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../tips/claude-md-curation/" class="md-tabs__link">
+          
+  
+  
+  Tips
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="agenKic sKills" class="md-nav__button md-logo" aria-label="agenKic sKills" data-md-component="logo">
+      
+  <img src="../assets/chrysaki-mark.svg" alt="logo">
+
+    </a>
+    agenKic sKills
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Kiriketsuki/agenKic-hub" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Kiriketsuki/agenKic-hub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Setup
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../setup/install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Install
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../setup/symlinks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manual symlinks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../setup/harnesses/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Harnesses
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Patterns
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Patterns
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../patterns/debugging-protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Debugging protocol
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../patterns/model-tiering/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model tiering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../patterns/council-patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Council patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../patterns/gherkin-and-specs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gherkin and specs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../patterns/hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Code hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../patterns/authoring-workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring workflows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../patterns/clip-path-borders/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clip-path borders
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Walkthrough
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Walkthrough
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basics
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Basics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#install-claude-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install Claude Code
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#install-the-github-cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install the GitHub CLI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clone-the-hub" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clone the hub
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-the-installer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run the installer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-four-skill-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The four skill groups
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tmux-for-agents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        tmux for agents
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-command-palette" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The command palette
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#first-skill-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        First skill run
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#intermediate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Intermediate
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Intermediate">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#context-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-full-spec-loop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The full spec loop
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#guard-rail-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Guard-rail hooks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#council-and-writing-skills" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Council and writing skills
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#multi-agent-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multi-agent workflows
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adversarial-council" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adversarial council
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#authoring-a-new-skill" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authoring a new skill
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extras-the-real-rice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extras: the real rice
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Extras: the real rice">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ext-statusline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ext-statusline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ext-tmux-theme" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ext-tmux-theme
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ext-dots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ext-dots
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tips
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tips
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tips/claude-md-curation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLAUDE.md curation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tips/hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tips/linters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Linters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tips/multi-account/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-account setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basics
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Basics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#install-claude-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install Claude Code
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#install-the-github-cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install the GitHub CLI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clone-the-hub" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clone the hub
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-the-installer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run the installer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-four-skill-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The four skill groups
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tmux-for-agents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        tmux for agents
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-command-palette" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The command palette
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#first-skill-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        First skill run
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#intermediate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Intermediate
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Intermediate">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#context-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-full-spec-loop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The full spec loop
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#guard-rail-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Guard-rail hooks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#council-and-writing-skills" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Council and writing skills
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#multi-agent-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multi-agent workflows
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adversarial-council" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adversarial council
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#authoring-a-new-skill" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authoring a new skill
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extras-the-real-rice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extras: the real rice
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Extras: the real rice">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ext-statusline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ext-statusline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ext-tmux-theme" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ext-tmux-theme
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ext-dots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ext-dots
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="walkthrough">Walkthrough<a class="headerlink" href="#walkthrough" title="Permanent link">&para;</a></h1>
+<p>A tiered path from zero to a productive Claude Code session with the
+agenKic-hub. Each step gives a command and one line of expected outcome.</p>
+<blockquote>
+<p><strong>Already fluent in Claude Code?</strong> Skim Basics for the hub-specific parts
+(tmux keybindings, statusline, first skill run), then start at
+Intermediate.</p>
+</blockquote>
+<p>On Linux or macOS, <code>setup/walkthrough.sh</code> runs the Basics tier
+interactively and checks each step for you. On Windows, run <code>setup.ps1</code>
+then follow this written walkthrough.</p>
+<h2 id="table-of-contents">Table of Contents<a class="headerlink" href="#table-of-contents" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="#basics">Basics</a></li>
+<li><a href="#install-claude-code">Install Claude Code</a></li>
+<li><a href="#install-the-github-cli">Install the GitHub CLI</a></li>
+<li><a href="#clone-the-hub">Clone the hub</a></li>
+<li><a href="#run-the-installer">Run the installer</a></li>
+<li><a href="#the-four-skill-groups">The four skill groups</a></li>
+<li><a href="#tmux-for-agents">tmux for agents</a></li>
+<li><a href="#the-command-palette">The command palette</a></li>
+<li><a href="#first-skill-run">First skill run</a></li>
+<li><a href="#intermediate">Intermediate</a></li>
+<li><a href="#context-management">Context management</a></li>
+<li><a href="#the-full-spec-loop">The full spec loop</a></li>
+<li><a href="#guard-rail-hooks">Guard-rail hooks</a></li>
+<li><a href="#council-and-writing-skills">Council and writing skills</a></li>
+<li><a href="#advanced">Advanced</a></li>
+<li><a href="#multi-agent-workflows">Multi-agent workflows</a></li>
+<li><a href="#adversarial-council">Adversarial council</a></li>
+<li><a href="#authoring-a-new-skill">Authoring a new skill</a></li>
+<li><a href="#extras-the-real-rice">Extras: the real rice</a></li>
+<li><a href="#ext-statusline">ext-statusline</a></li>
+<li><a href="#ext-tmux-theme">ext-tmux-theme</a></li>
+<li><a href="#ext-dots">ext-dots</a></li>
+</ul>
+<hr />
+<h2 id="basics">Basics<a class="headerlink" href="#basics" title="Permanent link">&para;</a></h2>
+<p>Adopt the hub in layers. Each layer works without the next, and each layer
+builds the habits the next layer assumes. Do not install everything on day
+one. This tier gets you your first productive session: install, a durable
+tmux session, and a first skill run. Start here even if you already know
+Claude Code, because the tmux keybindings and the skill names are specific
+to this hub.</p>
+<h3 id="install-claude-code">Install Claude Code<a class="headerlink" href="#install-claude-code" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code>npm<span class="w"> </span>install<span class="w"> </span>-g<span class="w"> </span>@anthropic-ai/claude-code
+</code></pre></div>
+Expected outcome: the <code>claude</code> command is on your PATH.</p>
+<p><div class="highlight"><pre><span></span><code>claude<span class="w"> </span>--version
+</code></pre></div>
+Expected outcome: prints a version string, for example <code>2.x.x (Claude Code)</code>.</p>
+<h3 id="install-the-github-cli">Install the GitHub CLI<a class="headerlink" href="#install-the-github-cli" title="Permanent link">&para;</a></h3>
+<p>The GitHub CLI handles auth for the clone, so a fresh machine needs no
+SSH alias and no manual key setup.</p>
+<p><div class="highlight"><pre><span></span><code>pacman<span class="w"> </span>-S<span class="w"> </span>github-cli<span class="w">   </span><span class="c1"># Arch. macOS: brew install gh. Debian: apt install gh</span>
+</code></pre></div>
+Expected outcome: the <code>gh</code> command is on your PATH.</p>
+<p><div class="highlight"><pre><span></span><code>gh<span class="w"> </span>auth<span class="w"> </span>login
+</code></pre></div>
+Expected outcome: an interactive login. Pick <code>github.com</code>, then SSH or
+HTTPS, and finish in the browser. Run this once per machine.</p>
+<h3 id="clone-the-hub">Clone the hub<a class="headerlink" href="#clone-the-hub" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code>gh<span class="w"> </span>repo<span class="w"> </span>clone<span class="w"> </span>Kiriketsuki/agenKic-hub
+<span class="nb">cd</span><span class="w"> </span>agenKic-hub
+</code></pre></div>
+Expected outcome: the repo sits at <code>agenKic-hub/</code> in your current
+directory.</p>
+<h3 id="run-the-installer">Run the installer<a class="headerlink" href="#run-the-installer" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code>./setup/setup.sh
+</code></pre></div>
+Expected outcome: an interactive picker starts. It lists every component
+manifest under <code>setup/components/</code>, one line per component with its
+description. Select <code>skills-core</code> and <code>config-tmux</code> for this tier, then
+answer the template prompts that follow (accept the defaults on your
+first run).</p>
+<p><div class="highlight"><pre><span></span><code>./setup/setup.sh<span class="w"> </span>--dry-run
+</code></pre></div>
+Expected outcome: prints every action the picker's selection would take,
+with no change on disk. Run this first if you want to preview before you
+commit.</p>
+<p>For a non-interactive run, copy <code>setup/answers.example.yml</code>, edit the
+<code>components:</code> line and the template variables, then pass it back in:</p>
+<p><div class="highlight"><pre><span></span><code>./setup/setup.sh<span class="w"> </span>--profile<span class="w"> </span>setup/answers.yml
+</code></pre></div>
+Expected outcome: the same install runs with no prompts.</p>
+<p>Windows users run <code>pwsh setup/setup.ps1</code> instead, then follow the rest of
+this walkthrough as written documentation, since <code>setup/walkthrough.sh</code>
+covers Linux and macOS only.</p>
+<h3 id="the-four-skill-groups">The four skill groups<a class="headerlink" href="#the-four-skill-groups" title="Permanent link">&para;</a></h3>
+<p>Skills sit under <code>skills/</code> in four groups. Each group has its own manifest
+under <code>setup/components/</code>, so the picker offers them one at a time, and
+each selection symlinks that group's skills individually into
+<code>~/.claude/skills/</code>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Group</th>
+<th style="text-align: left;">Manifest</th>
+<th style="text-align: left;">Skills</th>
+<th style="text-align: left;">Buys you</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>skills/core/</code></td>
+<td style="text-align: left;"><code>skills-core.conf</code></td>
+<td style="text-align: left;">brainstorm, brainstorm-grill, feature-spec, implement-spec, merge-next, context-handoff, context-resume, agent-route, model-route</td>
+<td style="text-align: left;">The spec-first loop this tier's capstone runs</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>skills/council/</code></td>
+<td style="text-align: left;"><code>skills-council.conf</code></td>
+<td style="text-align: left;">adversarial-council, council-fix, council-supervisor, parallel-fix</td>
+<td style="text-align: left;">Debate a change before it merges, see Advanced</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>skills/writing/</code></td>
+<td style="text-align: left;"><code>skills-writing.conf</code></td>
+<td style="text-align: left;">ste-writing, kilint, visual-explainer, cover-letter</td>
+<td style="text-align: left;">The prose house style, and a linter that checks it</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>skills/ops/</code></td>
+<td style="text-align: left;"><code>skills-ops.conf</code></td>
+<td style="text-align: left;">repo-hooks, security-scan, croc-send, release-notes-enricher, insights-to-vault, continuous-learning-v2</td>
+<td style="text-align: left;">Guard rails and repo maintenance</td>
+</tr>
+</tbody>
+</table>
+<p>Basics needs only <code>skills-core</code>. Install the rest as Intermediate and
+Advanced call for them.</p>
+<h3 id="tmux-for-agents">tmux for agents<a class="headerlink" href="#tmux-for-agents" title="Permanent link">&para;</a></h3>
+<p>Claude Code sessions run inside a shell process. Close the terminal window
+and the process dies with it. tmux keeps a session running on the machine
+independent of any one terminal window. An agent keeps working while you
+disconnect, close your laptop lid, or lose a network link. Reattach later
+and the session is exactly where you left it.</p>
+<p><div class="highlight"><pre><span></span><code>tmux<span class="w"> </span>new<span class="w"> </span>-s<span class="w"> </span>hub
+</code></pre></div>
+Expected outcome: a new tmux session named <code>hub</code> opens, with a status bar
+at the bottom.</p>
+<p>Start Claude Code inside that session, then detach without killing it:</p>
+<p><div class="highlight"><pre><span></span><code>Ctrl+a d
+</code></pre></div>
+Expected outcome: you return to your normal shell. The session, and any
+agent running inside it, keeps running in the background.</p>
+<p><div class="highlight"><pre><span></span><code>tmux<span class="w"> </span>attach<span class="w"> </span>-t<span class="w"> </span>hub
+</code></pre></div>
+Expected outcome: you land back inside the same session, with the agent's
+output exactly as you left it.</p>
+<p>The hub renders <code>config/tmux/tmux.conf.tmpl</code> into <code>~/.config/tmux/tmux.conf</code>
+during setup. The prefix is <code>Ctrl+a</code>, nearer your home row than the
+default <code>Ctrl+b</code>.</p>
+<h3 id="the-command-palette">The command palette<a class="headerlink" href="#the-command-palette" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code>Ctrl+a Space
+</code></pre></div>
+Expected outcome: a floating command palette opens, an fzf picker over 51
+tmux actions from <code>config/tmux/scripts/palette.sh</code>. Type to filter, Enter
+to run, Esc to cancel. Requires <code>fzf</code> on your PATH. When fzf is absent,
+the palette prints an install hint instead of opening.</p>
+<h3 id="first-skill-run">First skill run<a class="headerlink" href="#first-skill-run" title="Permanent link">&para;</a></h3>
+<p>Open Claude Code inside your tmux session and complete one skill run. Any
+completed skill run finishes this tier. Any skill from any group works.
+The guided example below is the spec pair from <code>skills-core</code>, but a
+<code>/kilint</code> pass on a file or a <code>/security-scan</code> also counts.</p>
+<p><div class="highlight"><pre><span></span><code>/brainstorm
+</code></pre></div>
+Expected outcome: Claude Code asks clarifying questions about what you
+want to build, one at a time. It then proposes two or three approaches
+and asks for your approval.</p>
+<p><div class="highlight"><pre><span></span><code>/feature-spec
+</code></pre></div>
+Expected outcome: Claude Code interviews you section by section, then
+writes a filled <code>docs/specs/todo/&lt;feature-name&gt;-spec.md</code> file in the
+target repo. Run this after <code>/brainstorm</code> approves a design, or on its
+own for a feature you already understand well.</p>
+<p>Basics ends here. You have a working install, a durable tmux session, and
+one completed skill run.</p>
+<hr />
+<h2 id="intermediate">Intermediate<a class="headerlink" href="#intermediate" title="Permanent link">&para;</a></h2>
+<p>This tier adds the habits that keep any long Claude Code session usable:
+context management, the rest of the spec loop, and guard-rail hooks. A
+hook enforces a rule deterministically, so it does not depend on the
+model remembering the rule.</p>
+<h3 id="context-management">Context management<a class="headerlink" href="#context-management" title="Permanent link">&para;</a></h3>
+<p>A long session accumulates conversation history that a model eventually
+must summarize or lose. The hub gives you two skills that make that
+transition deliberate instead of automatic.</p>
+<p><div class="highlight"><pre><span></span><code>/context-handoff
+</code></pre></div>
+Expected outcome: Claude Code writes a handoff file that orients a fresh
+session. It states the active task, the decisions made and why, the
+approaches that failed, and the concrete next steps. Run this before
+<code>/clear</code> or before compaction, not after.</p>
+<p><div class="highlight"><pre><span></span><code>/context-resume active
+</code></pre></div>
+Expected outcome: Claude Code loads the most recent handoff file, verifies
+the current git state, and re-reads the key files the handoff names.</p>
+<p>Watch the context bar in your session and hand off at about 80 percent
+used. Do not ride the bar into the summarizer, since a forced summary
+drops the nuance a deliberate handoff keeps.</p>
+<p>Run <code>/clear</code> between unrelated tasks, not mid-task. A cleared context
+starts a new conversation with no memory of what came before. Clear only
+after a handoff exists or after a task fully lands.</p>
+<h3 id="the-full-spec-loop">The full spec loop<a class="headerlink" href="#the-full-spec-loop" title="Permanent link">&para;</a></h3>
+<p>The core skills from Basics start the spec-first loop: brainstorm and
+feature-spec. These two finish it.</p>
+<p><div class="highlight"><pre><span></span><code>/implement-spec
+</code></pre></div>
+Expected outcome: Claude Code reads a <code>*-spec.md</code> file, routes its tasks
+to subagents, and executes them in dependency-aware waves, committing
+after each logical chunk. Point it at a spec in <code>docs/specs/todo/</code>, or let
+it find the most recent one.</p>
+<p><div class="highlight"><pre><span></span><code>/merge-next
+</code></pre></div>
+Expected outcome: Claude Code commits any remaining work, pushes, and
+verifies the pull request targets the correct parent branch. It then
+squash merges the PR, checks out the next sibling branch, and rebases it
+onto the parent. Run this when a feature, task, epic, or saga branch is
+ready to ship.</p>
+<h3 id="guard-rail-hooks">Guard-rail hooks<a class="headerlink" href="#guard-rail-hooks" title="Permanent link">&para;</a></h3>
+<p>A hook is a shell command the harness runs around a tool call. It enforces
+a rule deterministically, without depending on the model remembering an
+instruction. Install <code>skills-ops</code> for <code>repo-hooks</code> once your core loop
+feels routine:</p>
+<p><div class="highlight"><pre><span></span><code>./setup/setup.sh
+</code></pre></div>
+Expected outcome: select <code>skills-ops</code> in the picker. The installer
+symlinks <code>repo-hooks</code> into <code>~/.claude/skills/</code>. Run <code>/repo-hooks</code> from any
+session afterward to wire the guard rails into that repo's
+<code>.claude/settings.json</code>.</p>
+<h3 id="council-and-writing-skills">Council and writing skills<a class="headerlink" href="#council-and-writing-skills" title="Permanent link">&para;</a></h3>
+<p><code>skills-council</code> and <code>skills-writing</code> add a debate loop and a prose house
+style on top of the core loop. Install both once the core loop feels
+routine, since council fix rounds and STE prose both assume the spec loop
+already works for you.</p>
+<p><div class="highlight"><pre><span></span><code>./setup/setup.sh
+</code></pre></div>
+Expected outcome: select <code>skills-council</code> and <code>skills-writing</code> in the
+picker. Both groups symlink into <code>~/.claude/skills/</code>. Run <code>/kilint</code> on any
+markdown file, or continue to Advanced for <code>/adversarial-council</code>.</p>
+<hr />
+<h2 id="advanced">Advanced<a class="headerlink" href="#advanced" title="Permanent link">&para;</a></h2>
+<p>The workflow scripts below fan out multiple agents at once. They compose
+the skills from Basics and Intermediate, so confirm those already work on
+your machine before you install <code>workflows/</code>.</p>
+<h3 id="multi-agent-workflows">Multi-agent workflows<a class="headerlink" href="#multi-agent-workflows" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code>./setup/setup.sh
+</code></pre></div>
+Expected outcome: select <code>workflows</code> in the picker. The installer
+symlinks each <code>workflows/&lt;name&gt;</code> entry into <code>~/.claude/workflows/&lt;name&gt;</code>,
+covering <code>spec-loop</code>, <code>feature-loop</code>, <code>council-loop</code>, <code>ultracode-fix</code>,
+<code>ultracode-implement</code>, and further coordinator scripts for the Workflow
+tool.</p>
+<h3 id="adversarial-council">Adversarial council<a class="headerlink" href="#adversarial-council" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code>/adversarial-council
+</code></pre></div>
+Expected outcome: Claude Code convenes a team of real spawned advocate
+and critic agents to debate a motion. An arbiter moderates the debate and
+produces a FOR, AGAINST, or CONDITIONAL recommendation with cited
+rationale.</p>
+<h3 id="authoring-a-new-skill">Authoring a new skill<a class="headerlink" href="#authoring-a-new-skill" title="Permanent link">&para;</a></h3>
+<p>Study an existing skill under <code>skills/core/</code> before you write your own.
+Each <code>SKILL.md</code> carries YAML frontmatter with a <code>name</code>, a <code>description</code>
+that states its trigger phrases, and a body that walks the process step
+by step. Place a new skill under the group it serves (<code>skills/core/</code>,
+<code>skills/council/</code>, <code>skills/writing/</code>, or <code>skills/ops/</code>), then add it to
+that group's manifest under <code>setup/components/</code> so the installer offers
+it.</p>
+<p><div class="highlight"><pre><span></span><code>python3<span class="w"> </span>skills/writing/kilint/bin/kilint<span class="w"> </span>skills/&lt;group&gt;/&lt;your-skill&gt;/SKILL.md
+</code></pre></div>
+Expected outcome: a violation score under 1.5 per 100 words. Every skill
+body follows the same STE house style as the rest of the hub's prose.</p>
+<hr />
+<h2 id="extras-the-real-rice">Extras: the real rice<a class="headerlink" href="#extras-the-real-rice" title="Permanent link">&para;</a></h2>
+<p>Nothing in this section is required. The three components below install
+real external repos through the same <code>type=external</code> component path as
+every other manifest. The installer clones or pulls the repo. It then runs
+its own installer script, or applies the repo with stow. <code>--dry-run</code> prints
+the clone-and-run plan for any of them. It makes no change on disk.</p>
+<h3 id="ext-statusline">ext-statusline<a class="headerlink" href="#ext-statusline" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code>./setup/setup.sh
+</code></pre></div>
+Expected outcome: select <code>ext-statusline</code> in the picker. The installer
+clones <code>Kiriketsuki/chrysaki-claude</code> to <code>~/.local/share/chrysaki-claude</code>
+and runs that repo's own <code>init.sh</code>, which installs the statusline and
+wires <code>statusLine</code> into <code>~/.claude/settings.json</code>. Restart Claude Code
+afterward to see it render.</p>
+<h3 id="ext-tmux-theme">ext-tmux-theme<a class="headerlink" href="#ext-tmux-theme" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code>./setup/setup.sh
+</code></pre></div>
+Expected outcome: select <code>ext-tmux-theme</code> in the picker. The installer
+clones <code>Kiriketsuki/chrysaki</code> to <code>~/.config/tmux/chrysaki</code>. The rendered
+<code>tmux.conf</code> already carries a guarded source line for the theme file. The
+theme activates the next time you reload tmux with <code>Ctrl+a r</code>, no edit
+needed.</p>
+<h3 id="ext-dots">ext-dots<a class="headerlink" href="#ext-dots" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code>./setup/setup.sh
+</code></pre></div>
+Expected outcome: select <code>ext-dots</code> in the picker. The installer clones
+<code>Kiriketsuki/dots</code> to <code>~/dots</code> and applies it with <code>stow</code>, symlinking the
+rest of the dotfiles into your home directory. Follow the dots repo's own
+README for anything the stow pass does not cover.</p>
+<hr />
+<p><em>Authored by: Clault KiperS 4.6</em></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      agenKic sKills · MIT · built by Kiriketsuki
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/Kiriketsuki/agenKic-hub" target="_blank" rel="noopener" title="agenKic-hub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://github.com/Kiriketsuki/chrysaki-claude" target="_blank" rel="noopener" title="chrysaki-claude" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M248 106.6c18.9-9 32-28.3 32-50.6 0-30.9-25.1-56-56-56s-56 25.1-56 56c0 22.3 13.1 41.6 32 50.6v98.8c-2.8 1.3-5.5 2.9-8 4.7l-80.1-45.8c1.6-20.8-8.6-41.6-27.9-52.8C57.2 96 23 105.2 7.5 132S1.2 193 28 208.5c1.3.8 2.6 1.5 4 2.1v90.8c-1.3.6-2.7 1.3-4 2.1C1.2 319-8 353.2 7.5 380s49.7 36 76.5 20.5c19.3-11.1 29.4-32 27.8-52.8l50.5-28.9c-11.5-11.2-19.9-25.6-23.8-41.7l-50.5 29c-2.6-1.8-5.2-3.3-8-4.7v-90.8c2.8-1.3 5.5-2.9 8-4.7l80.1 45.8c-.1 1.4-.2 2.8-.2 4.3 0 22.3 13.1 41.6 32 50.6v98.8c-18.9 9-32 28.3-32 50.6 0 30.9 25.1 56 56 56s56-25.1 56-56c0-22.3-13.1-41.6-32-50.6v-98.8c2.8-1.3 5.5-2.9 8-4.7l80.1 45.8c-1.6 20.8 8.6 41.6 27.8 52.8 26.8 15.5 61 6.3 76.5-20.5s6.3-61-20.5-76.5c-1.3-.8-2.7-1.5-4-2.1v-90.8c1.4-.6 2.7-1.3 4-2.1 26.8-15.5 36-49.7 20.5-76.5s-49.5-36-76.3-20.5c-19.3 11.1-29.4 32-27.8 52.8l-50.6 28.9c11.5 11.2 19.9 25.6 23.8 41.7l50.6-29c2.6 1.8 5.2 3.3 8 4.7v90.8c-2.8 1.3-5.5 2.9-8 4.6l-80.1-45.8c.1-1.4.2-2.8.2-4.3 0-22.3-13.1-41.6-32-50.6v-98.8z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top", "search.highlight", "search.suggest", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
