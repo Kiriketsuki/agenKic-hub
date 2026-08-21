@@ -82,6 +82,12 @@ const C = Object.assign(
 const M = Object.assign(
   { advocate: 'opus', critic: 'opus', questioner: 'sonnet', arbiter: 'fable', fixPlan: 'fable', fix: 'opus', fixReview: 'fable', merge: 'sonnet', verify: 'sonnet' },
   (A.council && A.council.model) || {})
+// Singleton floor. arbiter, fixPlan and fixReview are per-iteration singletons, not
+// fan-out. Per workflow-model-tiering they never run below opus. An override map that
+// demotes them (the usual mistake: fixPlan classed as fan-out) is clamped back up.
+for (const role of ['arbiter', 'fixPlan', 'fixReview']) {
+  if (M[role] !== 'opus' && M[role] !== 'fable') M[role] = 'opus'
+}
 // per-role reasoning effort. Bounds spend on the opus and fable roles.
 const E = Object.assign(
   { advocate: 'low', critic: 'low', fixPlan: 'medium', fix: 'low', fixReview: 'low' },
