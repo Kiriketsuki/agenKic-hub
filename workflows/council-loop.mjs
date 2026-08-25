@@ -44,8 +44,9 @@
  *     rounds,            // default 2 — debate depth per agent within one council
  *     maxLoops,          // default 10 — bounded cap on council convenings (fix→re-review iterations)
  *     requireUnconditional, // default true — converge ONLY on unconditional FOR
- *     applyNonBlockers,  // default true — fold non-blockers (cosmetic + follow-ups) into fix rounds that run anyway; they never gate convergence (an unconditional FOR with zero blockers converges, leftovers land in inPrFollowUps)
- *     model: { advocate, critic, questioner, arbiter, fixPlan, fix, fixReview, merge, verify }, // per-role model overrides
+ *     applyNonBlockers,  // default true — fold non-blockers (cosmetic + follow-ups) into fix rounds
+ *     nonBlockerSweeps,  // default 2 — bounded fix rounds spent on non-blockers alone once the verdict is an unconditional FOR with zero blockers; leftovers land in inPrFollowUps
+ *     model: { advocate, critic, questioner, arbiter, fixPlan, fix, fixReview, merge, verify }, // per-role model overrides; a value is one model name or an ordered fallback chain such as ['fable','opus']
  *     effort: { advocate, critic, fixPlan, fix, fixReview },         // per-role reasoning effort overrides
  *   },
  * }
@@ -53,9 +54,9 @@
 
 export const meta = {
   name: 'council-loop',
-  description: 'Standalone adversarial council fix-loop over the working tree: review → fix in-PR + semantic commit/push → re-review until unconditional FOR with zero BLOCKING findings (non-blockers ride fix rounds but never gate convergence; default 1v1, no questioner, 2 debate rounds, bounded at 10 councils), then optionally squash-merge. Never files issues; commits/pushes per round.',
+  description: 'Standalone adversarial council fix-loop over the working tree: review → fix in-PR + semantic commit/push → re-review until unconditional FOR with zero BLOCKING findings (non-blockers ride fix rounds and get up to nonBlockerSweeps bounded sweeps of their own before convergence; default 1v1, no questioner, 2 debate rounds, bounded at 10 councils), then optionally squash-merge. Never files issues; commits/pushes per round.',
   phases: [
-    { title: 'Council', detail: 'advocate ∥ critic (∥ optional questioner) + arbiter; fix-then-review loop to unconditional FOR; each fix round commits semantically and pushes; follow-ups applied in-PR, never as issues' },
+    { title: 'Council', detail: 'advocate ∥ critic (∥ optional questioner) + arbiter; fix-then-review loop to unconditional FOR; each fix round commits semantically and pushes; follow-ups applied in-PR within a bounded sweep, never as issues' },
     { title: 'Verify', detail: 'build + tests on the final state; reports mergeable' },
     { title: 'Merge', detail: 'optional (merge:true): squash-merge into the parent on an unconditional FOR' },
   ],
@@ -77,16 +78,25 @@ const MERGE = A.merge === true
 
 // council knobs — defaults: 1v1, no questioner, 2 debate rounds, bounded at 10 councils, unconditional FOR + zero findings
 const C = Object.assign(
-  { advocates: 1, critics: 1, questioner: false, rounds: 2, maxLoops: 10, requireUnconditional: true, applyNonBlockers: true },
+  { advocates: 1, critics: 1, questioner: false, rounds: 2, maxLoops: 10, requireUnconditional: true, applyNonBlockers: true, nonBlockerSweeps: 2 },
   A.council || {})
+// A role takes one model name or an ordered fallback chain. tryAgent walks the chain and
+// drops an entry that the runtime rejects as unavailable, so a top tier that comes and goes
+// costs one failed call per run instead of the whole run. Fable is the case this exists for:
+// it disappeared on 2026-06-17 and every caller had to override three roles to opus by hand.
 const M = Object.assign(
-  { advocate: 'opus', critic: 'opus', questioner: 'sonnet', arbiter: 'fable', fixPlan: 'fable', fix: 'opus', fixReview: 'fable', merge: 'sonnet', verify: 'sonnet' },
+  { advocate: 'opus', critic: 'opus', questioner: 'sonnet', arbiter: ['fable', 'opus'], fixPlan: ['fable', 'opus'], fix: 'opus', fixReview: ['fable', 'opus'], merge: 'sonnet', verify: 'sonnet' },
   (A.council && A.council.model) || {})
+for (const role of Object.keys(M)) {
+  M[role] = (Array.isArray(M[role]) ? M[role] : [M[role]]).filter(Boolean)
+}
 // Singleton floor. arbiter, fixPlan and fixReview are per-iteration singletons, not
 // fan-out. Per workflow-model-tiering they never run below opus. An override map that
 // demotes them (the usual mistake: fixPlan classed as fan-out) is clamped back up.
+// The clamp reads the whole chain, so a chain that names no top tier falls back to opus.
 for (const role of ['arbiter', 'fixPlan', 'fixReview']) {
-  if (M[role] !== 'opus' && M[role] !== 'fable') M[role] = 'opus'
+  const kept = M[role].filter(m => m === 'opus' || m === 'fable')
+  M[role] = kept.length ? kept : ['opus']
 }
 // per-role reasoning effort. Bounds spend on the opus and fable roles.
 const E = Object.assign(
@@ -101,21 +111,48 @@ const E = Object.assign(
 // Workflow({ scriptPath, args, resumeFromRunId }) — completed agent() calls replay from cache.
 let limitHit = false
 const LIMIT_RE = /(429|rate[ _-]?limit|usage limit|session limit|quota|too many requests|insufficient_quota|limit (?:reached|exceeded))/i
+// A model the runtime refuses outright. This is not a transient blip, so a retry on the same
+// model wastes a call. tryAgent marks the model dead for the rest of the run and moves to the
+// next entry in the role chain. The pattern stays narrow on purpose: the word "model" alone
+// appears in plenty of ordinary agent failures.
+const MODEL_GONE_RE = /(unknown|invalid|unsupported|unavailable|not[ _-]?found|not available|no longer available|does not exist|no access|not[ _-]?permitted|deprecated)[^.\n]{0,40}model|model[^.\n]{0,40}(unknown|invalid|unsupported|unavailable|not[ _-]?found|not available|no longer available|does not exist|no access|not[ _-]?permitted|deprecated)/i
+const deadModels = new Set()                             // models this run has proven unavailable
 const sleep = (typeof setTimeout === 'function') ? (ms) => new Promise(r => setTimeout(r, ms)) : () => Promise.resolve()
 async function tryAgent(prompt, opts, retries = 2) {
+  const label = (opts && opts.label) || ''
+  // Resolve the role chain to the models still believed good. An opts.model may be a single
+  // name or an ordered chain. An empty result means every candidate died, so fall back to the
+  // session model by omitting model entirely rather than failing the run.
+  const raw = (opts && opts.model !== undefined && opts.model !== null)
+    ? (Array.isArray(opts.model) ? opts.model : [opts.model]).filter(Boolean)
+    : []
+  const chain = raw.filter(m => !deadModels.has(m))
+  const attempts = chain.length ? chain : [null]
   let last
-  for (let i = 0; i <= retries; i++) {
-    try { return await agent(prompt, opts) }
-    catch (e) {
-      last = e
-      const msg = String((e && e.message) || e)
-      if (LIMIT_RE.test(msg)) {                          // hard limit — stop, don't burn retries
-        limitHit = true
-        log(`agent ${(opts && opts.label) || ''} hit a usage/rate limit — stopping for resume: ${msg.slice(0, 120)}`)
-        const le = new Error(`LIMIT: ${msg}`); le.limit = true; throw le
+  for (let c = 0; c < attempts.length; c++) {
+    const model = attempts[c]
+    const o = Object.assign({}, opts)
+    if (model) o.model = model; else delete o.model
+    for (let i = 0; i <= retries; i++) {
+      try { return await agent(prompt, o) }
+      catch (e) {
+        last = e
+        const msg = String((e && e.message) || e)
+        if (LIMIT_RE.test(msg)) {                        // hard limit. Stop, and do not burn retries
+          limitHit = true
+          log(`agent ${label} hit a usage/rate limit. Stopping for resume: ${msg.slice(0, 120)}`)
+          const le = new Error(`LIMIT: ${msg}`); le.limit = true; throw le
+        }
+        if (model && MODEL_GONE_RE.test(msg)) {          // the model is gone. Retire it and take the next one
+          deadModels.add(model)
+          const next = attempts[c + 1] || 'the session model'
+          log(`agent ${label} model ${model} is unavailable. Falling back to ${next} for the rest of this run: ${msg.slice(0, 120)}`)
+          break
+        }
+        log(`agent ${label} attempt ${i + 1}/${retries + 1} failed: ${msg.slice(0, 140)}`)
+        if (i < retries) await sleep(1500 * (i + 1))     // linear backoff, a no-op if timers are unavailable
+        else throw last                                  // a real failure on a live model. Do not re-spend it on the next tier
       }
-      log(`agent ${(opts && opts.label) || ''} attempt ${i + 1}/${retries + 1} failed: ${msg.slice(0, 140)}`)
-      if (i < retries) await sleep(1500 * (i + 1))       // linear backoff (no-op if timers unavailable)
     }
   }
   throw last
@@ -200,6 +237,7 @@ if (!T.branch && T.pr) {
 const advNames = Array.from({ length: C.advocates }, (_, i) => `ADVOCATE${C.advocates > 1 ? i + 1 : ''}`)
 const critNames = Array.from({ length: C.critics }, (_, i) => `CRITIC${C.critics > 1 ? i + 1 : ''}`)
 let verdict = null, pending = null, iter = 0, stalled = false, converged = false
+let sweeps = 0                         // non-blocker sweeps already spent (bounded by C.nonBlockerSweeps)
 let stopReason = null                  // 'budget' | 'limit' | 'review-incomplete' | 'fix-failed' → resumable stop (never merges)
 let lastBlocking = []                  // blocking findings from the most recent judged round (surfaced top-level)
 const history = []
@@ -316,10 +354,28 @@ ${sides.map((s, i) => `--- ${i + 1} ---\n${s}`).join('\n\n')}`,
   // Ultracode fix (2026-08-13, #354 run wf_83839751): non-blockers no longer gate convergence. The
   // old `(!C.applyNonBlockers || !nonBlocking.length)` term let the arbiter hold an unconditional
   // FOR hostage by re-emitting a fresh "optional nit" follow-up every round — eight straight
-  // unconditional FORs churned to maxLoops and reported "did not converge". An unconditional FOR
-  // with zero blockers converges NOW; any remaining non-blockers are returned in inPrFollowUps for
-  // the caller to apply in-PR (never as issues).
-  if (verdictOk && !blocking.length) { converged = true; break }
+  // unconditional FORs churned to maxLoops and reported "did not converge". That change made an
+  // unconditional FOR with zero blockers converge immediately. The sweep below supersedes the
+  // immediate part of it, and keeps the cap that stopped the churn.
+  // Ultracode fix (2026-08-25): the 2026-08-13 change threw the baby out. It converged the
+  // INSTANT blockers hit zero, so with applyNonBlockers:true the non-blockers never got a fix
+  // round to ride and always fell out as inPrFollowUps. The caller then applied them by hand,
+  // which is the exact work this loop exists to do. A BOUNDED sweep restores that without
+  // reopening the churn: when an unconditional FOR carries non-blockers, spend up to
+  // C.nonBlockerSweeps fix rounds on them, then converge whatever the arbiter still emits.
+  // The cap is what stops a "fresh optional nit every round" arbiter from holding the FOR
+  // hostage to maxLoops. Blockers are unaffected: they still gate convergence with no cap.
+  if (verdictOk && !blocking.length) {
+    if (C.applyNonBlockers && nonBlocking.length && sweeps < C.nonBlockerSweeps) {
+      sweeps++
+      log(`unconditional FOR with ${nonBlocking.length} non-blocker(s) — sweep ${sweeps}/${C.nonBlockerSweeps} applying them in-PR before converging`)
+      pending = nonBlocking
+      continue
+    }
+    if (nonBlocking.length) log(`converging with ${nonBlocking.length} non-blocker(s) left after ${sweeps} sweep(s) — returned as inPrFollowUps`)
+    converged = true
+    break
+  }
 
   // when applyNonBlockers, drive non-blockers to zero too; otherwise only blockers feed the next round
   const toFix = C.applyNonBlockers ? [...blocking, ...nonBlocking] : blocking
