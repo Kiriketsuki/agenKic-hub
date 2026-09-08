@@ -136,6 +136,7 @@ Feel none of these? Install nothing.
 |:---|:---|
 | [`skills/`](skills/) | 23 Claude Code skills, install into `~/.claude/skills/` |
 | [`workflows/`](workflows/) | Multi-agent Workflow scripts for the Claude Code Workflow tool |
+| [`tools/stream-launcher/`](tools/stream-launcher/) | WIP standalone launcher with examples and a tuning guide. Manual use only |
 | [`harnesses/`](harnesses/) | Per-harness setup: Claude Code, Codex, OpenCode, Pi, Hermes |
 | [`config/`](config/) | Terminal environment: tmux, zsh fragments, statusline |
 | [`setup/`](setup/) | Cross-platform installer with component picker and templating |
@@ -177,6 +178,16 @@ Scripts for the Claude Code Workflow tool: council loops, spec loops, ultracode
 fix and implement pipelines, and worked examples for data pipelines. Each file
 carries a header comment stating what to customize. Catalog:
 [docs/workflows/index.md](docs/workflows/index.md).
+
+## Experimental tools
+
+The [stream launcher](tools/stream-launcher/README.md) opens existing branches in
+worktrees and starts agents in tmux windows. **It is a work in progress**, not a
+production supervisor or security sandbox. The installer does not install it.
+
+Read its tuning guide before use. It covers agent arguments, setup profiles,
+worktree naming, tmux placement, sharing limits, and troubleshooting. Copy the
+fictional examples outside the hub and start with `--dry-run`.
 
 ## Patterns
 

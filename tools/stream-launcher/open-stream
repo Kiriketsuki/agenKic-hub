@@ -1,0 +1,5 @@
+#!/bin/sh
+# Resolve relative to the launcher, never the caller's working directory.
+set -eu
+HERE="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
+exec uv run --script "$HERE/open_stream.py" "$@"

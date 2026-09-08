@@ -1,0 +1,40 @@
+name: Stream launcher (WIP)
+
+on:
+  pull_request:
+    paths:
+      - tools/stream-launcher/**
+      - .github/workflows/stream-launcher.yml
+  push:
+    branches: [main]
+    paths:
+      - tools/stream-launcher/**
+      - .github/workflows/stream-launcher.yml
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install terminal test tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes tmux shellcheck
+          git --version
+          tmux -V
+      - name: Check launcher wrapper
+        run: shellcheck tools/stream-launcher/open-stream
+      - name: Test with dummy agents and isolated tmux servers
+        run: uv run --no-project --python "${{ matrix.python }}" python -B -m unittest discover -s tools/stream-launcher/tests -v
+      - name: Validate fictional manifest without launching
+        run: tools/stream-launcher/open-stream --config tools/stream-launcher/examples/streams.toml --list
