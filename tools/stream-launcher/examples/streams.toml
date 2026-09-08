@@ -1,0 +1,29 @@
+# WIP example only. Copy this bundle outside the hub and edit it before use.
+# These paths assume workspace/stream-bundles/demo/streams.toml.
+repo = "../../your-repo"
+worktree_root = "../../worktrees"
+worktree_name = "demo-{issue}"
+manifest = "streams.tsv"
+brief_dir = "briefs"
+remote = "origin"
+
+[tmux]
+session = "streams"
+window_prefix = "demo-"
+# after = "editor window" # Exact name. Append if absent.
+# socket = "stream-sandbox" # Use tmux -L stream-sandbox to inspect this server.
+
+[agent]
+# Use your CLI's documented interactive arguments. Keep permission checks enabled.
+# The launcher replaces exactly one whole {brief} argument.
+command = ["claude", "{brief}"]
+
+# Built-in profiles: none, docs, uv, npm. The example manifest selects none.
+# Add this override only if your repository defines the test extra.
+# [setup.uv]
+# command = ["uv", "sync", "--locked", "--extra", "test"]
+# env_example = ".env.example" # Copy to .env only when absent. Never source it.
+
+# Optional repository-owned bootstrap. Select custom in the manifest to use it.
+# [setup.custom]
+# command = ["sh", "scripts/bootstrap.sh"]

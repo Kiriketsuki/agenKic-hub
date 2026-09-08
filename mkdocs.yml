@@ -57,6 +57,8 @@ nav:
       - Harnesses: setup/harnesses.md
   - Skills: skills/index.md
   - Workflows: workflows/index.md
+  - Tools:
+      - Stream launcher (WIP): tools/stream-launcher.md
   - Patterns:
       - Overview: patterns/index.md
       - Debugging protocol: patterns/debugging-protocol.md
