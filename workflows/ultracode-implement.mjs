@@ -4,9 +4,9 @@
  * Sibling of ultracode-fix.mjs, aimed at building a feature instead of fixing a
  * defect. Same model tiering (fixed by design, per user directive 2026-08-03):
  *   Explore   → sonnet (only when the plan needs more context)
- *   Plan      → fable, effort medium (design + task decomposition)
+ *   Plan      → opus, effort medium (design + task decomposition)
  *   Implement → opus, effort low (fan-out per plan task)
- *   Review    → fable, effort medium (also arbiters the fix loop)
+ *   Review    → opus, effort medium (also arbiters the fix loop)
  *
  * Invoke BY ABSOLUTE scriptPath (the name registry does not resolve
  * ~/.claude/workflows/*.mjs):
@@ -29,12 +29,12 @@
 
 export const meta = {
   name: 'ultracode-implement',
-  description: 'Build a feature: sonnet explores, fable plans the design (medium), opus implements (low), fable reviews and loops fixes until approved',
+  description: 'Build a feature: sonnet explores, opus plans the design (medium), opus implements (low), opus reviews and loops fixes until approved',
   phases: [
     { title: 'Explore', detail: 'sonnet scouts existing patterns and integration points when the plan needs context', model: 'sonnet' },
-    { title: 'Plan', detail: 'fable at medium effort designs the feature and decomposes it into tasks', model: 'fable' },
+    { title: 'Plan', detail: 'opus at medium effort designs the feature and decomposes it into tasks', model: 'opus' },
     { title: 'Implement', detail: 'opus at low effort builds each plan task in dependency waves', model: 'opus' },
-    { title: 'Review', detail: 'fable at medium effort reviews against the spec, requests fixes, loops until approved', model: 'fable' },
+    { title: 'Review', detail: 'opus at medium effort reviews against the spec, requests fixes, loops until approved', model: 'opus' },
   ],
 }
 
@@ -100,7 +100,7 @@ const REVIEW_SCHEMA = {
 
 const RESULT_SCHEMA = { type: 'object', required: ['done', 'report'], properties: { done: { type: 'boolean' }, report: { type: 'string' } } }
 
-// --- Phase 1+2: optional explore, then plan (fable, medium) ---
+// --- Phase 1+2: optional explore, then plan (opus, medium) ---
 let exploreNotes = ''
 const explorePrompt = (questions) => `${CWD}You are a read-only scout. Investigate the codebase to answer these questions about the feature below. Cite file:line for every claim. Note the conventions and patterns new code must follow. Do not edit anything. Return your findings as plain text.
 
@@ -121,14 +121,14 @@ if (EXPLORE === 'always') {
 }
 
 phase('Plan')
-let plan = await agent(planPrompt(), { label: 'plan', phase: 'Plan', schema: PLAN_SCHEMA, model: 'fable', effort: 'medium' })
+let plan = await agent(planPrompt(), { label: 'plan', phase: 'Plan', schema: PLAN_SCHEMA, model: 'opus', effort: 'medium' })
 if (!plan) throw new Error('planner died')
 
 if (plan.needsExplore && EXPLORE !== 'never') {
   log('Planner requested exploration. Dispatching sonnet scout.')
   exploreNotes = await agent(explorePrompt(plan.exploreQuestions?.length ? plan.exploreQuestions : ['Gather the context the plan needs.']),
     { label: 'explore:requested', phase: 'Explore', model: 'sonnet' }) || ''
-  plan = await agent(planPrompt(), { label: 'plan:v2', phase: 'Plan', schema: PLAN_SCHEMA, model: 'fable', effort: 'medium' })
+  plan = await agent(planPrompt(), { label: 'plan:v2', phase: 'Plan', schema: PLAN_SCHEMA, model: 'opus', effort: 'medium' })
   if (!plan) throw new Error('planner died on replan')
 }
 log(`Plan: ${plan.summary} (${plan.tasks.length} task(s))`)
@@ -156,7 +156,7 @@ while (remaining.length) {
   remaining = remaining.filter(t => !done.has(t.id))
 }
 
-// --- Phase 4: review loop (fable, medium) with opus fix rounds ---
+// --- Phase 4: review loop (opus, medium) with opus fix rounds ---
 phase('Review')
 const reviews = []
 let verdict = 'unreviewed'
@@ -169,7 +169,7 @@ Design:
 ${plan.design}
 Implementer reports:
 ${implemented.map(r => `- [${r.id}] ${r.report}`).join('\n')}`,
-    { label: `review:round${round}`, phase: 'Review', schema: REVIEW_SCHEMA, model: 'fable', effort: 'medium' })
+    { label: `review:round${round}`, phase: 'Review', schema: REVIEW_SCHEMA, model: 'opus', effort: 'medium' })
   if (!review) { verdict = 'review-agent-died'; break }
   reviews.push(review)
   if (review.approved) { verdict = 'approved'; log(`Approved on round ${round}.`); break }
