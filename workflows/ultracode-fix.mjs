@@ -3,9 +3,9 @@
  *
  * Model tiering (fixed by design, per user directive 2026-08-03):
  *   Explore   → sonnet (only when the plan needs more context)
- *   Plan      → fable, effort medium
+ *   Plan      → opus, effort medium
  *   Implement → opus, effort low (fan-out per plan task)
- *   Review    → fable, effort medium (also arbiters the fix loop)
+ *   Review    → opus, effort medium (also arbiters the fix loop)
  *
  * Invoke BY ABSOLUTE scriptPath (the name registry does not resolve
  * ~/.claude/workflows/*.mjs):
@@ -26,12 +26,12 @@
 
 export const meta = {
   name: 'ultracode-fix',
-  description: 'Fix a task: sonnet explores, fable plans (medium), opus implements (low), fable reviews and loops fixes until approved',
+  description: 'Fix a task: sonnet explores, opus plans (medium), opus implements (low), opus reviews and loops fixes until approved',
   phases: [
     { title: 'Explore', detail: 'sonnet scouts the codebase when the plan needs context', model: 'sonnet' },
-    { title: 'Plan', detail: 'fable at medium effort produces a task-list fix plan', model: 'fable' },
+    { title: 'Plan', detail: 'opus at medium effort produces a task-list fix plan', model: 'opus' },
     { title: 'Implement', detail: 'opus at low effort applies each plan task', model: 'opus' },
-    { title: 'Review', detail: 'fable at medium effort reviews, requests fixes, loops until approved', model: 'fable' },
+    { title: 'Review', detail: 'opus at medium effort reviews, requests fixes, loops until approved', model: 'opus' },
   ],
 }
 
@@ -92,7 +92,7 @@ const REVIEW_SCHEMA = {
 
 const RESULT_SCHEMA = { type: 'object', required: ['done', 'report'], properties: { done: { type: 'boolean' }, report: { type: 'string' } } }
 
-// --- Phase 1+2: optional explore, then plan (fable, medium) ---
+// --- Phase 1+2: optional explore, then plan (opus, medium) ---
 let exploreNotes = ''
 const explorePrompt = (questions) => `${CWD}You are a read-only scout. Investigate the codebase to answer these questions about the task below. Cite file:line for every claim. Do not edit anything. Return your findings as plain text.
 
@@ -113,14 +113,14 @@ if (EXPLORE === 'always') {
 }
 
 phase('Plan')
-let plan = await agent(planPrompt(), { label: 'plan', phase: 'Plan', schema: PLAN_SCHEMA, model: 'fable', effort: 'medium' })
+let plan = await agent(planPrompt(), { label: 'plan', phase: 'Plan', schema: PLAN_SCHEMA, model: 'opus', effort: 'medium' })
 if (!plan) throw new Error('planner died')
 
 if (plan.needsExplore && EXPLORE !== 'never') {
   log('Planner requested exploration. Dispatching sonnet scout.')
   exploreNotes = await agent(explorePrompt(plan.exploreQuestions?.length ? plan.exploreQuestions : ['Gather the context the plan needs.']),
     { label: 'explore:requested', phase: 'Explore', model: 'sonnet' }) || ''
-  plan = await agent(planPrompt(), { label: 'plan:v2', phase: 'Plan', schema: PLAN_SCHEMA, model: 'fable', effort: 'medium' })
+  plan = await agent(planPrompt(), { label: 'plan:v2', phase: 'Plan', schema: PLAN_SCHEMA, model: 'opus', effort: 'medium' })
   if (!plan) throw new Error('planner died on replan')
 }
 log(`Plan: ${plan.summary} (${plan.tasks.length} task(s))`)
@@ -147,7 +147,7 @@ while (remaining.length) {
   remaining = remaining.filter(t => !done.has(t.id))
 }
 
-// --- Phase 4: review loop (fable, medium) with opus fix rounds ---
+// --- Phase 4: review loop (opus, medium) with opus fix rounds ---
 phase('Review')
 const reviews = []
 let verdict = 'unreviewed'
@@ -159,7 +159,7 @@ Task: ${TASK}${CTX}
 Plan: ${plan.summary}
 Implementer reports:
 ${implemented.map(r => `- [${r.id}] ${r.report}`).join('\n')}`,
-    { label: `review:round${round}`, phase: 'Review', schema: REVIEW_SCHEMA, model: 'fable', effort: 'medium' })
+    { label: `review:round${round}`, phase: 'Review', schema: REVIEW_SCHEMA, model: 'opus', effort: 'medium' })
   if (!review) { verdict = 'review-agent-died'; break }
   reviews.push(review)
   if (review.approved) { verdict = 'approved'; log(`Approved on round ${round}.`); break }

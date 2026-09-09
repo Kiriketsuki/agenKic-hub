@@ -46,7 +46,7 @@
  *     requireUnconditional, // default true — converge ONLY on unconditional FOR
  *     applyNonBlockers,  // default true — fold non-blockers (cosmetic + follow-ups) into fix rounds
  *     nonBlockerSweeps,  // default 2 — bounded fix rounds spent on non-blockers alone once the verdict is an unconditional FOR with zero blockers; leftovers land in inPrFollowUps
- *     model: { advocate, critic, questioner, arbiter, fixPlan, fix, fixReview, merge, verify }, // per-role model overrides; a value is one model name or an ordered fallback chain such as ['fable','opus']
+ *     model: { advocate, critic, questioner, arbiter, fixPlan, fix, fixReview, merge, verify }, // per-role model overrides; a value is one model name or an ordered fallback chain such as ['opus','sonnet']. Do not put fable first, see the note by M
  *     effort: { advocate, critic, fixPlan, fix, fixReview },         // per-role reasoning effort overrides
  *   },
  * }
@@ -85,7 +85,7 @@ const C = Object.assign(
 // costs one failed call per run instead of the whole run. Fable is the case this exists for:
 // it disappeared on 2026-06-17 and every caller had to override three roles to opus by hand.
 const M = Object.assign(
-  { advocate: 'opus', critic: 'opus', questioner: 'sonnet', arbiter: ['fable', 'opus'], fixPlan: ['fable', 'opus'], fix: 'opus', fixReview: ['fable', 'opus'], merge: 'sonnet', verify: 'sonnet' },
+  { advocate: 'opus', critic: 'opus', questioner: 'sonnet', arbiter: ['opus'], fixPlan: ['opus'], fix: 'opus', fixReview: ['opus'], merge: 'sonnet', verify: 'sonnet' },
   (A.council && A.council.model) || {})
 for (const role of Object.keys(M)) {
   M[role] = (Array.isArray(M[role]) ? M[role] : [M[role]]).filter(Boolean)
@@ -98,7 +98,11 @@ for (const role of ['arbiter', 'fixPlan', 'fixReview']) {
   const kept = M[role].filter(m => m === 'opus' || m === 'fable')
   M[role] = kept.length ? kept : ['opus']
 }
-// per-role reasoning effort. Bounds spend on the opus and fable roles.
+// per-role reasoning effort. Bounds spend on the opus roles.
+// 2026-09-09: every fable pin moved to opus. Fable 5.1 hit the account monthly
+// spend limit, and an ordered fallback list does NOT rescue that. The subagent
+// dies mid-turn on a 429 and agent() still resolves, so the list never advances
+// and the role returns an empty result that reads as a success.
 const E = Object.assign(
   { advocate: 'low', critic: 'low', fixPlan: 'medium', fix: 'low', fixReview: 'low' },
   (A.council && A.council.effort) || {})
@@ -247,7 +251,7 @@ for (iter = 1; iter <= C.maxLoops; iter++) {
   if (lowBudget()) { stopReason = 'budget'; break }   // stop before spending a whole round we can't finish
   // fix FIRST (from the previous round's findings) so each review reflects the latest code — all in-PR
   if (pending && pending.length) {
-    // fix pipeline: plan (fable, medium) -> implement (opus, low) -> review (fable, low)
+    // fix pipeline: plan (opus, medium) -> implement (opus, low) -> review (opus, low)
     const plan = await tryAgent(
 `Plan the fixes for these council findings on ${TITLE}${PRREF} (${NAME}). READ the cited code first. For each finding: the exact file(s) and change, the order of application, risks and interactions between fixes, and the semantic commit split (one conventional commit per logical fix, subject + one-line why). Do NOT edit anything. Output a numbered plan as text.
 ${pending.map((b, i) => `${i + 1}. ${b}`).join('\n')}`,
@@ -272,7 +276,7 @@ ${COMMIT(iter)}`,
       stopReason = 'fix-failed'
       break
     }
-    // fix review: a cheap fable pass that checks each pending item actually landed as planned
+    // fix review: a cheap pass that checks each pending item actually landed as planned
     // BEFORE the full council re-reviews. On a reject, the issues become the next round's
     // pending and we re-fix (bounded by maxLoops and the budget guard) instead of burning a
     // full advocate/critic/arbiter round on a botched fix.
