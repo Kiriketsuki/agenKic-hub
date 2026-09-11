@@ -1,0 +1,4 @@
+interface:
+  display_name: "Goal Writer"
+  short_description: "Draft verifiable Codex goals with clear limits"
+  default_prompt: "Use $goal-writer to turn this task into a verifiable Codex goal. Draft the goal without activating it."

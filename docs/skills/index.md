@@ -16,6 +16,7 @@ Each skill is a directory under `skills/` with a `SKILL.md` that declares its na
 | [cover-letter](https://github.com/Kiriketsuki/agenKic-hub/blob/main/skills/writing/cover-letter/SKILL.md) | Writes a cover letter from a job posting in a configured personal voice and renders it as a LaTeX PDF. |
 | [croc-send](https://github.com/Kiriketsuki/agenKic-hub/blob/main/skills/ops/croc-send/SKILL.md) | Sends files and directories between machines using croc over tailscale. |
 | [feature-spec](https://github.com/Kiriketsuki/agenKic-hub/blob/main/skills/core/feature-spec/SKILL.md) | Interviews the user section by section and produces a filled feature spec with Gherkin acceptance scenarios and MoSCoW scope. |
+| [goal-writer](https://github.com/Kiriketsuki/agenKic-hub/blob/main/skills/core/goal-writer/SKILL.md) | Drafts Codex goals with evidence requirements, scope limits, and blocker conditions. Works in Claude and Codex. |
 | [implement-spec](https://github.com/Kiriketsuki/agenKic-hub/blob/main/skills/core/implement-spec/SKILL.md) | Implements a feature from a spec file by routing tasks to subagents in dependency-aware parallel waves. |
 | [insights-to-vault](https://github.com/Kiriketsuki/agenKic-hub/blob/main/skills/ops/insights-to-vault/SKILL.md) | Archives a Claude Code Insights report into an Obsidian vault with a structured companion note. |
 | [kilint](https://github.com/Kiriketsuki/agenKic-hub/blob/main/skills/writing/kilint/SKILL.md) | Lints prose for AI-slop patterns without rewriting it: sentence length, passive voice, filler, and punctuation. |
