@@ -158,6 +158,7 @@ Feel none of these? Install nothing.
 | [council-fix](skills/council/council-fix/) | One-command council review pipeline that ends in a prioritized fix plan |
 | [council-supervisor](skills/council/council-supervisor/) | Supervised multi-round council with heartbeats, checkpoints, and agent replacement |
 | [cover-letter](skills/writing/cover-letter/) | Cover letter from a job posting, rendered as a LaTeX-quality PDF |
+| [critique-loop](skills/core/critique-loop/) | Build a rubric, run independent critique rounds, or do both |
 | [croc-send](skills/ops/croc-send/) | Send files between machines with croc over tailscale |
 | [feature-spec](skills/core/feature-spec/) | Interview-driven feature spec with Gherkin acceptance scenarios |
 | [implement-spec](skills/core/implement-spec/) | Implement a written spec task by task |
@@ -168,9 +169,25 @@ Feel none of these? Install nothing.
 | [parallel-fix](skills/council/parallel-fix/) | Fan out independent fixes to parallel worktree agents |
 | [release-notes-enricher](skills/ops/release-notes-enricher/) | Enrich git-cliff release notes with PR prose summaries |
 | [repo-hooks](skills/ops/repo-hooks/) | Install and manage the repo's git hook conventions |
+| [rubric-builder](skills/core/rubric-builder/) | Define concrete scoring anchors, weights, and required evidence |
 | [security-scan](skills/ops/security-scan/) | Audit Claude Code configuration for security risks with AgentShield |
 | [ste-writing](skills/writing/ste-writing/) | Rewrite AI-flavored prose into a controlled house style |
 | [visual-explainer](skills/writing/visual-explainer/) | Self-contained HTML pages that explain systems, diffs, and plans visually |
+
+## Critique and revision
+
+Install the `skills-core` group to get both skills. Invoke `critique-loop` and choose an action:
+
+- **Build rubric** creates scoring criteria and stops.
+- **Run critique loop** improves work against an existing rubric.
+- **Build rubric and run** does both.
+
+For example, ask: "Use critique-loop with two reviewers, five rounds, and a score above 8 in every dimension."
+In Codex, tag `$critique-loop`. You can also invoke `rubric-builder` directly.
+
+Configure thresholds, weights, review counts, round limits, time limits, and early stopping.
+The loop preserves review evidence and reports when the limit ends without a passing result.
+Read the [configuration contract](skills/core/critique-loop/references/contracts.md) for defaults and file formats.
 
 ## Workflows
 
