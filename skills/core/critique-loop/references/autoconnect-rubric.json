@@ -1,0 +1,324 @@
+{
+  "schema_version": 1,
+  "id": "autoconnect-soft-matte-prototype",
+  "version": "1",
+  "title": "AutoConnect soft-matte prototype",
+  "scope": "Site 517 styling and integration feasibility. Preserve earlier within-dimension weights. Dimension weights 34/33/33 support a diagnostic overall score only. Default acceptance checks each dimension. Operator scores are design judgments, not validation with workers aged 50 to 60. Performance scores assess measured prototype costs, not target-tablet FPS. Declare budgets and representative workload before review.",
+  "dimensions": [
+    {
+      "id": "implementation",
+      "label": "Ease of implementation",
+      "weight": 34,
+      "criteria": [
+        {
+          "id": "reuse",
+          "label": "Reuse existing geometry",
+          "weight": 30,
+          "question": "Compare input models with the derived scene and conversion script.",
+          "procedure": [
+            "Compare input models with the derived scene and conversion script.",
+            "These anchors are ordered quality bands. Award the highest fully evidenced band. Higher bands repair lower-band defects and need not exhibit them. For intermediate integers, identify retained capabilities, specific observed progress, and the unmet next-band condition. If that distinction is not concrete, retain the lower band. Missing required evidence means null."
+          ],
+          "evidence_required": [
+            "Input and derived model inventory",
+            "Conversion script and material-study renders"
+          ],
+          "anchors": {
+            "0": "Every visible asset requires bespoke remodeling.",
+            "4": "Most geometry needs manual restructuring.",
+            "6": "Most recognizable silhouettes survive, with documented manual edits.",
+            "8": "All visible silhouettes reuse source geometry or documented simple footprint extrusions.",
+            "10": "The 8-point conditions hold and one repeatable conversion handles every included asset."
+          },
+          "minimum_score": null
+        },
+        {
+          "id": "materials",
+          "label": "Material and texture preparation",
+          "weight": 30,
+          "question": "Inspect every assigned material and its conversion rule.",
+          "procedure": [
+            "Inspect every assigned material and its conversion rule.",
+            "These anchors are ordered quality bands. Award the highest fully evidenced band. Higher bands repair lower-band defects and need not exhibit them. For intermediate integers, identify retained capabilities, specific observed progress, and the unmet next-band condition. If that distinction is not concrete, retain the lower band. Missing required evidence means null."
+          ],
+          "evidence_required": [
+            "Material inventory",
+            "Conversion rules",
+            "Representative close-up renders"
+          ],
+          "anchors": {
+            "0": "Materials are missing or broken.",
+            "4": "Most surfaces need unique hand-painted textures.",
+            "6": "Shared overrides cover most assets, with documented exceptions.",
+            "8": "Shared matte overrides cover every visible surface with no missing material slots.",
+            "10": "The 8-point conditions hold and the conversion is repeatable with no per-asset manual repairs."
+          },
+          "minimum_score": null
+        },
+        {
+          "id": "lighting",
+          "label": "Lighting and surface effects",
+          "weight": 25,
+          "question": "Reproduce the appearance from the documented lighting setup.",
+          "procedure": [
+            "Reproduce the appearance from the documented lighting setup.",
+            "These anchors are ordered quality bands. Award the highest fully evidenced band. Higher bands repair lower-band defects and need not exhibit them. For intermediate integers, identify retained capabilities, specific observed progress, and the unmet next-band condition. If that distinction is not concrete, retain the lower band. Missing required evidence means null."
+          ],
+          "evidence_required": [
+            "Lighting configuration",
+            "Browser or renderer capture"
+          ],
+          "anchors": {
+            "0": "The appearance cannot be reproduced from supplied settings.",
+            "4": "Undocumented lights or effects drive the appearance.",
+            "6": "Settings are documented but need multiple costly effects.",
+            "8": "Documented direct and ambient lighting produces the appearance without real-time reflections or full-screen effects.",
+            "10": "The 8-point conditions hold and the same setup covers close and overview views without individual object adjustments."
+          },
+          "minimum_score": null
+        },
+        {
+          "id": "components",
+          "label": "Match interface components",
+          "weight": 15,
+          "question": "Compare all visible controls against the project design requirements.",
+          "procedure": [
+            "Compare all visible controls against the project design requirements.",
+            "These anchors are ordered quality bands. Award the highest fully evidenced band. Higher bands repair lower-band defects and need not exhibit them. For intermediate integers, identify retained capabilities, specific observed progress, and the unmet next-band condition. If that distinction is not concrete, retain the lower band. Missing required evidence means null."
+          ],
+          "evidence_required": [
+            "Project design requirements",
+            "Control inventory",
+            "Browser capture and styles"
+          ],
+          "anchors": {
+            "0": "The controls contradict the project interaction patterns.",
+            "4": "Most controls need replacement to match the project.",
+            "6": "Most controls match, with documented size or geometry exceptions.",
+            "8": "All visible controls use the required typography, chamfers, opaque surfaces, and target sizes.",
+            "10": "The 8-point conditions hold and the prototype reuses existing components or a documented direct mapping."
+          },
+          "minimum_score": null
+        }
+      ]
+    },
+    {
+      "id": "visibility",
+      "label": "Operator visibility",
+      "weight": 33,
+      "criteria": [
+        {
+          "id": "labels",
+          "label": "Text and label recognition",
+          "weight": 30,
+          "question": "Inspect labels at the specified tablet viewport and measure text size and contrast.",
+          "procedure": [
+            "Inspect labels at the specified tablet viewport and measure text size and contrast.",
+            "These anchors are ordered quality bands. Award the highest fully evidenced band. Higher bands repair lower-band defects and need not exhibit them. For intermediate integers, identify retained capabilities, specific observed progress, and the unmet next-band condition. If that distinction is not concrete, retain the lower band. Missing required evidence means null."
+          ],
+          "evidence_required": [
+            "Viewport dimensions",
+            "Screenshots",
+            "Computed typography and contrast measurements"
+          ],
+          "anchors": {
+            "0": "Primary vehicle identity cannot be read.",
+            "4": "Primary identity is readable, but most supporting labels are too small or low contrast.",
+            "6": "Labels are readable in the open-view scenario, with recorded overlap or contrast failures.",
+            "8": "Every operational label meets the project size and contrast targets in open, crowded, and shadowed scenarios.",
+            "10": "The 8-point conditions hold in both themes and no labels collide or clip during the documented viewport checks."
+          },
+          "minimum_score": null
+        },
+        {
+          "id": "separation",
+          "label": "Vehicle separation from scenery",
+          "weight": 30,
+          "question": "Find each named vehicle in open, crowded, and building-occluded scenarios. Assess visual design only.",
+          "procedure": [
+            "Find each named vehicle in open, crowded, and building-occluded scenarios. Assess visual design only.",
+            "These anchors are ordered quality bands. Award the highest fully evidenced band. Higher bands repair lower-band defects and need not exhibit them. For intermediate integers, identify retained capabilities, specific observed progress, and the unmet next-band condition. If that distinction is not concrete, retain the lower band. Missing required evidence means null."
+          ],
+          "evidence_required": [
+            "Scenario screenshots",
+            "Selection and occlusion behavior recording"
+          ],
+          "anchors": {
+            "0": "Named vehicles cannot be distinguished from the ground.",
+            "4": "Selected vehicles are visible only in the open scenario.",
+            "6": "Selected and unselected vehicles are distinguishable in open and crowded scenarios.",
+            "8": "Identity markers remain visible across all three scenarios and clearly locate their vehicle.",
+            "10": "The 8-point conditions hold and overlapping or offscreen markers have a demonstrated clear resolution behavior."
+          },
+          "minimum_score": null
+        },
+        {
+          "id": "routes",
+          "label": "Route and spatial interpretation",
+          "weight": 25,
+          "question": "Trace the selected vehicle route from origin to destination in overview and close views.",
+          "procedure": [
+            "Trace the selected vehicle route from origin to destination in overview and close views.",
+            "These anchors are ordered quality bands. Award the highest fully evidenced band. Higher bands repair lower-band defects and need not exhibit them. For intermediate integers, identify retained capabilities, specific observed progress, and the unmet next-band condition. If that distinction is not concrete, retain the lower band. Missing required evidence means null."
+          ],
+          "evidence_required": [
+            "Route scenario captures",
+            "Route meaning and direction specification"
+          ],
+          "anchors": {
+            "0": "The route origin or destination cannot be identified.",
+            "4": "A line is visible but its direction or endpoints are ambiguous.",
+            "6": "Origin and destination are explicit, with some contrast or occlusion failures.",
+            "8": "Origin, destination, and direction remain unambiguous across open and occluded scenarios at both zoom levels.",
+            "10": "The 8-point conditions hold and crossing routes or unavailable routes have distinct demonstrated treatment."
+          },
+          "minimum_score": null
+        },
+        {
+          "id": "controls",
+          "label": "Controls and status semantics",
+          "weight": 15,
+          "question": "Exercise view controls and inspect selected, warning, fault, and stale-data examples.",
+          "procedure": [
+            "Exercise view controls and inspect selected, warning, fault, and stale-data examples.",
+            "These anchors are ordered quality bands. Award the highest fully evidenced band. Higher bands repair lower-band defects and need not exhibit them. For intermediate integers, identify retained capabilities, specific observed progress, and the unmet next-band condition. If that distinction is not concrete, retain the lower band. Missing required evidence means null."
+          ],
+          "evidence_required": [
+            "Interaction recording",
+            "Status examples",
+            "Computed control sizes"
+          ],
+          "anchors": {
+            "0": "Primary controls or status meaning are unusable.",
+            "4": "Most controls are labeled, but status relies on color alone.",
+            "6": "Controls work and statuses have text, with incomplete stale-data or selection distinctions.",
+            "8": "Every primary control meets project size requirements, and warning, fault, stale data, and selection have distinct text or symbols.",
+            "10": "The 8-point conditions hold with keyboard use and both themes, including a working top-down view."
+          },
+          "minimum_score": null
+        }
+      ]
+    },
+    {
+      "id": "web",
+      "label": "Web performance feasibility",
+      "weight": 33,
+      "criteria": [
+        {
+          "id": "geometry",
+          "label": "Geometry and draw calls",
+          "weight": 30,
+          "question": "Read visible triangle and draw-call counters under the documented representative workload. Compare agreed prototype budgets.",
+          "procedure": [
+            "Read visible triangle and draw-call counters under the documented representative workload. Compare agreed prototype budgets.",
+            "These anchors are ordered quality bands. Award the highest fully evidenced band. Higher bands repair lower-band defects and need not exhibit them. For intermediate integers, identify retained capabilities, specific observed progress, and the unmet next-band condition. If that distinction is not concrete, retain the lower band. Missing required evidence means null."
+          ],
+          "evidence_required": [
+            "Workload and viewport",
+            "Renderer counters",
+            "Geometry inventory and budgets"
+          ],
+          "anchors": {
+            "0": "The representative scene fails to render due to geometry load.",
+            "4": "No geometry reuse exists and visible counts exceed budgets by more than twice.",
+            "6": "Counts are within twice the budgets, with remaining optimization identified.",
+            "8": "Visible triangles and draw calls stay within agreed budgets in overview and close views.",
+            "10": "The 8-point conditions hold with at least 25 percent budget headroom in both views."
+          },
+          "minimum_score": null
+        },
+        {
+          "id": "texture-memory",
+          "label": "Materials and texture memory",
+          "weight": 30,
+          "question": "Inventory decoded texture allocations and material sharing under the representative workload.",
+          "procedure": [
+            "Inventory decoded texture allocations and material sharing under the representative workload.",
+            "These anchors are ordered quality bands. Award the highest fully evidenced band. Higher bands repair lower-band defects and need not exhibit them. For intermediate integers, identify retained capabilities, specific observed progress, and the unmet next-band condition. If that distinction is not concrete, retain the lower band. Missing required evidence means null."
+          ],
+          "evidence_required": [
+            "Texture dimensions and formats",
+            "Material inventory",
+            "Declared texture-memory budget"
+          ],
+          "anchors": {
+            "0": "Textures fail to load or exceed available memory.",
+            "4": "Most repeated surfaces use unique textures and allocations exceed budget.",
+            "6": "Most surfaces share materials, with remaining duplication or allocation uncertainty resolved in the inventory.",
+            "8": "All repeated compatible surfaces share materials and decoded texture allocation stays within budget.",
+            "10": "The 8-point conditions hold with at least 25 percent memory headroom and no unnecessary transparent materials."
+          },
+          "minimum_score": null
+        },
+        {
+          "id": "render-passes",
+          "label": "Lighting and extra passes",
+          "weight": 25,
+          "question": "Inspect the renderer settings and capture the passes for the representative scene.",
+          "procedure": [
+            "Inspect the renderer settings and capture the passes for the representative scene.",
+            "These anchors are ordered quality bands. Award the highest fully evidenced band. Higher bands repair lower-band defects and need not exhibit them. For intermediate integers, identify retained capabilities, specific observed progress, and the unmet next-band condition. If that distinction is not concrete, retain the lower band. Missing required evidence means null."
+          ],
+          "evidence_required": [
+            "Renderer configuration",
+            "Pass inventory",
+            "Rendered capture"
+          ],
+          "anchors": {
+            "0": "Required effects prevent the scene from rendering.",
+            "4": "Several full-screen or reflection passes run for this style.",
+            "6": "Effects render, but one avoidable full-screen or reflection pass remains.",
+            "8": "No full-screen post-processing or real-time reflections run, and shadow cost is bounded or approximated.",
+            "10": "The 8-point conditions hold with zero dynamic shadow passes while preserving legible contact and depth cues."
+          },
+          "minimum_score": null
+        },
+        {
+          "id": "loading",
+          "label": "Loading, culling, and animation",
+          "weight": 15,
+          "question": "Inspect resource loading, repeated-object reuse, culling, and idle repaint behavior.",
+          "procedure": [
+            "Inspect resource loading, repeated-object reuse, culling, and idle repaint behavior.",
+            "These anchors are ordered quality bands. Award the highest fully evidenced band. Higher bands repair lower-band defects and need not exhibit them. For intermediate integers, identify retained capabilities, specific observed progress, and the unmet next-band condition. If that distinction is not concrete, retain the lower band. Missing required evidence means null."
+          ],
+          "evidence_required": [
+            "Loading trace",
+            "Source or interaction evidence",
+            "Idle and motion frame counters"
+          ],
+          "anchors": {
+            "0": "The scene repeatedly reloads resources or cannot settle at idle.",
+            "4": "All assets load eagerly and repaint continues at idle.",
+            "6": "Resources reuse shared data, but culling or idle behavior has a documented defect.",
+            "8": "Resources are reused, distant objects are culled or simplified, and rendering stops at idle.",
+            "10": "The 8-point conditions hold and repeated navigation shows no growing resource count or duplicate loads."
+          },
+          "minimum_score": null
+        }
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "id": "source-preserved",
+      "label": "Original assets remain unchanged",
+      "procedure": [
+        "Compare original asset hashes with the baseline. Pass only if they match."
+      ],
+      "evidence_required": [
+        "Original asset hash baseline and final comparison"
+      ]
+    },
+    {
+      "id": "honest-scope",
+      "label": "Prototype limitations are explicit",
+      "procedure": [
+        "Inspect the artifact notes. Pass only if inferred buildings, static visualization status, and untested target-device performance are explicit."
+      ],
+      "evidence_required": [
+        "Artifact limitations and provenance notes"
+      ]
+    }
+  ]
+}
