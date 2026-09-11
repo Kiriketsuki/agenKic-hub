@@ -160,6 +160,7 @@ Feel none of these? Install nothing.
 | [cover-letter](skills/writing/cover-letter/) | Cover letter from a job posting, rendered as a LaTeX-quality PDF |
 | [croc-send](skills/ops/croc-send/) | Send files between machines with croc over tailscale |
 | [feature-spec](skills/core/feature-spec/) | Interview-driven feature spec with Gherkin acceptance scenarios |
+| [goal-writer](skills/core/goal-writer/) | Draft verifiable Codex goals with evidence requirements and clear limits |
 | [implement-spec](skills/core/implement-spec/) | Implement a written spec task by task |
 | [insights-to-vault](skills/ops/insights-to-vault/) | Archive a Claude Code Insights report into a notes vault |
 | [kilint](skills/writing/kilint/) | Prose linter for the STE house style |
