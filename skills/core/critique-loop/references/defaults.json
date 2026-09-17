@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "threshold": 8,
+  "comparison": "gte",
+  "pass_mode": "all_dimensions",
+  "max_rounds": 3,
+  "reviewer_count": 1,
+  "aggregation": "minimum",
+  "reviewer_lenses": [],
+  "max_minutes": null,
+  "stagnation_rounds": null,
+  "min_improvement": 0.1
+}

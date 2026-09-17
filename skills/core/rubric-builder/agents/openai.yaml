@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rubric Builder"
+  short_description: "Turn quality goals into concrete scoring rubrics"
+  default_prompt: "Use $rubric-builder to create a clear, evidence-based scoring rubric for this task."
