@@ -1,0 +1,4 @@
+interface:
+  display_name: "Critique Loop"
+  short_description: "Build a rubric, run a critique loop, or do both"
+  default_prompt: "Use $critique-loop and let me choose whether to build a rubric, run the critique loop, or do both."
