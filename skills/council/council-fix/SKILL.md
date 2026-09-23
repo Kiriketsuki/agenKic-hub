@@ -1,4 +1,5 @@
 ---
+disable-model-invocation: true
 name: council-fix
 description: "One-command alias for the full council review pipeline. Runs a supervised adversarial council, produces council-result.json and fix-manifest.md, then writes a prioritised plan file to ~/.claude/plans for the human to implement. Just type /council-fix PR #123 or /council-fix [topic]. Triggers: \"council fix\", \"review and fix\", \"council-fix PR\", \"/council-fix\"."
 ---
