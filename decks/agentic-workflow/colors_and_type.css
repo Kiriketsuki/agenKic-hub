@@ -1,0 +1,285 @@
+/* ============================================================
+   Chrysaki — Design Tokens
+   Dark-first · jewel-toned · zero-radius · geometric · OKLCH-calibrated
+   ============================================================ */
+
+/* Webfonts — Inter (UI), JetBrains Mono (code).
+   Iosevka Term Slab Nerd Font (terminal) is not on Google Fonts —
+   JetBrains Mono is the documented substitute for screen specimens. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+  /* ---------- SURFACES (dark → light) ---------- */
+  --ck-abyss:     #0f1117;   /* deepest bg, chrome, gutters */
+  --ck-base:      #161821;   /* primary canvas, editor */
+  --ck-surface:   #1c1f2b;   /* cards, sidebars, panels */
+  --ck-raised:    #252836;   /* hover, active, popups */
+  --ck-elevated:  #2e3142;   /* tooltips, floaters */
+  --ck-border:    #363a4f;   /* dividers, input borders */
+
+  /* ---------- TRI-PRIMARY (jewel accents) ---------- */
+  --ck-emerald:        #14664e;
+  --ck-emerald-lt:     #1a8a6a;
+  --ck-emerald-dim:    #0e4a38;
+  --ck-blue:           #122858;   /* fill only — never text on dark */
+  --ck-blue-lt:        #1c3d7a;   /* fill only */
+  --ck-blue-dim:       #0c1a40;
+  --ck-amethyst:       #3a2068;   /* fill only — never text on dark */
+  --ck-amethyst-lt:    #583090;   /* fill only */
+  --ck-amethyst-dim:   #1e1040;
+
+  /* ---------- SECONDARY ---------- */
+  --ck-teal:           #197278;
+  --ck-teal-lt:        #20969c;
+  --ck-teal-dim:       #0f4f54;
+  --ck-blonde:         #FBB13C;
+  --ck-blonde-lt:      #FCC96A;
+  --ck-blonde-dim:     #C4861C;
+  --ck-error:          #8C2F39;
+  --ck-error-lt:       #b53f4a;
+  --ck-error-dim:      #5e1f25;
+
+  /* ---------- SEMANTIC ---------- */
+  --ck-success:        var(--ck-emerald-lt);
+  --ck-info:           var(--ck-teal-lt);
+  --ck-warning:        var(--ck-blonde);
+  --ck-critical:       var(--ck-error-lt);
+  --ck-accent:         var(--ck-amethyst-lt);
+
+  /* ---------- TEXT / FOREGROUND ---------- */
+  --ck-fg1:            #e0e2ea;   /* primary — body, headings */
+  --ck-fg2:            #a0a4b8;   /* secondary — metadata, timestamps */
+  --ck-fg3:            #6a6e82;   /* muted — placeholders, disabled */
+  --ck-fg-inverse:     #0f1117;   /* text on bright accent fills (Blonde) */
+
+  /* ---------- SAFE TEXT-ON-DARK SHORTLIST ----------
+     Emerald Lt, Teal, Teal Lt, Blonde, Blonde Lt, Error Lt only.
+     Royal Blue + Amethyst are fill colours; never use as text. */
+
+  /* ---------- SIGNATURE GRADIENTS ---------- */
+  --ck-tri-primary:    linear-gradient(135deg, #14664e 0%, #122858 50%, #3a2068 100%);
+  --ck-jewel-edge:     linear-gradient(90deg,  #1a8a6a 0%, #1c3d7a 50%, #583090 100%);
+  --ck-jewel-light:    linear-gradient(90deg,  #1a8a6a 0%, #20969c 50%, #FCC96A 100%);
+
+  /* ---------- TYPOGRAPHY ---------- */
+  --ck-font-ui:        "Inter", "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+  --ck-font-mono:      "Fira Code", "JetBrains Mono", "Cascadia Code", ui-monospace, monospace;
+  --ck-font-terminal:  "Iosevka Term Slab", "Fira Code", monospace; /* nerd-font glyphs */
+
+  --ck-size-xs:   12px;
+  --ck-size-sm:   14px;
+  --ck-size-md:   16px;
+  --ck-size-lg:   20px;
+  --ck-size-xl:   28px;
+  --ck-size-2xl:  40px;
+  --ck-size-3xl:  56px;
+  --ck-size-display: 80px;
+
+  --ck-leading-tight: 1.15;
+  --ck-leading-snug:  1.3;
+  --ck-leading-body:  1.55;
+  --ck-leading-loose: 1.7;
+
+  --ck-tracking-tight:   -0.02em;
+  --ck-tracking-normal:   0;
+  --ck-tracking-wide:     0.06em;
+  --ck-tracking-display:  0.12em;   /* uppercase eyebrows */
+
+  /* ---------- SPACING (4px base) ---------- */
+  --ck-space-0:   0px;
+  --ck-space-1:   4px;
+  --ck-space-2:   8px;
+  --ck-space-3:   12px;
+  --ck-space-4:   16px;
+  --ck-space-5:   24px;
+  --ck-space-6:   32px;
+  --ck-space-7:   48px;
+  --ck-space-8:   64px;
+
+  /* Panel gutters (BAR-SPEC / MANGA-INK) */
+  --ck-gutter-inter-island: 8px;   /* between bar islands */
+  --ck-gutter-intra-island: 4px;   /* between segments within one island */
+
+  /* ---------- GEOMETRY ----------
+     Zero radius is non-negotiable. Use clip-paths instead.
+     Hex shapes are regular (made from 6 equilaterals) — pair the clip-path
+     with `aspect-ratio` so the box has the correct width:height ratio. */
+  --ck-radius:  0;
+  --ck-inset:   16px;  /* tiling trapezoid inset depth */
+
+  --ck-clip-trapezoid-tab: polygon(8% 0%, 92% 0%, 100% 100%, 0% 100%);
+  /* Pointy-top regular hex — box aspect-ratio: 0.866 / 1 (√3 : 2) */
+  --ck-clip-hex-point: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  --ck-hex-point-ratio: calc(1.7320508 / 2);  /* width / height for regular */
+  /* Flat-top regular hex — box aspect-ratio: 2 / √3 */
+  --ck-clip-hex-flat:  polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  --ck-hex-flat-ratio: calc(2 / 1.7320508);
+  --ck-clip-parallelogram: polygon(15% 0%, 100% 0%, 85% 100%, 0% 100%);
+  --ck-clip-chevron: polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%, 15% 50%);
+  --ck-clip-diamond: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  --ck-clip-triangle-right: polygon(0% 0%, 100% 50%, 0% 100%);
+
+  /* ---------- BORDERS / INK WEIGHTS ---------- */
+  --ck-ink-hair:   1px;   /* interior dividers, ghost grouping */
+  --ck-ink-body:   2px;   /* primary outline, focus selection */
+  --ck-ink-heavy:  3px;   /* accent bars, signature edges */
+
+  /* ---------- SHADOWS ----------
+     Hard = grounded/planted. Soft = floating/glass. */
+  --ck-shadow-hard:   3px 3px 0 rgba(0, 0, 0, 0.70);
+  --ck-shadow-hard-sm: 2px 2px 0 rgba(0, 0, 0, 0.55);
+  --ck-shadow-soft:   0 4px 30px rgba(0, 0, 0, 0.30);
+  --ck-shadow-soft-sm: 0 2px 16px rgba(0, 0, 0, 0.25);
+  --ck-glow-emerald:  0 0 0 1px rgba(26, 138, 106, 0.55), 0 0 24px rgba(26, 138, 106, 0.20);
+  --ck-glow-blonde:   0 0 0 1px rgba(251, 177, 60, 0.55), 0 0 24px rgba(251, 177, 60, 0.20);
+
+  /* ---------- GLASS STACK ----------
+     White tint 0.03–0.12. Above 0.15 reads milky. */
+  --ck-glass-bg:     rgba(255, 255, 255, 0.05);
+  --ck-glass-bg-hi:  rgba(255, 255, 255, 0.08);
+  --ck-glass-border: rgba(255, 255, 255, 0.08);
+  --ck-glass-blur:   blur(16px) saturate(140%);
+
+  /* ---------- INK TEXTURES (manga-ink) ----------
+     Apply via background-image on Surface-or-higher containers.
+     Never on Abyss chrome. Never on interactive elements. */
+  --ck-screentone-dot: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px) 0 0 / 8px 8px;
+  --ck-screentone-emerald: radial-gradient(circle, rgba(26,138,106,0.25) 1.5px, transparent 1.5px) 0 0 / 6px 6px;
+  --ck-hatch-single: repeating-linear-gradient(45deg,
+    transparent 0 4px, rgba(255,255,255,0.04) 4px 5px);
+  --ck-hatch-cross:
+    repeating-linear-gradient(45deg, transparent 0 4px, rgba(255,255,255,0.03) 4px 5px),
+    repeating-linear-gradient(-45deg, transparent 0 4px, rgba(255,255,255,0.03) 4px 5px);
+  --ck-hatch-error: radial-gradient(circle, rgba(140,47,57,0.35) 2px, transparent 2px) 0 0 / 10px 10px;
+
+  /* ---------- ANIMATION ---------- */
+  --ck-ease-out:  cubic-bezier(0.16, 1, 0.30, 1);
+  --ck-ease-in:   cubic-bezier(0.65, 0, 0.35, 1);
+  --ck-ease-flat: linear;
+  --ck-dur-fast:  120ms;
+  --ck-dur-med:   220ms;
+  --ck-dur-slow:  420ms;
+  --ck-dur-gradient: 4s;  /* tri-primary gradient sweep loop */
+}
+
+/* ============================================================
+   SEMANTIC TYPE STYLES
+   ============================================================ */
+
+.ck-display {
+  font-family: var(--ck-font-ui);
+  font-weight: 800;
+  font-size: var(--ck-size-display);
+  line-height: var(--ck-leading-tight);
+  letter-spacing: var(--ck-tracking-tight);
+  color: var(--ck-fg1);
+}
+
+.ck-h1 {
+  font-family: var(--ck-font-ui);
+  font-weight: 700;
+  font-size: var(--ck-size-2xl);
+  line-height: var(--ck-leading-tight);
+  letter-spacing: var(--ck-tracking-tight);
+  color: var(--ck-emerald-lt);
+}
+
+.ck-h2 {
+  font-family: var(--ck-font-ui);
+  font-weight: 600;
+  font-size: var(--ck-size-xl);
+  line-height: var(--ck-leading-snug);
+  color: var(--ck-teal-lt);
+  border-bottom: var(--ck-ink-body) solid var(--ck-border);
+  padding-bottom: 0.25em;
+}
+
+.ck-h3 {
+  font-family: var(--ck-font-ui);
+  font-weight: 600;
+  font-size: var(--ck-size-lg);
+  line-height: var(--ck-leading-snug);
+  color: var(--ck-blonde);
+}
+
+.ck-eyebrow {
+  font-family: var(--ck-font-mono);
+  font-weight: 600;
+  font-size: var(--ck-size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--ck-tracking-display);
+  color: var(--ck-teal-lt);
+}
+
+.ck-body {
+  font-family: var(--ck-font-ui);
+  font-weight: 400;
+  font-size: var(--ck-size-md);
+  line-height: var(--ck-leading-body);
+  color: var(--ck-fg1);
+}
+
+.ck-body-sm {
+  font-family: var(--ck-font-ui);
+  font-weight: 400;
+  font-size: var(--ck-size-sm);
+  line-height: var(--ck-leading-body);
+  color: var(--ck-fg2);
+}
+
+.ck-caption {
+  font-family: var(--ck-font-ui);
+  font-weight: 500;
+  font-size: var(--ck-size-xs);
+  line-height: var(--ck-leading-snug);
+  color: var(--ck-fg3);
+  letter-spacing: 0.02em;
+}
+
+.ck-code,
+.ck-mono {
+  font-family: var(--ck-font-mono);
+  font-weight: 500;
+  font-size: 0.92em;
+  background: var(--ck-amethyst-dim);
+  border: 1px solid var(--ck-elevated);
+  color: var(--ck-fg1);
+  padding: 0.1em 0.4em;
+}
+
+.ck-pre {
+  font-family: var(--ck-font-mono);
+  font-size: var(--ck-size-sm);
+  line-height: 1.5;
+  color: var(--ck-fg1);
+  background: var(--ck-surface);
+  border: 1px solid var(--ck-border);
+  border-image: var(--ck-jewel-edge) 1;
+  border-top-width: var(--ck-ink-heavy);
+  padding: var(--ck-space-4);
+  overflow-x: auto;
+}
+
+.ck-link {
+  color: var(--ck-emerald-lt);
+  text-decoration: underline;
+  text-decoration-color: var(--ck-emerald-dim);
+  text-underline-offset: 2px;
+}
+.ck-link:hover { color: var(--ck-teal-lt); }
+
+.ck-strong { color: var(--ck-blonde); font-weight: 700; }
+.ck-em     { color: var(--ck-fg2); font-style: italic; }
+
+/* ============================================================
+   ANIMATED TRI-PRIMARY (signature motion — use sparingly)
+   ============================================================ */
+@keyframes ckGradientShift {
+  from { background-position: 0% 50%; }
+  to   { background-position: 200% 50%; }
+}
+.ck-gradient-flow {
+  background: linear-gradient(90deg, #1a8a6a, #1c3d7a, #583090, #1a8a6a);
+  background-size: 200% 100%;
+  animation: ckGradientShift var(--ck-dur-gradient) linear infinite;
+}
