@@ -350,6 +350,33 @@ lines for CI.
 | 1 | at least one file scored over its threshold |
 | 2 | usage error, unreadable file, or bad config |
 
+## CI
+
+`ci/pr_lint.py` runs the STE check on a pull request. It lints the PR title, the PR body, each commit message and each Markdown file the PR adds or changes. A kilint error fails the check. A warning or a notice only shows in the annotations and the job summary.
+
+The script skips merge commits and commits from `github-actions[bot]` and `dependabot[bot]`. Path routing still applies to the Markdown files, so a repository can exempt a path in its own `.kilint.toml`.
+
+Each repository runs it from `.github/workflows/ste-lint.yml`, which checks out this folder from `Kiriketsuki/agenKic-hub`:
+
+```yaml
+- name: Checkout kilint
+  uses: actions/checkout@v6
+  with:
+      repository: Kiriketsuki/agenKic-hub
+      path: .kilint
+      sparse-checkout: skills/writing/kilint
+
+- name: Lint the PR title, body, commits and changed docs
+  env:
+      PR_TITLE: ${{ github.event.pull_request.title }}
+      PR_BODY: ${{ github.event.pull_request.body }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+  run: python3 .kilint/skills/writing/kilint/ci/pr_lint.py
+```
+
+The PR text reaches the script through `env`, so a title or a body cannot run as a command.
+
 ## Limitations
 
 kilint checks form. It cannot judge whether the text is true, complete, or
