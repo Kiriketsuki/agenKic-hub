@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" aria-label="Chrysaki mark">
+  <defs>
+    <linearGradient id="ck-edge" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1a8a6a"></stop>
+      <stop offset=".5" stop-color="#1c3d7a"></stop>
+      <stop offset="1" stop-color="#583090"></stop>
+    </linearGradient>
+  </defs>
+
+  <polygon points="32,4 56.25,18 56.25,46 32,60 7.75,46 7.75,18" fill="#0f1117" stroke="url(#ck-edge)" stroke-width="2.5" stroke-linejoin="miter"></polygon>
+
+  <polygon points="32,32 7.75,18 32,4 56.25,18" fill="#14664e"></polygon>
+  <polygon points="32,32 56.25,18 56.25,46 32,60" fill="#3a2068"></polygon>
+  <polygon points="32,32 32,60 7.75,46 7.75,18" fill="#122858"></polygon>
+
+  <path d="M32,32 L32,4 M32,32 L56.25,18 M32,32 L56.25,46 M32,32 L32,60 M32,32 L7.75,46 M32,32 L7.75,18" stroke="#0f1117" stroke-width="1.5" stroke-linecap="square"></path>
+
+  <polygon points="32,28 36,32 32,36 28,32" fill="#FBB13C"></polygon>
+</svg>
