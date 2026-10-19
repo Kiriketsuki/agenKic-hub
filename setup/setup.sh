@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # agentic-hub installer. Linux, macOS, and Git Bash on Windows.
-# Usage: ./setup.sh [--profile answers.yml] [--dry-run]
+# Usage: ./setup.sh [--profile answers.yml] [--dry-run] [--force]
+# Exits non-zero when any step fails.
 # Bash 3.2 compatible. No associative arrays, no readlink -f.
 set -u
 
@@ -9,7 +10,10 @@ REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 COMPONENTS_DIR="$SCRIPT_DIR/components"
 EXAMPLE_ANSWERS="$SCRIPT_DIR/answers.example.yml"
 ANSWERS_TMP="$(mktemp)"
+REPO_REAL="$(cd "$REPO_DIR" && pwd -P)"
 DRY_RUN=0
+FORCE=0
+FAILURES=0
 PROFILE=""
 trap 'rm -f "$ANSWERS_TMP"' EXIT
 
@@ -41,28 +45,135 @@ get_answer() {
     sed -n "s/^$1=//p" "$ANSWERS_TMP" | head -n 1
 }
 
-# Move a real file or directory aside before we replace it. Links get removed,
-# never backed up, because we can recreate them.
-backup_if_real() {
-    local path="$1"
-    if [ -L "$path" ]; then
-        [ "$DRY_RUN" = 1 ] && { log "  [dry] remove link $path"; return; }
-        rm -f "$path"
-    elif [ -e "$path" ]; then
-        [ "$DRY_RUN" = 1 ] && { log "  [dry] backup $path -> $path.bak"; return; }
-        rm -rf "$path.bak" 2>/dev/null
-        mv "$path" "$path.bak"
-        log "  backed up $path -> $path.bak"
+# Count a failure and keep going. main() exits non-zero at the end when any failed.
+fail() {
+    log "  FAILED: $*"
+    FAILURES=$((FAILURES + 1))
+}
+
+# Print an unused backup name. The first backup is <path>.bak. When that name is
+# taken, use <path>.bak.<YYYYmmddHHMMSS>. An older backup is never overwritten.
+backup_name() {
+    local path="$1" cand ts n
+    cand="$path.bak"
+    if [ ! -e "$cand" ] && [ ! -L "$cand" ]; then printf '%s' "$cand"; return; fi
+    ts="$(date +%Y%m%d%H%M%S)"
+    cand="$path.bak.$ts"
+    n=0
+    while [ -e "$cand" ] || [ -L "$cand" ]; do
+        n=$((n + 1))
+        cand="$path.bak.$ts.$n"
+    done
+    printf '%s' "$cand"
+}
+
+# Move a real file or directory aside. Returns 1 when the move fails.
+do_backup() {
+    local path="$1" to
+    to="$(backup_name "$path")"
+    if [ "$DRY_RUN" = 1 ]; then log "  [dry] backup $path -> $to"; return 0; fi
+    if mv "$path" "$to"; then
+        log "  backed up $path -> $to"
+    else
+        fail "cannot back up $path"
+        return 1
     fi
+}
+
+# True when two files, or two directory trees, hold the same bytes.
+same_content() {
+    if [ -d "$1" ] && [ -d "$2" ]; then
+        diff -rq "$1" "$2" >/dev/null 2>&1
+    elif [ -f "$1" ] && [ -f "$2" ]; then
+        cmp -s "$1" "$2"
+    else
+        return 1
+    fi
+}
+
+# Print the absolute, physical path that a symlink points at. A dangling link
+# prints its target as written, made absolute.
+link_dest_abs() {
+    local link="$1" t d
+    t="$(readlink "$link")"
+    case "$t" in /*) ;; *) t="$(dirname "$link")/$t" ;; esac
+    d="$(dirname "$t")"
+    if [ -d "$d" ]; then
+        printf '%s/%s' "$(cd "$d" && pwd -P)" "$(basename "$t")"
+    else
+        printf '%s' "$t"
+    fi
+}
+
+# Decide what to do with whatever sits at dst before we write src there.
+# Returns 0 when the caller may write. Returns 1 when the caller must skip,
+# because the target is already right, is a foreign link, or is a real
+# directory that differs from src.
+clear_target() {
+    local src="$1" dst="$2" cur abs
+    if [ -L "$dst" ]; then
+        cur="$(readlink "$dst")"
+        if [ ! -e "$dst" ]; then
+            log "  dangling link $dst -> $cur, replacing"
+        elif [ "$cur" = "$src" ]; then
+            log "  link already correct: $dst"
+            return 1
+        else
+            abs="$(link_dest_abs "$dst")"
+            case "$abs" in
+                "$REPO_REAL"/*) ;;
+                *)
+                    if [ "$FORCE" = 1 ]; then
+                        log "  --force: replacing link $dst (old target: $cur)"
+                    else
+                        log "  skip: $dst is a link to $cur, outside this repo. Use --force to replace it"
+                        return 1
+                    fi
+                    ;;
+            esac
+        fi
+        if [ "$DRY_RUN" = 1 ]; then log "  [dry] remove link $dst"; return 0; fi
+        rm -f "$dst" || { fail "cannot remove link $dst"; return 1; }
+        return 0
+    fi
+    if [ -d "$dst" ]; then
+        # A parent symlink can make dst the source directory itself. Then the
+        # contents match and a removal would delete the repo copy.
+        if [ "$(cd "$dst" && pwd -P)" = "$(cd "$src" && pwd -P)" ]; then
+            log "  skip: $dst resolves to the source directory itself"
+            return 0
+        fi
+        if same_content "$src" "$dst"; then
+            if [ "$DRY_RUN" = 1 ]; then log "  [dry] remove identical directory $dst"; return 0; fi
+            rm -rf "$dst" || { fail "cannot remove $dst"; return 1; }
+            log "  removed directory $dst (identical to the repo copy)"
+            return 0
+        fi
+        if [ "$FORCE" = 1 ]; then
+            do_backup "$dst" || return 1
+            return 0
+        fi
+        log "  differs, merge by hand: $dst is a real directory that differs from $src. Use --force to back it up and replace it"
+        return 1
+    fi
+    if [ -e "$dst" ]; then
+        if same_content "$src" "$dst"; then
+            if [ "$DRY_RUN" = 1 ]; then log "  [dry] replace identical file $dst"; return 0; fi
+            rm -f "$dst" || { fail "cannot remove $dst"; return 1; }
+            return 0
+        fi
+        do_backup "$dst" || return 1
+    fi
+    return 0
 }
 
 # Create a symlink. On Windows, fall back to a junction for a directory or a
 # copy for a file when symlink creation fails (needs Developer Mode or admin).
 make_link() {
     local src="$1" dst="$2"
-    backup_if_real "$dst"
-    [ "$DRY_RUN" = 1 ] && { log "  [dry] link $dst -> $src"; return; }
-    mkdir -p "$(dirname "$dst")"
+    clear_target "$src" "$dst" || return 0
+    [ "$DRY_RUN" = 1 ] && { log "  [dry] link $dst -> $src"; return 0; }
+    mkdir -p "$(dirname "$dst")" || { fail "cannot create directory $(dirname "$dst")"; return 0; }
     if is_windows; then
         # nativestrict makes ln -s create a real Windows symlink or fail.
         if MSYS=winsymlinks:nativestrict ln -s "$src" "$dst" 2>/dev/null; then
@@ -70,47 +181,77 @@ make_link() {
         elif [ -d "$src" ]; then
             local wsrc wdst
             wsrc="$(cygpath -w "$src")"; wdst="$(cygpath -w "$dst")"
-            cmd //c mklink //J "$wdst" "$wsrc" >/dev/null 2>&1 \
-                && log "  junction (fallback) $dst -> $src" \
-                || die "junction failed for $dst"
+            if cmd //c mklink //J "$wdst" "$wsrc" >/dev/null 2>&1; then
+                log "  junction (fallback) $dst -> $src"
+            else
+                fail "junction failed for $dst"
+            fi
         else
-            cp "$src" "$dst" && log "  copy (fallback) $dst"
+            if cp "$src" "$dst"; then log "  copy (fallback) $dst"; else fail "copy failed for $dst"; fi
         fi
     else
-        ln -s "$src" "$dst" && log "  link $dst -> $src"
+        if ln -s "$src" "$dst"; then
+            log "  link $dst -> $src"
+        else
+            fail "ln -s failed: $dst -> $src"
+        fi
     fi
 }
 
+# Escape a value for the replacement side of a sed s||| command.
+# Backslash and ampersand are special in a replacement. The pipe is our delimiter.
+sed_escape() {
+    printf '%s' "$1" | sed -e 's/[\\&|]/\\&/g'
+}
+
 # Substitute {{key}} placeholders from the answers file into dst.
+# Fails, and writes nothing, when a placeholder has no answer.
 render_template() {
-    local src="$1" dst="$2" sedfile tmp
+    local src="$1" dst="$2" sedfile tmp k v left
     sedfile="$(mktemp)"; tmp="$(mktemp)"
     while IFS='=' read -r k v; do
         [ -n "$k" ] || continue
-        # | is the sed delimiter, so strip it from values for safety.
-        v="$(printf '%s' "$v" | tr -d '|')"
-        printf 's|{{%s}}|%s|g\n' "$k" "$v" >> "$sedfile"
+        printf 's|{{%s}}|%s|g\n' "$k" "$(sed_escape "$v")" >> "$sedfile"
     done < "$ANSWERS_TMP"
-    sed -f "$sedfile" "$src" > "$tmp"
-    backup_if_real "$dst"
-    if [ "$DRY_RUN" = 1 ]; then log "  [dry] render $dst"; else
-        mkdir -p "$(dirname "$dst")"
-        mv "$tmp" "$dst"
-        log "  rendered $dst"
+    if ! sed -f "$sedfile" "$src" > "$tmp"; then
+        fail "sed failed while rendering $src"
+        rm -f "$sedfile" "$tmp"
+        return 0
     fi
+    left="$(grep -o '{{[^}]*}}' "$tmp" | sort -u | tr '\n' ' ')"
+    if [ -n "$left" ]; then
+        fail "unresolved placeholder(s) in $src: $left"
+        rm -f "$sedfile" "$tmp"
+        return 0
+    fi
+    write_file "$tmp" "$dst" render
     rm -f "$sedfile" "$tmp" 2>/dev/null
+    return 0
+}
+
+# Write the file at $1 to $2. Skips an identical file, keeps older backups,
+# and counts a failure. $3 names the action in the log.
+write_file() {
+    local from="$1" dst="$2" verb="$3"
+    if [ -f "$dst" ] && [ ! -L "$dst" ] && cmp -s "$from" "$dst"; then
+        log "  unchanged $dst"
+        return 0
+    fi
+    clear_target "$from" "$dst" || return 0
+    if [ "$DRY_RUN" = 1 ]; then log "  [dry] $verb $dst"; return 0; fi
+    mkdir -p "$(dirname "$dst")" || { fail "cannot create directory $(dirname "$dst")"; return 0; }
+    if [ "$verb" = render ]; then
+        if mv "$from" "$dst"; then log "  rendered $dst"; else fail "cannot write $dst"; fi
+    else
+        if cp "$from" "$dst"; then log "  copy $dst"; else fail "cannot copy to $dst"; fi
+    fi
 }
 
 install_file() {
     local src="$1" dst="$2"
     case "$src" in
         *.tmpl) render_template "$src" "${dst%.tmpl}" ;;
-        *)
-            backup_if_real "$dst"
-            [ "$DRY_RUN" = 1 ] && { log "  [dry] copy $dst"; return; }
-            mkdir -p "$(dirname "$dst")"
-            cp "$src" "$dst" && log "  copy $dst"
-            ;;
+        *) write_file "$src" "$dst" copy ;;
     esac
 }
 
@@ -147,13 +288,13 @@ clone_or_pull() {
         log "  [dry]   fallback: git clone https://github.com/$repo $dest"
         return 0
     fi
-    mkdir -p "$(dirname "$dest")"
+    mkdir -p "$(dirname "$dest")" || { fail "cannot create directory $(dirname "$dest")"; return 1; }
     if command -v gh >/dev/null 2>&1 && gh repo clone "$repo" "$dest" >/dev/null 2>&1; then
         log "  cloned $repo -> $dest"
     elif git clone "https://github.com/$repo" "$dest" >/dev/null 2>&1; then
         log "  cloned $repo -> $dest (git fallback)"
     else
-        log "  clone failed: $repo"
+        fail "clone failed: $repo"
         return 1
     fi
     return 0
@@ -182,7 +323,7 @@ run_external() {
             elif [ -f "$dest/$run" ]; then
                 ( cd "$dest" && bash "$run" ) \
                     && log "  ran $run" \
-                    || log "  delegate installer failed: $run"
+                    || fail "delegate installer failed: $run"
             else
                 log "  delegate installer not found: $dest/$run"
             fi
@@ -197,7 +338,7 @@ run_external() {
             else
                 ( cd "$dest" && stow --target "$HOME" . ) \
                     && log "  stowed $dest into $HOME" \
-                    || log "  stow failed in $dest"
+                    || fail "stow failed in $dest"
             fi
             ;;
         clone)
@@ -324,7 +465,8 @@ main() {
         case "$1" in
             --profile) PROFILE="${2:-}"; shift 2 ;;
             --dry-run) DRY_RUN=1; shift ;;
-            -h|--help) log "usage: setup.sh [--profile answers.yml] [--dry-run]"; exit 0 ;;
+            --force) FORCE=1; shift ;;
+            -h|--help) log "usage: setup.sh [--profile answers.yml] [--dry-run] [--force]"; exit 0 ;;
             *) die "unknown flag: $1" ;;
         esac
     done
@@ -346,6 +488,10 @@ main() {
         fi
     done
     log ""
+    if [ "$FAILURES" -gt 0 ]; then
+        log "done with $FAILURES failure(s). Read the FAILED lines above."
+        exit 1
+    fi
     log "done."
 }
 
