@@ -109,7 +109,7 @@ navigate. Print to PDF gives one page per slide.
 | # | Layer | The idea |
 |:--|:---|:---|
 | 15 | CI | Nine workflows: docs, release, three version workflows, an STE lint gate, a CI job for the tests, a stream-launcher check, and an issue-branch handler that turns an issue into a branch on its own. Credentials live in repo secrets, never in the YAML. |
-| — | Installer | The installer enforces the modularity. One manifest per component, bash and PowerShell scripts, `{{variable}}` templates for machine values, `--dry-run` to preview. Existing files move to `.bak`. Re-running only replaces links it made itself. |
+| n/a | Installer | The installer enforces the modularity. One manifest per component, bash and PowerShell scripts, `{{variable}}` templates for machine values, `--dry-run` to preview. Existing files move to `.bak`. Re-running only replaces links it made itself. |
 
 ### Adoption order
 
@@ -199,8 +199,8 @@ carries a header comment stating what to customize. Catalog:
 
 ## Experimental tools
 
-The [stream launcher](tools/stream-launcher/README.md) opens existing branches in
-worktrees and starts agents in tmux windows. **It is a work in progress**, not a
+The [stream launcher](tools/stream-launcher/README.md) opens existing branches in worktrees.
+It also starts agents in tmux windows. **It is a work in progress**, not a
 production supervisor or security sandbox. The installer does not install it.
 
 Read its tuning guide before use. It covers agent arguments, setup profiles,
