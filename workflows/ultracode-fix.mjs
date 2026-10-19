@@ -127,7 +127,7 @@ if (plan.needsExplore && EXPLORE !== 'never') {
 }
 log(`Plan: ${plan.summary} (${plan.tasks.length} task(s))`)
 
-// --- Phase 3: implement (opus, low). Sequential per dependency waves, parallel within a wave. ---
+// --- Phase 3: implement. Dependency waves, one task at a time (see the single-writer note below). ---
 phase('Implement')
 const implPrompt = (t) => `${CWD}You are the implementer for one plan task. Apply exactly this change, verify it compiles/runs, and return a short report of what you changed (files + reasoning). Stay inside the task scope.${TEST}${COMMIT_RULE}
 
@@ -153,16 +153,20 @@ while (remaining.length) {
   if (passes-- <= 0) return implFailed(remaining.map(t => ({ id: t.id, reason: 'never scheduled (loop guard)', report: null })))
   const wave = remaining.filter(t => (t.dependsOn || []).every(d => done.has(d)))
   if (!wave.length) { log('Dependency cycle or unknown dependency in plan. Running the first remaining task alone.'); wave.push(remaining[0]) }
-  const results = await parallel(wave.map(t => () =>
-    agent(implPrompt(t), { label: `impl:${t.id}`, phase: 'Implement', schema: RESULT_SCHEMA, model: 'opus', effort: 'low' })
-      .then(r => (r ? { id: t.id, ...r } : null))))
-  const failed = []
-  wave.forEach((t, i) => {
-    const r = results[i]
-    if (r && r.done === true) { done.add(t.id); implemented.push(r) }
-    else failed.push({ id: t.id, reason: r ? 'implementer reported done:false' : 'implementer returned no result', report: r ? r.report : null })
-  })
-  if (failed.length) return implFailed(failed)
+  // One writer at a time. Every implementer edits the same working tree, and with commit:true
+  // they also share one git index. Parallel writers raced on files and on index.lock, and one
+  // task could commit the half-done edits of another. Worktree isolation would need a merge
+  // step, and the default commit:false mode leaves nothing committed to merge. Sequential runs
+  // in dependency order are the simpler safe option. The first failure stops the wave.
+  for (const t of wave) {
+    const raw = await agent(implPrompt(t), { label: `impl:${t.id}`, phase: 'Implement', schema: RESULT_SCHEMA, model: 'opus', effort: 'low' })
+    const r = raw ? { id: t.id, ...raw } : null
+    if (!(r && r.done === true)) {
+      return implFailed([{ id: t.id, reason: r ? 'implementer reported done:false' : 'implementer returned no result', report: r ? r.report : null }])
+    }
+    done.add(t.id)
+    implemented.push(r)
+  }
   remaining = remaining.filter(t => !done.has(t.id))
 }
 
@@ -188,19 +192,19 @@ ${implemented.map(r => `- [${r.id}] ${r.report}`).join('\n')}`,
   if (!Array.isArray(review.findings) || !review.findings.length) { verdict = 'review-rejected-without-findings'; break }
   verdict = 'fixes-pending'
   log(`Round ${round}: ${review.findings.length} finding(s). Dispatching fixes.`)
-  const fixes = await parallel(review.findings.map((f, i) => () =>
-    agent(implPrompt({ id: `fix-r${round}-${i + 1}`, instruction: `${f.summary} (${f.file})\n${f.fixInstruction}` }),
-      { label: `fix:r${round}-${i + 1}`, phase: 'Implement', schema: RESULT_SCHEMA, model: 'opus', effort: 'low' })
-      .then(r => (r ? { id: `fix-r${round}-${i + 1}`, ...r } : null))))
+  // One fixer per round gets every finding. Parallel fixers shared one working tree and raced
+  // on the same files, which is the single-writer problem described in Implement.
+  const fixId = `fix-r${round}`
+  const fixRaw = await agent(implPrompt({ id: fixId, instruction: `Fix every review finding below. Each one is blocking.\n${review.findings.map((f, i) => `${i + 1}. ${f.summary} (${f.file})\n${f.fixInstruction}`).join('\n\n')}` }),
+    { label: `fix:r${round}`, phase: 'Implement', schema: RESULT_SCHEMA, model: 'opus', effort: 'low' })
+  const fix = fixRaw ? { id: fixId, ...fixRaw } : null
   // Same rule as Implement: a null or done:false fixer stops the loop instead of reading as fixed.
-  const fixFailed = review.findings.map((f, i) => ({ f, r: fixes[i], id: `fix-r${round}-${i + 1}` }))
-    .filter(x => !(x.r && x.r.done === true))
-  implemented.push(...fixes.filter(r => r && r.done === true))
-  if (fixFailed.length) {
-    failed = fixFailed.map(x => ({ id: x.id, reason: x.r ? 'fixer reported done:false' : 'fixer returned no result', report: x.r ? x.r.report : null }))
+  if (!(fix && fix.done === true)) {
+    failed = [{ id: fixId, reason: fix ? 'fixer reported done:false' : 'fixer returned no result', report: fix ? fix.report : null }]
     verdict = 'fix-failed'
     break
   }
+  implemented.push(fix)
 }
 if (verdict === 'fixes-pending') verdict = 'max-loops-reached'
 
