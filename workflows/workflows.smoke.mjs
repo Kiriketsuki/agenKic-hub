@@ -23,6 +23,7 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join, basename } from 'node:path'
+import { createHash } from 'node:crypto'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const AsyncFunction = (async () => {}).constructor
@@ -48,9 +49,11 @@ class StrictDate extends Date {
   static now() { throw new Error('Date.now() is unavailable in the workflow runtime') }
 }
 
+function compileSource(source) {
+  return new AsyncFunction(...PARAMS, source.replace(/^export\s+/gm, ''))
+}
 function compile(file) {
-  const src = readFileSync(join(HERE, file), 'utf8').replace(/^export\s+/gm, '')
-  return new AsyncFunction(...PARAMS, src)
+  return compileSource(readFileSync(join(HERE, file), 'utf8'))
 }
 
 const clone = (v) => (v === undefined ? undefined : structuredClone(v))
@@ -100,7 +103,9 @@ function makeRuntime(responses = {}, workflowImpl = null) {
 }
 
 async function exec(file, args, rt) {
-  const fn = compile(file)
+  return execFn(compile(file), args, rt)
+}
+async function execFn(fn, args, rt) {
   return fn(rt.agent, rt.parallel, rt.pipeline, rt.phase, rt.log, rt.workflow, args, undefined, StrictDate, StrictMath)
 }
 
@@ -151,8 +156,53 @@ const councilTwoRounds = (over = {}) => ({
   ...over,
 })
 
+// ─── legacy prompt snapshot ───────────────────────────────────────────────────────────────────
+// A prompt change invalidates the resume journal of an in-flight run. These scenarios cover every
+// legacy (debate: 'parallel') prompt shape. The digest below came from the council-loop.mjs of the
+// #20 branch (commit 4c8883a), before the exchange mode existed. Re-baseline it ONLY on a deliberate
+// legacy prompt change, with:
+//   node workflows/workflows.smoke.mjs --legacy-snapshot workflows/council-loop.mjs
+const LEGACY_DIGEST = 'f58453ac8b31b8effb79f34678c871cddb2b718710ebd5afd71f4c66b3103d4b'
+const LEGACY_SCENARIOS = [
+  ['happy branch mode', COUNCIL_ARGS, () => councilHappy()],
+  ['two rounds with a fix', COUNCIL_ARGS, () => councilTwoRounds()],
+  ['questioner, 2 advocates, 2 critics, spec, live validate, scope, env, extra rules', {
+    ...COUNCIL_ARGS, scope: 'only src/', envNote: 'run in /repo', extraRules: 'use tokens', liveValidate: 'prove it',
+    project: { ...COUNCIL_ARGS.project, specFile: 'spec.md' }, council: { advocates: 2, critics: 2, questioner: true, rounds: 3 },
+  }, () => councilHappy({ 'advocate-2#1': 'ADV2', 'critic-2#1': 'CRIT2', 'questioner#1': 'Q' })],
+  ['working-tree mode', { ...COUNCIL_ARGS, target: { parentRef: 'origin/dev' }, merge: false }, () => councilTwoRounds()],
+  ['pr-only target', { ...COUNCIL_ARGS, target: { pr: 42 } }, () => councilHappy({ 'resolve-branch': { headRefName: 'feature/42-x', baseRefName: 'main' } })],
+  ['fix review reject then pass', COUNCIL_ARGS, () => councilTwoRounds({
+    'fix-review#2': { ok: false, issues: ['guard is incomplete at a.js:4'] },
+    'fix-plan#3': 'plan 3', 'fix#3': FIX_OK, 'fix-review#3': { ok: true },
+    'advocate-1#3': 'FOR', 'critic-1#3': 'none', 'arbiter#3': FOR,
+  })],
+  ['non-blocker sweep', COUNCIL_ARGS, () => councilHappy({
+    'arbiter#1': { ...FOR, followUps: ['rename x'] }, 'fix-plan#2': 'plan', 'fix#2': FIX_OK, 'fix-review#2': { ok: true },
+    'advocate-1#2': 'FOR', 'critic-1#2': 'none', 'arbiter#2': FOR,
+  })],
+]
+async function legacySnapshot(source) {
+  const out = []
+  for (const [name, args, responses] of LEGACY_SCENARIOS) {
+    const rt = makeRuntime(responses())
+    try { await execFn(compileSource(source), structuredClone(args), rt) } catch (e) { out.push({ scenario: name, error: String((e && e.message) || e) }) }
+    for (const c of rt.calls) {
+      out.push({ scenario: name, label: c.label, model: c.opts.model ?? null, effort: c.opts.effort ?? null, agentType: c.opts.agentType ?? null,
+        schema: c.opts.schema ? JSON.stringify(c.opts.schema) : null, prompt: c.prompt })
+    }
+  }
+  return out
+}
+const digestOf = (records) => createHash('sha256').update(JSON.stringify(records)).digest('hex')
+
 async function councilTests() {
   console.log('\ncouncil-loop orchestration:')
+  {
+    const snap = await legacySnapshot(readFileSync(join(HERE, 'council-loop.mjs'), 'utf8'))
+    const digest = digestOf(snap)
+    assert(digest === LEGACY_DIGEST, `legacy prompts, models and schemas are byte-identical to the #20 branch (${snap.length} calls, digest ${digest.slice(0, 12)})`)
+  }
   {
     const { rt, result, error } = await runCase('council-loop.mjs', COUNCIL_ARGS, councilHappy())
     assert(!error && result?.converged === true && result?.verified === true && rt.called('merge') && result?.merge?.merged === true,
@@ -441,6 +491,11 @@ function gitSafetyTests() {
 }
 
 async function main() {
+  if (process.argv[2] === '--legacy-snapshot') {
+    const snap = await legacySnapshot(readFileSync(process.argv[3], 'utf8'))
+    console.log(JSON.stringify({ digest: digestOf(snap), calls: snap }, null, 1))
+    return
+  }
   syntaxTests()
   await councilTests()
   await specTests()
