@@ -161,7 +161,8 @@ Workflow({
 The journal replays every completed `agent()` call from cache (~0 tokens) — the **opus decompose
 result replays from cache** and the deterministic wave planner **re-runs in pure JS** — so only the
 unfinished wave's agents run live. Git is the checkpoint: every commit/push/merge is idempotent
-(tolerates "nothing to commit", pushes `--force-with-lease`, checks "already merged" before acting).
+(tolerates "nothing to commit", pushes with a plain `git push` that stops on a rejection, checks
+"already merged" before acting). No workflow prompt force-pushes or runs `git reset --hard`.
 Resume in a **fresh turn** so the token budget has reset.
 
 > A `resumable: true` result is NOT a failure — it means "paused at a safe point." A terminal result

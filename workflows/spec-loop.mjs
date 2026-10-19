@@ -579,9 +579,10 @@ const EXTRA = A.extraRules ? `\n- ${A.extraRules}` : ''
  * agreement used by feature-loop.mjs / council-loop.mjs (immutability, small files, no console.log,
  * commit semantically + push, never merge/rebase). Pure string builder.
  * @param {string} parentRef - the branch this leaf builds on top of (dependencies already merged there)
+ * @param {string} branch - the leaf branch the agent may push
  * @returns {string} the rules block
  */
-function rulesBlock(parentRef) {
+function rulesBlock(parentRef, branch) {
   return `
 Project rules you MUST follow:
 - Immutability: never mutate inputs; return new objects/arrays.
@@ -589,7 +590,7 @@ Project rules you MUST follow:
 - Validate inputs at boundaries; never trust client data. No hardcoded secrets (env vars + .env.example only).
 - Preserve existing UX/visual treatment unless the feature explicitly changes it.
 - If you add deps, update the lockfile (CI runs a clean install). Do NOT edit version files (CI bumps on merge).
-- When your change builds clean, stage it and commit with a semantic conventional-commit message (feat/fix/refactor/...) describing THIS work, then push your branch. If there is nothing to commit (already committed on a prior attempt), do NOT error — skip the commit and ensure the branch is pushed (\`git push --force-with-lease\`). Do NOT merge or rebase, and do NOT create issues — prior features are already-merged dependencies in ${parentRef}.${EXTRA}`
+- When your change builds clean, stage it and commit with a semantic conventional-commit message (feat/fix/refactor/...) describing THIS work, then push your branch. If there is nothing to commit (already committed on a prior attempt), do NOT error — skip the commit and ensure the branch is pushed with a plain \`git push origin ${branch}\`. NEVER force-push. If the remote rejects the push, STOP: do not force, do not pull, do not rebase, and report the rejection as a blocker. Do NOT merge or rebase, and do NOT create issues — prior features are already-merged dependencies in ${parentRef}.${EXTRA}`
 }
 
 /**
@@ -606,7 +607,7 @@ SCOPE GUARD (critical): implement ONLY this leaf — spec tasks ${scope}. Do NOT
 Briefing: ${leaf.briefing || leaf.title}${ENV}
 Touch points (files/modules to add or change): ${touch || '(infer from the spec)'}
 Steps: (1) read ${SPEC} (the tasks for ${scope}) + the touch-point files; build on existing code. (2) Implement working code — no stubs/TODOs; cover the acceptance criteria for ${scope}. (3) Run \`${BUILD}\` and fix every error.${lvFor(leaf.feature) ? ' (4) Validate against the real backend per the project note.' : ''}
-${rulesBlock(EPIC_BRANCH)}
+${rulesBlock(EPIC_BRANCH, leaf.branch)}
 After the build passes, commit semantically and push your branch ${leaf.branch}. Report filesChanged, buildPassed, scopeKept, branch (echo ${leaf.branch}), and any blockers.`
 }
 

@@ -153,8 +153,9 @@ Workflow({
 
 The journal replays every completed `agent()` call from cache (~0 tokens); only the unfinished phase
 re-runs live. Git **is** the checkpoint — every commit/push/promote/merge prompt is idempotent
-(tolerates "nothing to commit", pushes `--force-with-lease`, and checks "already merged / already on
-branch" before acting), so a re-run of the interrupted agent never double-commits or double-merges.
+(tolerates "nothing to commit", pushes with a plain `git push` that stops on a rejection, and checks
+"already merged / already on branch" before acting), so a re-run of the interrupted agent never
+double-commits or double-merges. No workflow prompt force-pushes or runs `git reset --hard`.
 Resume in a **fresh turn** so the token budget has reset.
 
 > A `resumable: true` result is NOT a failure — it means "paused at a safe point." A terminal result
