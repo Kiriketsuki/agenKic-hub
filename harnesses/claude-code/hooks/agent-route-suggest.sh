@@ -1,46 +1,39 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # PreToolUse hook: Agent|TeamCreate
-# Nudges agents to consider agent-route and model-route when spawning subagents.
-# Uses a cooldown to avoid firing on every single Agent call in a parallel batch.
+# Adds a soft note about agent and model choice when a subagent starts.
+# Suggestion hook: fails open and silent when jq is missing.
+# A cooldown stops the note from firing on every call in a parallel batch.
 
-COOLDOWN_FILE="/tmp/.claude_agent_route_cooldown"
+command -v jq >/dev/null 2>&1 || exit 0
+
+COOLDOWN_FILE="${XDG_RUNTIME_DIR:-/tmp}/agent-route-suggest-$UID"
 COOLDOWN_SECS=60
 
-# Check cooldown
 if [ -f "$COOLDOWN_FILE" ]; then
-    LAST=$(cat "$COOLDOWN_FILE" 2>/dev/null || echo 0)
-    NOW=$(date +%s)
-    [ $((NOW - LAST)) -lt "$COOLDOWN_SECS" ] && exit 0
+  LAST=$(cat "$COOLDOWN_FILE" 2>/dev/null || echo 0)
+  NOW=$(date +%s)
+  [[ "$LAST" =~ ^[0-9]+$ ]] || LAST=0
+  [ $((NOW - LAST)) -lt "$COOLDOWN_SECS" ] && exit 0
 fi
 
 INPUT=$(cat)
+SUBAGENT_TYPE=$(jq -r '.tool_input.subagent_type // empty' <<<"$INPUT" 2>/dev/null)
+MODEL=$(jq -r '.tool_input.model // empty' <<<"$INPUT" 2>/dev/null)
 
-# Extract subagent_type and model from tool input (if present)
-SUBAGENT_TYPE=""
-MODEL=""
-if command -v jq &>/dev/null; then
-    SUBAGENT_TYPE=$(echo "$INPUT" | jq -r '.tool_input.subagent_type // empty' 2>/dev/null)
-    MODEL=$(echo "$INPUT" | jq -r '.tool_input.model // empty' 2>/dev/null)
-fi
+# The caller already chose both, so stay quiet.
+[ -n "$SUBAGENT_TYPE" ] && [ -n "$MODEL" ] && exit 0
 
-# If both are already set, skip — the caller made a deliberate choice
-if [ -n "$SUBAGENT_TYPE" ] && [ -n "$MODEL" ]; then
-    exit 0
-fi
-
-# Build nudge based on what's missing
 NUDGE=""
 if [ -z "$SUBAGENT_TYPE" ] && [ -z "$MODEL" ]; then
-    NUDGE="[Agent Route] Neither subagent_type nor model specified. Consider: Explore (search, haiku), Plan (architecture, opus), diagnosis (bugs, sonnet), Senior Developer (implementation, sonnet), Code Reviewer (review, sonnet). See /agent-route for full routing. See /model-route for model selection."
+  NUDGE="[Agent Route] The call sets neither subagent_type nor model. Consider Explore (search, haiku), Plan (architecture, opus), diagnosis (bugs, sonnet), Senior Developer (implementation, sonnet) or Code Reviewer (review, sonnet). See /agent-route and /model-route."
 elif [ -z "$SUBAGENT_TYPE" ]; then
-    NUDGE="[Agent Route] No subagent_type specified — using general-purpose. Consider a specialist: Explore (search), Plan (architecture), diagnosis (bugs), Senior Developer (implementation), Code Reviewer (review). See /agent-route for full routing."
-elif [ -z "$MODEL" ]; then
-    NUDGE="[Model Route] No model specified. Defaults: Explore=haiku, developer/reviewer agents=sonnet, Plan/architects=opus. See /model-route for guidance."
+  NUDGE="[Agent Route] The call sets no subagent_type, so it uses general-purpose. Consider a specialist: Explore (search), Plan (architecture), diagnosis (bugs), Senior Developer (implementation) or Code Reviewer (review). See /agent-route."
+else
+  NUDGE="[Model Route] The call sets no model. Defaults: Explore=haiku, developer and reviewer agents=sonnet, Plan and architects=opus. See /model-route."
 fi
 
-if [ -n "$NUDGE" ]; then
-    echo "$NUDGE"
-    date +%s > "$COOLDOWN_FILE"
-fi
+jq -n --arg ctx "$NUDGE" \
+  '{hookSpecificOutput: {hookEventName: "PreToolUse", additionalContext: $ctx}}'
+date +%s > "$COOLDOWN_FILE" 2>/dev/null
 
 exit 0

@@ -15,6 +15,12 @@ $RepoDir = Split-Path -Parent $ScriptDir
 $ComponentsDir = Join-Path $ScriptDir "components"
 $ExampleAnswers = Join-Path $ScriptDir "answers.example.yml"
 
+# Every file read and write uses UTF-8 without a BOM. Windows PowerShell 5.1 defaults to the
+# ANSI code page on read and to a BOM on Set-Content -Encoding UTF8, and both corrupt
+# non-ASCII answers and templates. .NET resolves relative paths against the process
+# directory, not the PowerShell location, so callers pass absolute paths.
+$Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+
 function Expand-Home([string]$Path) {
     if ($Path -eq "~") { return $HOME }
     if ($Path.StartsWith("~/")) { return (Join-Path $HOME $Path.Substring(2)) }
@@ -24,7 +30,8 @@ function Expand-Home([string]$Path) {
 # Parse a flat "key: value" or "key=value" file into a hashtable.
 function Read-FlatFile([string]$File, [string]$Sep) {
     $map = @{}
-    foreach ($line in Get-Content $File) {
+    $abs = (Resolve-Path -LiteralPath $File).Path
+    foreach ($line in [System.IO.File]::ReadAllLines($abs, $Utf8NoBom)) {
         $t = $line.Trim()
         if ($t -eq "" -or $t.StartsWith("#")) { continue }
         $idx = $t.IndexOf($Sep)
@@ -36,22 +43,37 @@ function Read-FlatFile([string]$File, [string]$Sep) {
     return $map
 }
 
+# Pick an unused backup name. The first backup is <path>.bak. When that name is
+# taken, use <path>.bak.<yyyyMMddHHmmss>. An older backup is never overwritten.
+function Get-BackupName([string]$Path) {
+    $cand = "$Path.bak"
+    if (-not (Get-Item -LiteralPath $cand -Force -ErrorAction SilentlyContinue)) { return $cand }
+    $ts = Get-Date -Format "yyyyMMddHHmmss"
+    $cand = "$Path.bak.$ts"
+    $n = 0
+    while (Get-Item -LiteralPath $cand -Force -ErrorAction SilentlyContinue) {
+        $n++
+        $cand = "$Path.bak.$ts.$n"
+    }
+    return $cand
+}
+
 # Move a real file or directory aside before replacing it. Links are removed,
 # never backed up, because they can be recreated.
+# Test-Path returns $false for a dangling link, so the code uses Get-Item -Force
+# with SilentlyContinue. That call still returns the link item.
 function Backup-IfReal([string]$Path) {
-    if (-not (Test-Path -LiteralPath $Path)) { return }
-    $item = Get-Item -LiteralPath $Path -Force
+    $item = Get-Item -LiteralPath $Path -Force -ErrorAction SilentlyContinue
+    if (-not $item) { return }
     if ($item.LinkType) {
         if ($DryRun) { Write-Host "  [dry] remove link $Path"; return }
         # Remove the link itself, not the target contents.
         $item.Delete()
     } else {
-        if ($DryRun) { Write-Host "  [dry] backup $Path -> $Path.bak"; return }
-        if (Test-Path -LiteralPath "$Path.bak") {
-            Remove-Item -LiteralPath "$Path.bak" -Recurse -Force
-        }
-        Move-Item -LiteralPath $Path -Destination "$Path.bak"
-        Write-Host "  backed up $Path -> $Path.bak"
+        $to = Get-BackupName $Path
+        if ($DryRun) { Write-Host "  [dry] backup $Path -> $to"; return }
+        Move-Item -LiteralPath $Path -Destination $to
+        Write-Host "  backed up $Path -> $to"
     }
 }
 
@@ -84,14 +106,17 @@ function Make-Link([string]$Src, [string]$Dst) {
 
 # Substitute {{key}} placeholders from the answers into the destination.
 function Render-Template([string]$Src, [string]$Dst, [hashtable]$Answers) {
-    $text = Get-Content -LiteralPath $Src -Raw
+    $text = [System.IO.File]::ReadAllText((Resolve-Path -LiteralPath $Src).Path, $Utf8NoBom)
+    # String.Replace is literal, so values with \, & or | need no escaping here.
     foreach ($k in $Answers.Keys) {
         $text = $text.Replace("{{$k}}", $Answers[$k])
     }
+    $left = @([regex]::Matches($text, '\{\{[^}]*\}\}') | ForEach-Object { $_.Value } | Sort-Object -Unique)
+    if ($left.Count -gt 0) { throw "unresolved placeholder(s) in ${Src}: $($left -join ' ')" }
     Backup-IfReal $Dst
     if ($DryRun) { Write-Host "  [dry] render $Dst"; return }
     Ensure-ParentDir $Dst
-    Set-Content -LiteralPath $Dst -Value $text -NoNewline
+    [System.IO.File]::WriteAllText($Dst, $text, $Utf8NoBom)
     Write-Host "  rendered $Dst"
 }
 

@@ -7,7 +7,7 @@
  *   Bootstrap (run-id + branch + baseline) → Diagnose → Impact scout → Critique-before-compute
  *     → [ always-on fan-out of 2-3 competing worktree fixes → HARD anti-gaming gate
  *         → promote champion → ledger ]  (bounded loop, termination ladder)
- *     → council-loop review (the backstop) + final code-reviewer + detect_changes.
+ *     → council-loop review (review only, no fixes, no push) + final code-reviewer + scope check.
  *
  * NEVER edits code itself, NEVER auto-merges. Leaves the branch review-ready.
  *
@@ -65,13 +65,13 @@ export const meta = {
   phases: [
     { title: 'Bootstrap', detail: 'one agent derives run-id via shell date, branches off main per the naming hook, materializes .autofix/<runId>/, runs testCmd once to capture baseline red/green and detect mode' },
     { title: 'Diagnose', detail: 'diagnosis agent: symptom, 3+ hypotheses, file:line evidence, root cause, confidence; never edits' },
-    { title: 'Impact', detail: 'GitNexus impact(upstream) per suspect symbol; surface HIGH/CRITICAL; produce falsification criteria (tests that must newly pass / must not regress)' },
+    { title: 'Impact', detail: 'rg caller search per suspect symbol; rate risk by caller count; surface HIGH/CRITICAL; produce falsification criteria (tests that must newly pass / must not regress)' },
     { title: 'Critique', detail: 'adversarial-council on candidate approaches before spending worktree compute; arbiter returns a deduped 2-3 shortlist, dropping anything Retired in the ledger; skippable for trivial bugs' },
     { title: 'Swarm', detail: 'always-on fan-out: 2-3 agents in isolated worktrees, one per approach, each one atomic change, tests-first, full suite synchronously, structured result' },
     { title: 'Gate', detail: 'hard anti-gaming gate per candidate: reject any diff touching test files or deleting/weakening assertions before promotion' },
     { title: 'Promote', detail: 'orchestrator is sole writer of champion.md: binary mode smallest passing diff with no d=1 regression; perf mode best metric among all-green with strict-improvement' },
     { title: 'Ledger', detail: 'append insights.jsonl (machine truth for stagnation), retire failures to dead-ends.md, update champion.md' },
-    { title: 'Report', detail: 'run the council-loop workflow on the champion diff (CRITICAL/HIGH must be clean) plus a final code-reviewer and detect_changes; never auto-merge; leave the branch review-ready' },
+    { title: 'Report', detail: 'when a champion exists, run council-loop as a one-round review only (no fix rounds, no push, no merge) plus a final code-reviewer and a git diff --stat scope check; never auto-merge; leave the branch review-ready' },
   ],
 }
 
@@ -301,9 +301,9 @@ const LEDGER_SCHEMA = {
 
 const FINAL_CHECK_SCHEMA = {
   type: 'object', additionalProperties: false,
-  required: ['detectChangesClean', 'reviewerClean'],
+  required: ['scopeClean', 'reviewerClean'],
   properties: {
-    detectChangesClean: { type: 'boolean' },
+    scopeClean: { type: 'boolean' },
     reviewerClean: { type: 'boolean' },
     criticalHigh: { type: 'array', items: { type: 'string' } },
     notes: { type: 'string' },
@@ -315,6 +315,34 @@ const MODE_LINE = PERF
   ? `Mode: perf (continuous metric). The success oracle is the metric command \`${PERF_METRIC}\`${PERF_TARGET !== null ? ` against the target ${PERF_TARGET}` : ' (no explicit target — best-so-far)'}; tests must still stay green.`
   : `Mode: ${MODE} (binary oracle). The success oracle is the full test suite: it passes or it does not.`
 const TASK_BLOCK = `Task (verbatim, do not reinterpret): ${TASK}\nFull test command: ${TEST}${BUILD ? `\nBuild command: ${BUILD}` : ''}${PERF ? `\nPerf metric command: ${PERF_METRIC}` : ''}\n${MODE_LINE}`
+
+// ─── Resumable stop for an agent that returned nothing usable ────────────────────────────
+// A subagent that dies on a spend limit or a crash can resolve agent() with null or an empty
+// object instead of throwing. Reading a field off that value would crash the body with a vague
+// TypeError, or worse, let the run carry on with no data. Each guard below calls stopEarly()
+// and returns its result, so the caller sees a clear, resumable reason.
+function stopEarly(stage, partial) {
+  const rid = (partial && partial.runId) || null
+  return {
+    task: TASK,
+    mode: MODE,
+    runId: rid,
+    branch: (partial && partial.branch) || null,
+    outcome: 'agent-failure',
+    stage,
+    iterations: 0,
+    history: [],
+    champion: null,
+    diagnosis: (partial && partial.diag) || null,
+    impact: (partial && partial.impact) || null,
+    councilReview: null,
+    finalCheck: null,
+    reviewReady: false,
+    resumable: true,
+    merged: false,
+    reason: `the ${stage} agent returned no usable result (likely a usage limit or a subagent crash). Check the per-agent .meta.json and .jsonl for apiErrorStatus. Resume${rid ? ` with resumeFromRunId and runId ${rid}` : ' with resumeFromRunId'} once the cause is fixed.`,
+  }
+}
 
 // ═════════════════════════════════════════════════════════════════════════════════════════
 // P0 — Bootstrap (once)
@@ -332,6 +360,8 @@ ${TASK_BLOCK}
 
 Return BOOTSTRAP_SCHEMA.`,
   { label: 'bootstrap', phase: 'Bootstrap', model: MODELS.diagnosis, schema: BOOTSTRAP_SCHEMA })
+
+if (!boot || !boot.runId || !boot.branch || !boot.runDir) return stopEarly('bootstrap', boot || null)
 
 const runId = boot.runId
 const branch = boot.branch
@@ -353,11 +383,12 @@ Produce a rigorous diagnosis:
 - hypotheses: AT LEAST 3, each with a one-line rationale and concrete evidence; cite file + line where the defect likely lives.
 - rootCause: the best-supported root cause, citing file:line.
 - confidence: high | medium | low.
-- suspectSymbols: the symbol names (functions/classes/methods) most likely involved — these feed GitNexus impact analysis next.
+- suspectSymbols: the symbol names (functions/classes/methods) most likely involved — these feed the caller search next.
 - trivial: true ONLY if this is a small, single-site cause a stack trace collapses to one file:line (used to decide whether the council critique can be skipped).
 
 Return DIAGNOSIS_SCHEMA.`,
   { label: 'diagnose', phase: 'Diagnose', model: MODELS.diagnosis, agentType: 'diagnosis', schema: DIAGNOSIS_SCHEMA })
+if (!diag || !diag.confidence || !diag.rootCause) return stopEarly('diagnose', { runId, branch })
 log(`diagnose: rootCause confidence=${diag.confidence} trivial=${diag.trivial === true} suspects=${(diag.suspectSymbols || []).length}`)
 
 // ═════════════════════════════════════════════════════════════════════════════════════════
@@ -369,7 +400,7 @@ const impact = await tryAgent(
 ${TASK_BLOCK}
 Diagnosis to scout: ${JSON.stringify(diag)}
 
-For EACH symbol in suspectSymbols, call the GitNexus MCP tool impact({target:<symbol>, direction:'upstream'}) and record the risk level (LOW/MEDIUM/HIGH/CRITICAL) plus the direct callers (d=1). Collect any HIGH or CRITICAL symbols into highOrCritical. (CLAUDE.md mandates impact analysis before any edit — this is that gate.)
+For EACH symbol in suspectSymbols, find its direct callers with ripgrep: \`rg -nw -- '<symbol>'\` from the repo root (skip .git, node_modules, vendored trees and the .autofix dir). Separate the definition site from the call sites and list the files that call or import it as directCallers. Rate the risk by the number of distinct caller files: 0-2 LOW, 3-5 MEDIUM, 6-12 HIGH, more than 12 CRITICAL. Raise a symbol one level when it is part of a public API, an entry point or a shared library module. Collect any HIGH or CRITICAL symbols into highOrCritical. This caller search is the impact gate before any edit.
 
 Then produce falsification criteria the fix must satisfy:
 - mustPass: the specific tests that must NEWLY pass for the task to be considered fixed.
@@ -377,6 +408,7 @@ Then produce falsification criteria the fix must satisfy:
 
 Return IMPACT_SCHEMA.`,
   { label: 'impact', phase: 'Impact', model: MODELS.diagnosis, schema: IMPACT_SCHEMA })
+if (!impact || !impact.falsification) return stopEarly('impact', { runId, branch, diag })
 log(`impact: HIGH/CRITICAL=${(impact.highOrCritical || []).length} mustPass=${(impact.falsification && impact.falsification.mustPass || []).length} mustNotRegress=${(impact.falsification && impact.falsification.mustNotRegress || []).length}`)
 
 // ═════════════════════════════════════════════════════════════════════════════════════════
@@ -398,8 +430,9 @@ Impact + falsification: ${JSON.stringify(impact)}
 FIRST read \`${runDir}/dead-ends.md\` and EXCLUDE any approach already retired there. Then weigh competing fix approaches (e.g. a minimal patch vs a targeted refactor vs an alternative root-cause attack) and return a DEDUPED shortlist of EXACTLY ${FANOUT} approaches, each mapped onto the strategy enum [${STRATEGIES.join(', ')}]. Each approach: a concrete plan and a one-line rationale. Do not edit code or write any file.
 
 Return SHORTLIST_SCHEMA.`,
-    { label: 'critique', phase: 'Critique', model: MODELS.arbiter, agentType: 'adversarial-council', schema: SHORTLIST_SCHEMA })
+    { label: 'critique', phase: 'Critique', model: MODELS.arbiter, schema: SHORTLIST_SCHEMA })
 }
+if (!shortlist || !(shortlist.approaches || []).length) return stopEarly('critique', { runId, branch, diag, impact })
 log(`shortlist: ${(shortlist.approaches || []).map(a => a.strategy).join(', ')}`)
 
 // ─── stagnation council pivot (used by the termination ladder) ───────────────────────────
@@ -415,7 +448,7 @@ Prior shortlist that failed: ${JSON.stringify(prev)}
 Read \`${runDir}/insights.jsonl\` and \`${runDir}/dead-ends.md\` first. Produce a FRESH shortlist of EXACTLY ${FANOUT} approaches that are COLD — a different strategy class or a different file region from everything tried so far — and EXPLICITLY exclude every approach listed in dead-ends.md. Map each onto the strategy enum [${STRATEGIES.join(', ')}]. Do not edit code or write any file.
 
 Return SHORTLIST_SCHEMA.`,
-    { label: 'council-pivot', phase: 'Critique', model: MODELS.arbiter, agentType: 'adversarial-council', schema: SHORTLIST_SCHEMA })
+    { label: 'council-pivot', phase: 'Critique', model: MODELS.arbiter, schema: SHORTLIST_SCHEMA })
 }
 
 // ═════════════════════════════════════════════════════════════════════════════════════════
@@ -474,7 +507,7 @@ HARD CONSTRAINTS (your work is rejected later if you violate these):
 Report: candidateId (echo the id above verbatim), strategy (echo the assigned strategy verbatim), applied (did you write code + commit), testPass (full suite green), exitCode, newlyGreen (tests now passing that were failing), regressions (tests now failing that passed before), filesTouched, productionLinesChanged (non-test diff size — used to pick the smallest passing diff), diffStat, worktreePath, branch, summary.
 
 Return CANDIDATE_SCHEMA.`,
-      { label: `fix:${candidateId}`, phase: 'Swarm', model: MODELS.fix, isolation: 'worktree', agentType: 'parallel-fix', schema: CANDIDATE_SCHEMA })
+      { label: `fix:${candidateId}`, phase: 'Swarm', model: MODELS.fix, isolation: 'worktree', schema: CANDIDATE_SCHEMA })
   })
 
   const candidates = (await parallel(fixThunks)).filter(Boolean)
@@ -576,7 +609,7 @@ Impact perSymbol (for the d=1 regression check): ${JSON.stringify(impact.perSymb
 
 Do exactly this:
 1. Apply the winner's worktree commit onto ${branch} (cherry-pick or apply the commit; keep ${branch} as the single canonical branch). IDEMPOTENCY (resume-safe): first check whether this winner's change is ALREADY on ${branch} — \`git log --oneline ${branch}\` and \`git diff --stat ${branch}\` — because a prior interrupted run may have cherry-picked it. If it is already present, do NOT apply it again; treat it as already promoted and continue from step 2.
-2. Run the GitNexus detect_changes MCP tool and confirm there is NO d=1 regression among the impact perSymbol symbols. Report noD1Regression. ${PERF ? '' : 'In binary mode a d=1 regression means do NOT write the champion.'}
+2. Check the scope of the change on ${branch}. Run \`git diff --stat ${PARENT}...${branch}\` and confirm it touches only the files the winner's diffStat names. Then run \`rg -nw -- '<symbol>'\` for each impact perSymbol symbol the diff changes, and confirm every direct caller still matches the changed signature or behavior. Set noD1Regression=true only when both checks pass. (The field name is historical. It means no direct-caller regression.) Report noD1Regression. ${PERF ? '' : 'In binary mode a d=1 regression means do NOT write the champion.'}
 3. Write \`${runDir}/champion.md\` with the winning strategy, diffStat, productionLinesChanged${PERF ? ', the measured metric, and whether the metric meets the perf target (metricMeetsTarget)' : ''}.
 ${PERF ? '4. Set metricMeetsTarget = (a target is set AND the measured metric meets/beats it). If no target is set, metricMeetsTarget=false.' : '4. Set metricMeetsTarget=false (binary mode).'}
 Do NOT merge anything. Report championWritten, championStrategy, championBranch, championLinesChanged, championMetric, metricMeetsTarget, noD1Regression, replacedPrevious.
@@ -587,8 +620,9 @@ Return PROMOTE_SCHEMA.`,
     // Enforce the binary-mode 'no d=1 regression' rule in CONTROL FLOW, not only the prompt:
     // a reported d=1 regression in binary mode cannot become the body's champion regardless of
     // how the promote agent set championWritten. (Perf mode does not gate on d=1 per the design.)
-    const d1Ok = PERF || promote.noD1Regression !== false
-    if (promote.championWritten && d1Ok) {
+    if (!promote) log(`promote returned no usable result for ${winner.candidateId} — no champion adopted this iteration`)
+    const d1Ok = PERF || (promote && promote.noD1Regression !== false)
+    if (promote && promote.championWritten && d1Ok) {
       champion = PERF
         ? {
             strategy: winner.strategy, branch, linesChanged: winner.productionLinesChanged, metric: winner.metric,
@@ -601,7 +635,7 @@ Return PROMOTE_SCHEMA.`,
             metricMeetsTarget: false,
             testPass: winner.testPass === true, regressions: winner.regressions || [], newlyGreen: winner.newlyGreen || [],
           }
-    } else if (promote.championWritten && !d1Ok) {
+    } else if (promote && promote.championWritten && !d1Ok) {
       log(`promote reported championWritten but noD1Regression=false in binary mode — NOT adopting as champion`)
     }
   }
@@ -620,7 +654,7 @@ Return PROMOTE_SCHEMA.`,
 let champion = null            // body's view; champion.md on disk is written by the promote agent
 let noChampionStreak = 0
 let pivoted = false            // the stagnation rung fires its ONE council pivot only once
-let outcome = null             // 'success' | 'budget' | 'stagnation-exit' | 'token-budget' | 'limit'
+let outcome = null             // 'success' | 'budget' | 'stagnation-exit' | 'token-budget' | 'limit' | 'agent-failure'
 const history = []
 
 try {
@@ -664,7 +698,12 @@ for (let iter = 1; iter <= MAX; iter++) {
       log(zeroCandidates === true
         ? 'zero candidates this iteration — whole shortlist dead, triggering ONE council pivot immediately'
         : `stagnation: ${STAG_N} consecutive no-champion iterations — triggering ONE council pivot`)
-      shortlist = await councilPivot(shortlist)
+      const pivotList = await councilPivot(shortlist)
+      if (!pivotList || !(pivotList.approaches || []).length) {
+        log('council pivot returned no usable shortlist — stopping so the run can resume')
+        outcome = 'agent-failure'; break
+      }
+      shortlist = pivotList
       // loop continues with the fresh shortlist
     } else {
       log('stagnation persists after the pivot — exiting honestly')
@@ -676,63 +715,69 @@ for (let iter = 1; iter <= MAX; iter++) {
 } catch (e) { if (e && e.limit) { limitHit = true; outcome = 'limit' } else throw e }
 
 // ═════════════════════════════════════════════════════════════════════════════════════════
-// P8 — Report (once, after the loop): council-loop backstop + final code-reviewer + detect_changes
+// P8 — Report (once, after the loop): council-loop review-only backstop + final code-reviewer + scope check
 // ═════════════════════════════════════════════════════════════════════════════════════════
 // Skip the (expensive) backstop entirely if a hard limit already hit — it would just re-trip it.
 // council-loop is itself resumable; if it stops mid-review, propagate that as a resumable run.
 let councilReview = null, finalCheck = null
 try {
-  if (!limitHit) {
+  // The backstop runs only when a champion exists. Without one there is no diff to review.
+  // It is REVIEW ONLY. maxLoops:1 gives one council round and no fix round, and
+  // applyNonBlockers:false stops the non-blocker sweep. council-loop fix rounds commit and push,
+  // and a push here would change the champion after the anti-gaming gate already judged it.
+  if (!limitHit && champion) {
     phase('Report')
     councilReview = await workflow({ scriptPath: `${WF_DIR}/council-loop.mjs` }, {
       title: `autofix-swarm champion for: ${TASK}`,
       target: { branch, parentRef: `origin/${PARENT}` },
-      scope: `Review ONLY the champion diff on ${branch} vs ${PARENT}. The fix must clear CRITICAL/HIGH with zero findings. Do NOT merge.`,
+      scope: `Review ONLY the champion diff on ${branch} vs ${PARENT}. Report CRITICAL/HIGH findings. This is a review only: change no file, commit nothing, push nothing and do NOT merge.`,
       project: { name: REPO, buildCmd: BUILD || TEST, testCmd: TEST },
       merge: false,                       // NEVER auto-merge
-      council: { advocates: 1, critics: 1, requireUnconditional: true },
+      council: { advocates: 1, critics: 1, requireUnconditional: true, maxLoops: 1, applyNonBlockers: false },
     })
     if (councilReview && councilReview.resumable) { limitHit = true; outcome = outcome || 'limit' }
   }
 
-  if (!limitHit) {
+  if (!limitHit && champion) {
     finalCheck = await tryAgent(
 `You are the final-check agent. Do NOT change code — verify and report only. ${REPO_NOTE}
 Canonical fix branch under review: ${branch} (vs ${PARENT}).
 
-1. Run the GitNexus detect_changes MCP tool and confirm the changed scope matches the expected fix (no surprise files / symbols). Set detectChangesClean accordingly.
+1. Run \`git diff --stat ${PARENT}...${branch}\` and confirm the changed files match the expected fix (no surprise files). Use \`rg -nw -- '<symbol>'\` on each changed symbol to confirm no caller was missed. Set scopeClean accordingly.
 2. Run a code-reviewer pass over the champion diff. Set reviewerClean=true ONLY if there are ZERO CRITICAL and ZERO HIGH findings; list any CRITICAL/HIGH in criticalHigh.
 
 Return FINAL_CHECK_SCHEMA.`,
-      { label: 'final-check', phase: 'Report', model: MODELS.reviewer, agentType: 'code-reviewer', schema: FINAL_CHECK_SCHEMA })
+      { label: 'final-check', phase: 'Report', model: MODELS.reviewer, schema: FINAL_CHECK_SCHEMA })
   }
 } catch (e) { if (e && e.limit) { limitHit = true; outcome = outcome || 'limit' } else throw e }
 
 // ─── Final result ────────────────────────────────────────────────────────────────────────
-// The workflow harness wraps this body and captures its completion value, so the result is
-// the body's final expression statement. We bind it and leave it as that trailing expression
-// (a top-level `return` is not legal in an ESM module body and fails `node --check`).
-const resumable = !!limitHit || outcome === 'token-budget'
+// The workflow harness wraps this body in an async function, so a top-level `return` is
+// legal there and hands the result to the caller. A bare trailing expression returned
+// undefined. `node --check` rejects a top-level `return` in a .mjs file, so syntax-check
+// the body as an AsyncFunction instead.
+const resumable = !!limitHit || outcome === 'token-budget' || outcome === 'agent-failure'
 const result = {
   task: TASK,
   mode: MODE,
   runId,
   branch,
-  outcome,                            // 'success' | 'budget' | 'stagnation-exit' | 'token-budget' | 'limit'
+  outcome,                            // 'success' | 'budget' | 'stagnation-exit' | 'token-budget' | 'limit' | 'agent-failure'
   iterations: history.length,
   history,                            // [{iter, promoted, candidates}]
   champion,                           // null if never promoted
   diagnosis: diag,
   impact,
   councilReview,                      // council-loop result (converged?, reason)
-  finalCheck,                         // {detectChangesClean, reviewerClean, criticalHigh}
+  finalCheck,                         // {scopeClean, reviewerClean, criticalHigh}
   reviewReady: !resumable && !!(champion && finalCheck && finalCheck.reviewerClean && councilReview && councilReview.converged),
   resumable,                          // true → stopped on a limit/token-budget; resume with resumeFromRunId
   merged: false,                      // ALWAYS false — never auto-merge
   reason: outcome === 'success' ? 'target green / perf target met'
     : outcome === 'limit' ? 'hit a usage/rate limit — partial progress committed to the branch + ledger; resume with resumeFromRunId once limits reset'
+    : outcome === 'agent-failure' ? 'an agent returned no usable result (the council pivot) — partial progress is on the branch + ledger; resume with resumeFromRunId'
     : outcome === 'token-budget' ? 'turn token budget nearly exhausted — resume with resumeFromRunId in a fresh turn'
     : outcome === 'budget' ? `iteration cap (${MAX}) reached — best champion left review-ready`
     : 'stagnation persisted after one council pivot — exited honestly',
 }
-result
+return result
