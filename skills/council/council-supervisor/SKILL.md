@@ -5,7 +5,7 @@ description: "Wraps the full adversarial-council debate with a supervisor layer:
 
 ## Context
 
-This skill runs the full adversarial-council debate itself — it does NOT delegate to
+This skill runs the full adversarial-council debate itself. It does not delegate to
 `/adversarial-council` as a subprocess. It spawns all agents directly via TeamCreate,
 manages the multi-round exchange, and adds a supervisor layer for liveness monitoring,
 stall recovery, and structured output.
@@ -15,20 +15,22 @@ when `--supervised` or `--chain-fix` is set, and this skill takes it from Step 1
 
 ## Agent Communication Model
 
-| Agent type | How spawned | Has SendMessage? | How results are returned |
+| Agent type | How spawned | Has SendMessage? | How results come back |
 |:---|:---|:---|:---|
 | Debate agents (advocates, critics, questioner, arbiter) | `Agent` with `team_name` | Yes | Broadcast to team via SendMessage |
 | Verifier (Step 5) | `Agent` standalone (no team) | **No** | Final text output → Agent tool return value |
 
-**Never SendMessage to a standalone agent.** Read the Agent tool's return value instead.
+**Never SendMessage to a standalone agent.**
+Read the Agent tool's return value instead.
+
 **Never ask a standalone agent to SendMessage.** Tell it to return results as final text output.
 
-If a spawned agent reports "I don't have SendMessage" — that agent's output IS its results.
-Read its response text; do not retry or ask it to send again.
+If a spawned agent reports "I don't have SendMessage", that agent's output IS its results.
+Read its response text. Do not retry or ask it to send again.
 
 ## Options
 
-All adversarial-council options are accepted, plus:
+The skill accepts all adversarial-council options, plus:
 
 ```
 --motion "text"                    Proposition to debate (inline)
@@ -80,7 +82,7 @@ Auto-complexity table:
 | Questioner | haiku  | haiku  | haiku |
 | Verifier   | sonnet | sonnet | sonnet|
 
-`--model` does NOT cascade to questioner. Report assignments to user before proceeding.
+`--model` does not cascade to the questioner. Report assignments to user before proceeding.
 
 ---
 
@@ -137,8 +139,10 @@ Auto-complexity table:
 Spawn all agents simultaneously via the Agent tool. All use
 `subagent_type: general-purpose` and `team_name: [team from Step 2]`.
 
-Use the same prompt templates as adversarial-council (advocate, critic, questioner,
-arbiter). The prompts are identical -- the supervisor layer is external to the agents.
+Use the same prompt templates as adversarial-council. They live in
+`../adversarial-council/references/roles/` (`advocate.md`, `critic.md`,
+`questioner.md`, `arbiter.md`). Insert `../adversarial-council/references/evidence-protocol.md`
+into the advocate and critic prompts. The prompts are identical -- the supervisor layer is external to the agents.
 
 Key prompt fields per role:
 - Motion, role designation, team roster
@@ -146,11 +150,11 @@ Key prompt fields per role:
 - REGRESSION_HISTORY block (if not null)
 - Pre-Debate Scan section (CODE motions only: SCAN_TARGETS / DIFF_CONTEXT)
 - Discussion Rules: POSITION, REBUTTAL, CONCESSION, OBJECTION, ANSWER headers
-- Scope Discipline: only motion-relevant findings; CRITICAL DISCOVERY exception
+- Scope Discipline: only motion-relevant findings, with the CRITICAL DISCOVERY exception
 - Evidence Requirement: cite file:line for code, named source for general
 - Flow: scan → POSITION → rebuttals → respond to PROBE → CONCESSION → await DEBATE CALLED
 
-Use the role focus map from adversarial-council when `--roles` names are provided:
+Use the role focus map from adversarial-council when the user gives `--roles` names:
 PERF, SEC, UX, A11Y, SCOPE, ARCH, COST, DARKMODE, LIGHTMODE.
 
 ---
@@ -162,8 +166,8 @@ The supervisor drives the rounds. After spawning agents, monitor the team active
 #### Round structure
 
 Each round consists of:
-1. All advocates and critics broadcast (POSITION in round 1; REBUTTAL/OBJECTION in later rounds)
-2. QUESTIONER fires PROBEs at unsubstantiated claims; agents respond ANSWER when able
+1. All advocates and critics broadcast (POSITION in round 1, REBUTTAL/OBJECTION in later rounds)
+2. QUESTIONER fires PROBEs at unsubstantiated claims, and agents respond ANSWER when able
 3. ARBITER monitors and may call DEBATE CALLED when it judges the exchange exhausted
 
 The ARBITER enforces the round ceiling. After ROUNDS exchanges, send:
@@ -185,10 +189,13 @@ After each round of messages, for each agent:
      `"SUPERVISOR: @[AgentName] -- your input is needed. Please broadcast your response."`
    - **Nudge 2**: SendMessage to agent:
      `"SUPERVISOR: @[AgentName] -- final notice. Respond this round or you will be replaced."`
-   - **Replace** (after max-nudges exhausted):
-     a. Checkpoint current debate state (all messages so far)
-     b. SendMessage to team: `"SUPERVISOR: @[AgentName] replaced due to inactivity."`
-     c. Spawn replacement agent with the same role prompt PLUS a context block:
+   - **Replace** the agent when it has used every nudge.
+
+     a. Checkpoint current debate state (all messages so far).
+
+     b. SendMessage to team: `"SUPERVISOR: @[AgentName] replaced due to inactivity."` as the notice.
+
+     c. Spawn replacement agent with the same role prompt. Add a context block like this.
         ```
         ## Debate Context (you are replacing a previous agent)
         Round [N] of [MAX]. Transcript so far:
@@ -219,13 +226,13 @@ adversarial-council):
 1. ARBITER broadcasts "DEBATE CALLED" then requests FINAL SUMMARY from each agent.
 2. ARBITER synthesizes into a recommendation: FOR / AGAINST / CONDITIONAL with findings.
 3. A separate verifier agent (sonnet) reads all cited file:line references and confirms
-   each finding matches the actual source. Findings that don't verify are marked phantom.
-   **The verifier is a standalone Agent (no team_name) — it does NOT have SendMessage.**
-   Do NOT use SendMessage to communicate with it. Read its results from the Agent tool
-   return value. The verifier prompt MUST include:
+   each finding matches the actual source. The verifier marks findings that do not verify as phantom.
+   **The verifier is a standalone Agent (no team_name). It has no SendMessage.**
+   Do not use SendMessage to communicate with it, because it cannot receive one. Read its results from the Agent tool
+   return value. The verifier prompt must include:
    ```
    ## Output
-   You are a standalone agent. You do NOT have SendMessage -- do not attempt to use it.
+   You are a standalone agent. You have no SendMessage, so do not try to use it.
    Return your results as your final text output. The caller reads your response directly.
    ```
 4. Parse the recommendation into structured data.
@@ -308,7 +315,7 @@ Result: .council/council-result.json"
 
 ## Consolidated Single-Agent Fallback
 
-When agent capacity is exceeded:
+When you exceed agent capacity:
 
 1. Spawn one agent:
    ```
@@ -330,6 +337,6 @@ When agent capacity is exceeded:
 - **Network/tool errors on SendMessage**: Retry once. If it fails again, checkpoint
   and report the error to the user. Do not silently drop messages.
 - **Agent reports "no SendMessage"**: The agent is standalone, not a team member.
-  Its output IS the result — read the Agent tool return value directly. Do not retry
-  SendMessage or ask it to resend. This is expected for verifier agents.
+  Its output IS the result. Read the Agent tool return value directly. Do not retry
+  SendMessage or ask it to resend. Verifier agents behave this way by design.
 - **ARBITER stalls before DEBATE CALLED**: Replace after 1 nudge. No verdict = no result.
