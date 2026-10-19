@@ -16,8 +16,9 @@
  *      conventional-commit message, then pushes to update the PR — so the branch carries a
  *      readable per-round history. On an unconditional FOR it optionally squash-merges into
  *      the parent (set `merge: true`); otherwise it leaves the converged, pushed branch for
- *      the caller (the driver or feature-loop) to merge. The gh-pr-merge approval hook still
- *      applies — allow/approve `gh pr merge --squash` for an unattended merge.
+ *      the caller (the driver or feature-loop) to merge. Every `gh pr merge` asks the user:
+ *      the gh-check-before-create hook returns an ask decision and the settings carry an ask
+ *      rule. An allow rule does not override an ask, so a run waits at the merge for approval.
  *
  * Invoke (from the driver, or nested via workflow()) BY ABSOLUTE scriptPath — the name registry
  * does NOT resolve ~/.claude/workflows/*.mjs (only built-ins), so `{ name: "council-loop" }` errors.
