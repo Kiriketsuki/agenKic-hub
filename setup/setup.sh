@@ -137,6 +137,12 @@ clear_target() {
         return 0
     fi
     if [ -d "$dst" ]; then
+        # A parent symlink can make dst the source directory itself. Then the
+        # contents match and a removal would delete the repo copy.
+        if [ "$(cd "$dst" && pwd -P)" = "$(cd "$src" && pwd -P)" ]; then
+            log "  skip: $dst resolves to the source directory itself"
+            return 0
+        fi
         if same_content "$src" "$dst"; then
             if [ "$DRY_RUN" = 1 ]; then log "  [dry] remove identical directory $dst"; return 0; fi
             rm -rf "$dst" || { fail "cannot remove $dst"; return 1; }
