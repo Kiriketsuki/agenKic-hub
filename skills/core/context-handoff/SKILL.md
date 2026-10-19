@@ -17,13 +17,13 @@ The user asks to:
 
 ## Core Principle
 
-**Compound, don't compact.** Automatic summarization loses nuance, decisions, and rationale. A handoff explicitly extracts what matters and writes it to a file that a fresh session reads at startup.
+**Compound, do not compact.** Automatic summarization loses nuance, decisions, and rationale. A handoff explicitly extracts what matters and writes it to a file that a fresh session reads at startup.
 
 A good handoff orients a *fresh reader* who has never seen this conversation. Provide pointers to files (not summaries of file contents) and preserve decisions with their reasoning.
 
 ## Primary Mechanism: Handoff File
 
-Write the handoff file directly. The file is the continuity plan that a fresh session loads. If the active harness provides a real plan mode, it may be used while drafting, but plan mode is not required and must not be assumed.
+Write the handoff file directly. The file is the continuity plan that a fresh session loads. If the active harness provides a real plan mode, you may use it while drafting. Plan mode is not required, so do not assume it.
 
 For complex situations where the main file is not large enough, write overflow to `{handoffs-dir}/overflow-{slug}.md` and reference it from the handoff. This is the exception, not the norm.
 
@@ -52,9 +52,9 @@ After resolving the harness, write the handoff file to:
 Filename: `YYYY-MM-DD-HHhMM-{slug}.md`
 
 **Slug**: short kebab-case label derived from current task (e.g., `feature-152-db-consolidation`, `fix-auth-timeout`).
-**Timestamp format**: `2026-02-27-14h30` — lexicographic sort equals chronological sort.
+**Timestamp format**: `2026-02-27-14h30`. Lexicographic sort equals chronological sort.
 
-Create the directory if it does not exist. New handoffs must only be written to the resolved harness directory; other harness directories are compatibility sources for resume, not write targets.
+Create the directory if it does not exist. Write new handoffs only to the resolved harness directory. Other harness directories are compatibility sources for resume, not write targets.
 
 Append a brief entry to `progress.txt` in the same directory after writing the handoff file.
 
@@ -152,7 +152,7 @@ Keep this short. Its purpose is preventing drift on settled questions, not recap
 - Summaries of file contents (point to files, let the next session read them)
 - Implementation details that exist in code
 - Conversation history
-- Completed work that doesn't affect next steps
+- Completed work that does not affect next steps
 
 ## Size Guidance
 
@@ -172,7 +172,7 @@ Before finishing, verify:
 
 - [ ] A fresh context can start working without asking what to do
 - [ ] Settled decisions documented with reasoning
-- [ ] Failed approaches listed so they aren't re-explored
+- [ ] Failed approaches listed so nobody re-explores them
 - [ ] Key files listed as paths, not described in prose
 - [ ] Git state documented (branch, uncommitted changes, test status)
 - [ ] User preferences from this session captured
@@ -188,11 +188,11 @@ Good: [List decisions, state, and next steps directly]
 
 ### Summarizing file contents
 Bad: "The presenter.py file contains a PresenterClass with methods for..."
-Good: "Read `src/presenter.py` — calibration workflow state machine"
+Good: "Read `src/presenter.py`: calibration workflow state machine"
 
 ### Vague next steps
 Bad: "Continue working on the feature"
-Good: "Implement `_handle_frame_drop()` in `src/sync.py:142` — see decision about mutex vs debounce above"
+Good: "Implement `_handle_frame_drop()` in `src/sync.py:142`: see decision about mutex vs debounce above"
 
 ### Over-documenting completed work
 Bad: [Three paragraphs about what was finished]
