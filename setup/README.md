@@ -36,8 +36,8 @@ Add `--dry-run` (bash) or `-DryRun` (PowerShell) to print actions without
 touching the filesystem.
 
 `setup.sh` also takes `--force`. Without it, the installer leaves two kinds of
-target alone and prints why: a real directory that differs from the repo copy
-(`differs, merge by hand`) and an existing link that points outside the repo
+target alone and prints why. The first is a real directory that differs from the repo copy
+(`differs, merge by hand`). The second is an existing link that points outside the repo
 (the message shows the old target). With `--force`, it backs up the directory
 and replaces the link.
 
@@ -76,8 +76,8 @@ To add a component, add one manifest file. Two types exist:
 
 ## Idempotence and backups
 
-Re-running the installer replaces links it created. A dangling link at a
-target path is removed and created again. It never overwrites a real file or
+Re-running the installer replaces links it created. The installer removes a
+dangling link at a target path and creates it again. It never overwrites a real file or
 directory at a target path. It moves the existing path to `<path>.bak` first.
 When `<path>.bak` already exists, it uses `<path>.bak.<YYYYmmddHHMMSS>`, so an
 older backup is never deleted. When the existing file is byte-identical to the
@@ -92,8 +92,8 @@ count.
 `relink.sh` repairs the vault skill links after the skills regroup. Run
 `relink.sh --sweep --dry-run` to list stale links under `~/.claude`,
 `~/.claude-aurrigo`, `~/.codex` and `~/.config/opencode` (depth 3). A link is
-stale when its target holds `agenKic-sKills`, or when it is dangling and points
-into `agenKic-hub`. The sweep repoints a stale link only when the new target
+stale when its target holds `agenKic-sKills`. A link is also stale when it dangles
+and points into `agenKic-hub`. The sweep repoints a stale link only when the new target
 exists in this repo. Run it without `--dry-run` to apply the change.
 
 ## Symlinks per OS

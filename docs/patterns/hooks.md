@@ -52,9 +52,9 @@ The hooks in this repo fall into three families.
 
 ### Suggestion hooks
 
-**`agent-route-suggest.sh`** (PreToolUse, matcher `Agent`) fires when a subagent is spawned without an explicit `subagent_type` or `model`. It suggests the routing skills that pick a specialist and a model tier. When both fields are set, it stays silent: the caller made a deliberate choice.
+**`agent-route-suggest.sh`** (PreToolUse, matcher `Agent`) fires when Claude spawns a subagent without an explicit `subagent_type` or `model`. It suggests the routing skills that pick a specialist and a model tier. When both fields are set, it stays silent: the caller made a deliberate choice.
 
-**`context7-suggest.sh`** (PostToolUse, matcher `Read`) fires when a dependency manifest is read: `package.json`, `requirements.txt`, `pyproject.toml`, `go.mod`, or `Cargo.toml`. It extracts the top dependencies and hints at a docs lookup before writing code against an unfamiliar library.
+**`context7-suggest.sh`** (PostToolUse, matcher `Read`) fires when Claude reads a dependency manifest: `package.json`, `requirements.txt`, `pyproject.toml`, `go.mod`, or `Cargo.toml`. It extracts the top dependencies and hints at a docs lookup before writing code against an unfamiliar library.
 
 ### Correctness checks (PostToolUse, matcher `Edit|Write`)
 
@@ -70,7 +70,7 @@ The hooks in this repo fall into three families.
 
 ## Not ported
 
-The source environment also runs hooks that are too personal to publish: vault sync and auto-push hooks for a private Obsidian vault, semantic-index maintenance hooks for local services, an account-specific auth switcher, and plugin path normalizers. They follow the same patterns as the hooks above, so they are useful as categories even without the scripts: a `Stop` hook that commits and pushes a knowledge base, and `PostToolUse` hooks that keep local indexes fresh after edits.
+The source environment also runs hooks that are too personal to publish. They include vault sync and auto-push hooks for a private Obsidian vault. They also include semantic-index maintenance hooks for local services, an account-specific auth switcher, and plugin path normalizers. They follow the same patterns as the hooks above. They stay useful as categories even without the scripts. One example is a `Stop` hook that commits and pushes a knowledge base. Another is `PostToolUse` hooks that keep local indexes fresh after edits.
 
 ## Installation
 

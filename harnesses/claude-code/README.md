@@ -23,7 +23,7 @@ Ported hooks:
 | `agent-route-suggest.sh` | PreToolUse (Agent) | Adds a soft `additionalContext` note about subagent type and model. Cooldown file lives in `$XDG_RUNTIME_DIR` |
 | `preflight-check.sh` | SessionStart | Environment health report: package-manager locks, node path, git locks. Prints warnings only |
 | `python-syntax-check.sh` | PostToolUse (Edit\|Write) | Parses edited `.py` files with `ast`. Writes no `__pycache__`. Reports syntax errors on stderr |
-| `context7-suggest.sh` | PostToolUse (Read) | Adds an `additionalContext` note about Context7 docs lookup when a dependency manifest is read |
+| `context7-suggest.sh` | PostToolUse (Read) | Adds an `additionalContext` note about Context7 docs lookup when Claude reads a dependency manifest |
 | `stop-verify-gate.sh` | Stop | Runs the executable `.claude/verify.sh` of the project, if one exists. On failure it blocks the stop and returns the tail of the output. On the second try (`stop_hook_active`) it allows the stop and adds a `systemMessage`. With no `verify.sh` it does nothing |
 
 Output rules for PreToolUse and PostToolUse hooks: stdout on exit 0 reaches only the debug log.
