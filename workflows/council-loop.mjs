@@ -215,7 +215,10 @@ const review = () => T.branch
 // intends to demote (council review F2, 2026-07-30: a free-form "minor" landed in blocking,
 // which the convergence test then discarded).
 const VERDICT_SCHEMA = { type: 'object', additionalProperties: false, required: ['verdict', 'unconditional', 'rationale'], properties: { verdict: { type: 'string', enum: ['FOR', 'AGAINST', 'CONDITIONAL'] }, unconditional: { type: 'boolean' }, conditions: { type: 'array', items: { type: 'string' } }, findings: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['description', 'severity'], properties: { description: { type: 'string' }, file: { type: 'string' }, line: { type: 'integer' }, severity: { type: 'string', enum: ['critical', 'high', 'medium', 'low', 'cosmetic'] }, fix: { type: 'string' } } } }, followUps: { type: 'array', items: { type: 'string' } }, rationale: { type: 'string' } } }
-const FIX_SCHEMA = { type: 'object', additionalProperties: false, required: ['applied', 'buildPassed'], properties: { applied: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['item'], properties: { item: { type: 'string' }, file: { type: 'string' }, change: { type: 'string' } } } }, buildPassed: { type: 'boolean' }, pushed: { type: 'boolean' }, notes: { type: 'string' } } }
+// `pushed` is required. An optional flag that the model omits reads as undefined, and the
+// stop check below must not depend on the model remembering to send it. `tests` and `testTail`
+// carry the fix round's test evidence to the next arbiter.
+const FIX_SCHEMA = { type: 'object', additionalProperties: false, required: ['applied', 'buildPassed', 'pushed', 'tests', 'testTail'], properties: { applied: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['item'], properties: { item: { type: 'string' }, file: { type: 'string' }, change: { type: 'string' } } } }, buildPassed: { type: 'boolean' }, pushed: { type: 'boolean' }, tests: { type: 'string', enum: ['pass', 'fail', 'none'] }, testTail: { type: 'string' }, notes: { type: 'string' } } }
 const FIXREVIEW_SCHEMA = { type: 'object', additionalProperties: false, required: ['ok'], properties: { ok: { type: 'boolean' }, issues: { type: 'array', items: { type: 'string' } }, notes: { type: 'string' } } }
 const VERIFY_SCHEMA ={ type: 'object', additionalProperties: false, required: ['build', 'tests', 'mergeable'], properties: { build: { type: 'string', enum: ['pass', 'fail'] }, tests: { type: 'string', enum: ['pass', 'fail', 'none'] }, output: { type: 'string' }, mergeable: { type: 'boolean' } } }
 const MERGE_SCHEMA = { type: 'object', additionalProperties: false, required: ['merged'], properties: { merged: { type: 'boolean' }, blocked: { type: 'boolean' }, output: { type: 'string' } } }
@@ -246,8 +249,9 @@ const advNames = Array.from({ length: C.advocates }, (_, i) => `ADVOCATE${C.advo
 const critNames = Array.from({ length: C.critics }, (_, i) => `CRITIC${C.critics > 1 ? i + 1 : ''}`)
 let verdict = null, pending = null, iter = 0, stalled = false, converged = false
 let sweeps = 0                         // non-blocker sweeps already spent (bounded by C.nonBlockerSweeps)
-let stopReason = null                  // 'budget' | 'limit' | 'review-incomplete' | 'fix-failed' → resumable stop (never merges)
+let stopReason = null                  // 'budget' | 'limit' | 'review-incomplete' | 'fix-plan-null' | 'fix-failed' | 'fix-review-null' | 'fix-review-empty' → resumable stop (never merges)
 let lastBlocking = []                  // blocking findings from the most recent judged round (surfaced top-level)
+let lastFixTests = null                // { iter, tests, testTail } from the most recent fix round, shown to the arbiter
 const history = []
 
 try {
@@ -261,25 +265,39 @@ for (iter = 1; iter <= C.maxLoops; iter++) {
 ${pending.map((b, i) => `${i + 1}. ${b}`).join('\n')}`,
       { label: `fix-plan#${iter}`, phase: 'Council', model: M.fixPlan, effort: E.fixPlan })
     if (limitHit) { stopReason = 'limit'; break }
+    // agent() resolves to null when the subagent dies. A fix agent with no plan used to run
+    // anyway. On 2026-09-09 two fix-plan agents died this way and the loop pushed four commits
+    // with no plan behind them. A null or blank plan stops the run.
+    if (typeof plan !== 'string' || !plan.trim()) {
+      log(`fix plan round ${iter} returned no plan. Stopping before any fix is applied.`)
+      stopReason = 'fix-plan-null'
+      break
+    }
     const fix = await tryAgent(
-`Apply these council-raised fixes to ${TITLE}${PRREF} as IN-PR updates in the working tree. Follow the plan below. Implement each fully, verify by reading the result, then run \`${BUILD}\`${A.liveValidate ? ' and re-validate the backend if a fix touched it' : ''}.${branchPin()}
+`Apply these council-raised fixes to ${TITLE}${PRREF} as IN-PR updates in the working tree. Follow the plan below. Implement each fully, verify by reading the result, then run \`${BUILD}\`${A.liveValidate ? ' and re-validate the backend if a fix touched it' : ''}. Then run \`${TEST}\` and report tests as pass, fail, or none (no test script), with testTail set to the last 40 lines of the test output. The test result is evidence for the next council round.${branchPin()}
 ${pending.map((b, i) => `${i + 1}. ${b}`).join('\n')}
-${plan ? `\nPLAN (from the planning agent — deviate only with a stated reason in notes):\n${plan}\n` : ''}
+
+PLAN (from the planning agent — deviate only with a stated reason in notes):
+${plan}
+
 ${RULES}
 ${COMMIT(iter)}`,
       { label: `fix#${iter}`, phase: 'Council', model: M.fix, effort: E.fix, agentType: AGENT, schema: FIX_SCHEMA })
+    if (limitHit) { stopReason = 'limit'; break }
     // Council review F3 (2026-07-30): the fix result used to be discarded. A build failure or
     // an unlanded push means the next review would re-read IDENTICAL committed code and
     // re-litigate the same findings until maxLoops — a silent budget burn misreported as
     // "did not converge". Stop resumable with the real cause instead.
-    // Ultracode review (2026-08-02): FIX_SCHEMA does not require `pushed`, so a
-    // model that omits it yields undefined, and `undefined === false` let the
-    // unlanded-push arm never fire. In branch mode only an explicit true counts.
-    if (fix && (fix.buildPassed === false || (T.branch && fix.pushed !== true))) {
-      log(`fix round ${iter} did not land (buildPassed=${fix.buildPassed} pushed=${fix.pushed}): ${(fix.notes || '').slice(0, 200)}`)
+    // Every term needs a positive result. A null fix is a dead agent, so it stops too. The old
+    // check started with `fix &&`, which let a null fix fall through to the fix review.
+    if (!fix || fix.buildPassed !== true || (T.branch && fix.pushed !== true)) {
+      log(fix
+        ? `fix round ${iter} did not land (buildPassed=${fix.buildPassed} pushed=${fix.pushed}): ${(fix.notes || '').slice(0, 200)}`
+        : `fix round ${iter} returned no result. Stopping before review.`)
       stopReason = 'fix-failed'
       break
     }
+    lastFixTests = { iter, tests: fix.tests, testTail: String(fix.testTail || '').slice(-2000) }
     // fix review: a cheap pass that checks each pending item actually landed as planned
     // BEFORE the full council re-reviews. On a reject, the issues become the next round's
     // pending and we re-fix (bounded by maxLoops and the budget guard) instead of burning a
@@ -290,7 +308,21 @@ Check ONLY that each item below was fully and correctly implemented (read the co
 ${pending.map((b, i) => `${i + 1}. ${b}`).join('\n')}`,
       { label: `fix-review#${iter}`, phase: 'Council', model: M.fixReview, effort: E.fixReview, schema: FIXREVIEW_SCHEMA })
     if (limitHit) { stopReason = 'limit'; break }
-    if (fr && fr.ok === false && Array.isArray(fr.issues) && fr.issues.length) {
+    // A null fix review never checked the fix. Treating it as a pass let unchecked work reach
+    // the council and the merge.
+    if (!fr) {
+      log(`fix review round ${iter} returned no result. Stopping.`)
+      stopReason = 'fix-review-null'
+      break
+    }
+    if (fr.ok !== true) {
+      // A reject with no issues gives the next fix round nothing to act on. Clearing pending
+      // here used to treat the reject as a pass.
+      if (!Array.isArray(fr.issues) || !fr.issues.length) {
+        log(`fix review round ${iter} rejected the fix but listed no issues. Stopping.`)
+        stopReason = 'fix-review-empty'
+        break
+      }
       log(`fix review round ${iter} rejected ${fr.issues.length} item(s) — re-fixing next round`)
       pending = fr.issues
       continue
@@ -330,7 +362,7 @@ You do NOT argue for or against merging. Probe every claim — from any agent �
   verdict = await tryAgent(
 `You are the ARBITER of an adversarial council on ${TITLE}${PRREF} (${NAME}). Independently verify contested claims by reading the cited code. ${review()}
 "unconditional" = true ONLY if FOR with ZERO blocking conditions/findings: build+tests pass${SPEC ? `, acceptance criteria in ${SPEC} met` : ''}, no security gaps${A.liveValidate ? ', backend behavior validated live' : ''}. Drop findings you cannot verify in code, that are pre-existing/unrelated${C.questioner ? ', or that the QUESTIONER marked UNSUBSTANTIATED' : ''}. Demote LOW/cosmetic nits to in-PR follow-ups (put them in followUps; do NOT block on them). Each blocking finding needs file+line+fix. ${NOISSUE}
-Council positions:
+${lastFixTests ? `Test evidence from fix round ${lastFixTests.iter} (\`${TEST}\`, reported tests=${lastFixTests.tests}). Last lines of the output:\n${lastFixTests.testTail || '(no output reported)'}\n` : ''}Council positions:
 ${sides.map((s, i) => `--- ${i + 1} ---\n${s}`).join('\n\n')}`,
     { label: `arbiter#${iter}`, phase: 'Council', model: M.arbiter, schema: VERDICT_SCHEMA })
 
@@ -399,7 +431,10 @@ ${sides.map((s, i) => `--- ${i + 1} ---\n${s}`).join('\n\n')}`,
 if (stopReason && !converged) {
   const why = stopReason === 'budget' ? 'turn token budget nearly exhausted'
             : stopReason === 'review-incomplete' ? 'a council reviewer did not complete (likely a limit/blip) — refusing to judge unreviewed code'
-            : stopReason === 'fix-failed' ? 'a fix round did not land (build failed or the push never reached the remote) — re-reviewing identical code would burn rounds for nothing'
+            : stopReason === 'fix-failed' ? 'a fix round did not land (no result, build failed, or the push never reached the remote) — re-reviewing identical code would burn rounds for nothing'
+            : stopReason === 'fix-plan-null' ? 'the fix plan agent returned no plan. No fix runs without a plan'
+            : stopReason === 'fix-review-null' ? 'the fix review agent returned no result. Unchecked fixes do not reach the council'
+            : stopReason === 'fix-review-empty' ? 'the fix review rejected the fix but listed no issues, so the next fix round has nothing to act on'
             : 'hit a usage/rate limit'
   log(`council-loop stopping (resumable): ${why} at round ${iter}`)
   return {
