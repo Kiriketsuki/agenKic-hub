@@ -603,6 +603,7 @@ function buildPrompt(leaf) {
   const scope = Array.isArray(leaf.scopeTasks) ? leaf.scopeTasks.join(', ') : String(leaf.scopeTasks || '')
   const touch = Array.isArray(leaf.touchPoints) ? leaf.touchPoints.join(', ') : ''
   return `Implement leaf ${leaf.key}: ${leaf.title} FULLY for ${NAME}. You run in your OWN fresh git worktree (isolation handles creation) — operate ONLY there, on the branch ${leaf.branch}.
+BRANCH BASE (critical): the worktree may start from any commit, so set the base explicitly before any edit. Run \`git fetch origin\`. If origin/${leaf.branch} exists (a prior attempt pushed it), run \`git checkout ${leaf.branch}\` (git creates a tracking branch when no local one exists), then \`git pull --ff-only origin ${leaf.branch}\`. Otherwise run \`git checkout -b ${leaf.branch} origin/${EPIC_BRANCH}\`. Never build on whatever commit the worktree started from.
 SCOPE GUARD (critical): implement ONLY this leaf — spec tasks ${scope}. Do NOT build other features. If the work seems to require another feature's code, treat that as a dependency already merged into ${EPIC_BRANCH} if present (read it, build on it) — do NOT re-implement it. If a genuine gap blocks you, STOP and report it as a blocker rather than expanding scope.
 Briefing: ${leaf.briefing || leaf.title}${ENV}
 Touch points (files/modules to add or change): ${touch || '(infer from the spec)'}
@@ -661,7 +662,13 @@ Keep features genuinely independent where possible; encode real ordering constra
 Return DECOMP_SCHEMA.`,
   { label: 'decompose', phase: 'Decompose', model: MODELS.decompose, agentType: 'Software Architect', schema: DECOMP_SCHEMA })
 
-const features = (decomp && Array.isArray(decomp.features)) ? decomp.features : []
+// A null or empty decomposition is a failed stage, not an empty epic. The old code turned it
+// into features=[] and ran straight to the epic council and its merge into main with nothing
+// built. Stop resumable so a resume re-runs the decompose agent.
+if (!decomp || !Array.isArray(decomp.features) || !decomp.features.length) {
+  return RESUMABLE(decomp ? 'the decompose agent returned no features' : 'the decompose agent returned no result')
+}
+const features = decomp.features
 log(`decompose: ${features.length} features — ${features.map((f) => `${f.key}(${(f.subTasks || []).length} sub)`).join(', ')}`)
 
 // Flatten features → leaves (sub-tasks when present, else the feature itself). IMMUTABLE: build a
@@ -793,6 +800,13 @@ for (waveIdx = 0; waveIdx < planResult.waves.length; waveIdx++) {
       builds.push({ key: leaf.key, feature: leaf.feature, branch: leaf.branch, buildPassed: r.buildPassed === true, scopeKept: r.scopeKept !== false, blockers: r.blockers || [] })
       builtKeys.push(leaf.key)
     })
+    // A build result is a pass only with buildPassed true, scope kept, and no blockers. The old
+    // code counted any non-null result as built, so a failed build went on to a council and a
+    // merge into the epic.
+    const badBuilds = builds.filter((b) => chunk.some((l) => l.key === b.key) && (!b.buildPassed || !b.scopeKept || b.blockers.length))
+    if (badBuilds.length) {
+      return RESUMABLE(`build failed in wave ${waveIdx + 1}: ${badBuilds.map((b) => `${b.key} (buildPassed=${b.buildPassed} scopeKept=${b.scopeKept} blockers=${b.blockers.length})`).join(', ')} — fix the leaf, then resume`)
+    }
   }
   // if ANY leaf in this wave failed to build (null), stop resumable rather than merging a partial wave.
   if (builtKeys.length !== wave.length) return RESUMABLE(`only ${builtKeys.length}/${wave.length} leaves built in wave ${waveIdx + 1} (limit/blip nulled a build) — refusing a partial wave`)
@@ -839,11 +853,17 @@ Return SUBMERGE_SCHEMA.`,
       log(`intra-feature merge ${feat}: NULL result — refusing to council an unverified feature branch`)
       return RESUMABLE(`intra-feature merge agent for ${feat} returned null — refusing to proceed with an unverified feature branch`)
     }
-    if (m && m.conflict) {
+    if (m.conflict) {
       log(`intra-feature merge ${feat} reported a conflict — stopping resumable rather than councilling a corrupt branch`)
       return RESUMABLE(`intra-feature sub-task merge for ${feat} hit a conflict the disjoint check missed`)
     }
-    featureBranches.set(feat, (m && m.featureBranch) || targetBranch)
+    // Only an explicit merged:true counts. The old code ignored merged:false and councilled a
+    // feature branch that did not hold every sub-task.
+    if (m.merged !== true) {
+      log(`intra-feature merge ${feat} reported merged=${m.merged} — refusing to council an incomplete feature branch`)
+      return RESUMABLE(`intra-feature sub-task merge for ${feat} did not report merged:true (${String(m.output || '').slice(0, 160)})`)
+    }
+    featureBranches.set(feat, m.featureBranch || targetBranch)
   }
 
   // ---- FEATURE COUNCIL: serial workflow('council-loop', {merge:true}) per feature in this wave ----
