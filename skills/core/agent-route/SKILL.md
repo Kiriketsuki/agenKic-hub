@@ -22,8 +22,7 @@ There are three layers of agents, checked in this order:
 
 Check the Agent tool's own list of agent types before you route. A name that is not
 in that list does not exist, so do not recommend it. `references/agent-catalog.md`
-lists the agent types that exist on the author's machine and is a snapshot, not the
-source of truth.
+lists the agent types on the author's machine. It is a snapshot, not the source of truth.
 
 ## Quick Routing Table
 
@@ -59,11 +58,11 @@ For the full list with tool access, read `references/agent-catalog.md`.
 
 ## Decision Factors
 
-- **Scope**: Read-only investigation = `diagnosis`; implementation = developer agents; review = reviewer agents
+- **Scope**: Read-only investigation = `diagnosis`, implementation = developer agents, review = reviewer agents
 - **Read-only types**: `Explore`, `Plan` and `diagnosis` cannot edit files. Do not route build work to them.
-- **Domain specificity**: Generic coding = `Senior Developer`; specialized domain (ROS, MCP, Python) = domain agent
-- **Blast radius**: Narrow file search = `Explore`; multi-file refactor = `Software Architect` then `Senior Developer`
-- **Pipeline stage**: Planning = `Plan`; building = developer agents; review = `Code Reviewer`
+- **Domain specificity**: Generic coding = `Senior Developer`, specialized domain (ROS, MCP, Python) = domain agent
+- **Blast radius**: Narrow file search = `Explore`, multi-file refactor = `Software Architect` then `Senior Developer`
+- **Pipeline stage**: Planning = `Plan`, building = developer agents, review = `Code Reviewer`
 - **Tool access**: Match the agent's tool access to what the task requires.
 
 ## Model Pairing

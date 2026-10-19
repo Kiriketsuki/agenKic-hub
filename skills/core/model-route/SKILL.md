@@ -24,8 +24,8 @@ Fable is unavailable. Do not recommend it. Use opus as the top tier.
 Never put opus on a fan-out stage, such as N review lenses across rounds or per-repo
 appliers. Token spend concentrates there and hits the session limit.
 
-Escalate an agent to opus when a sonnet attempt failed on the root cause, when the
-task needs cross-system reasoning, or when the result becomes the canonical fix that
+Escalate an agent to opus in three cases. A sonnet attempt failed on the root cause.
+The task needs cross-system reasoning. The result becomes the canonical fix that
 others copy.
 
 ## Effort
@@ -42,10 +42,10 @@ Pair the tier with an effort level. Lower the effort for fan-out.
 
 ## Decision Factors
 
-- **Role**: synthesis and arbitration = opus; implementation and fan-out = sonnet; mechanical reads = haiku
+- **Role**: synthesis and arbitration = opus, implementation and fan-out = sonnet, mechanical reads = haiku
 - **Reversibility**: irreversible actions (git push, file deletes, schema changes) warrant opus
-- **Ambiguity**: clear spec = haiku or sonnet; vague or conflicting requirements = opus
-- **Blast radius**: single file = haiku or sonnet; repo-wide design = opus
+- **Ambiguity**: clear spec = haiku or sonnet, vague or conflicting requirements = opus
+- **Blast radius**: single file = haiku or sonnet, repo-wide design = opus
 - **Budget sensitivity**: if the user signals cost concern, bias toward sonnet and lower effort
 
 ## Output Format
