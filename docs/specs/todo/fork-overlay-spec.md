@@ -236,8 +236,9 @@ pattern covers the dots, chrysaki and chrysaki-claude repos.
 
 **Tier 3, reverse leak (error in hub CI on every hub PR)**. Work data must
 never reach the public hub through a port step. The patterns cover the
-private org name, the work GitHub account, the work SSH host alias, the work
-workspace path, internal hostnames and production service names.
+private org name, the work GitHub account and the work SSH host alias. They
+also cover the work workspace path, internal hostnames and production service
+names.
 
 **Where the literal patterns live**. The public hub must not hold the literal
 tier 1 and tier 3 values, because the list itself would leak them. The gate
