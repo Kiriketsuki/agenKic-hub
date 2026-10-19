@@ -24,7 +24,9 @@
  *   commit,        // optional: true → implementers commit with conventional messages (default false)
  * }
  *
- * Returns { verdict, plan, implemented, reviews, resumable }.
+ * Returns { verdict, plan, implemented, reviews, failed, resumable }. verdict is one of
+ * approved, impl-failed, fix-failed, review-agent-died, review-rejected-without-findings,
+ * max-loops-reached. failed lists the tasks or fixes that did not finish.
  */
 
 export const meta = {
@@ -145,14 +147,31 @@ Your task (${t.id}): ${t.instruction}`
 
 const done = new Set()
 const implemented = []
+// A stop result for a task that did not finish. agent() resolves to null when the subagent dies,
+// and the old `.then(r => ({ id: t.id, ...r }))` turned that null into a truthy `{ id }` that
+// counted as done. Only an explicit done:true counts now, and any failure stops the run.
+const implFailed = (failed) => {
+  log(`Implement stopped: ${failed.map(f => `${f.id} (${f.reason})`).join(', ')}`)
+  return { verdict: 'impl-failed', failed, plan, implemented, reviews: [], resumable: true }
+}
 let remaining = [...plan.tasks]
+// Each pass either completes at least one task or returns, so the loop ends within
+// plan.tasks.length passes. The guard is a backstop in case a later edit breaks that property.
+let passes = plan.tasks.length + 1
 while (remaining.length) {
+  if (passes-- <= 0) return implFailed(remaining.map(t => ({ id: t.id, reason: 'never scheduled (loop guard)', report: null })))
   const wave = remaining.filter(t => (t.dependsOn || []).every(d => done.has(d)))
-  if (!wave.length) { log('Dependency cycle in plan. Running remaining tasks sequentially.'); wave.push(remaining[0]) }
+  if (!wave.length) { log('Dependency cycle or unknown dependency in plan. Running the first remaining task alone.'); wave.push(remaining[0]) }
   const results = await parallel(wave.map(t => () =>
     agent(implPrompt(t), { label: `impl:${t.id}`, phase: 'Implement', schema: RESULT_SCHEMA, model: 'opus', effort: 'low' })
-      .then(r => ({ id: t.id, ...r }))))
-  for (const r of results.filter(Boolean)) { done.add(r.id); implemented.push(r) }
+      .then(r => (r ? { id: t.id, ...r } : null))))
+  const failed = []
+  wave.forEach((t, i) => {
+    const r = results[i]
+    if (r && r.done === true) { done.add(t.id); implemented.push(r) }
+    else failed.push({ id: t.id, reason: r ? 'implementer reported done:false' : 'implementer returned no result', report: r ? r.report : null })
+  })
+  if (failed.length) return implFailed(failed)
   remaining = remaining.filter(t => !done.has(t.id))
 }
 
@@ -160,6 +179,7 @@ while (remaining.length) {
 phase('Review')
 const reviews = []
 let verdict = 'unreviewed'
+let failed = []
 for (let round = 1; round <= MAX_LOOPS; round++) {
   const review = await agent(
     `${CWD}You are the reviewer and orchestrator of a build pipeline. Review the CURRENT working-tree change against the feature request${A.specFile ? ' and the spec' : ''}. Verify correctness against actual source (read the files, do not trust the reports alone). Check scope: every acceptance criterion met, nothing extra built. ${A.testCmd ? `Run \`${A.testCmd}\` and treat a failure as a blocking finding. ` : ''}Approve only if the feature is genuinely done. For each blocking finding, write a self-contained fixInstruction.
@@ -173,13 +193,24 @@ ${implemented.map(r => `- [${r.id}] ${r.report}`).join('\n')}`,
   if (!review) { verdict = 'review-agent-died'; break }
   reviews.push(review)
   if (review.approved) { verdict = 'approved'; log(`Approved on round ${round}.`); break }
+  // A reject with no findings gives the fixers nothing to do. Another round would re-review the
+  // same tree, so stop.
+  if (!Array.isArray(review.findings) || !review.findings.length) { verdict = 'review-rejected-without-findings'; break }
   verdict = 'fixes-pending'
   log(`Round ${round}: ${review.findings.length} finding(s). Dispatching fixes.`)
   const fixes = await parallel(review.findings.map((f, i) => () =>
     agent(implPrompt({ id: `fix-r${round}-${i + 1}`, instruction: `${f.summary} (${f.file})\n${f.fixInstruction}` }),
       { label: `fix:r${round}-${i + 1}`, phase: 'Implement', schema: RESULT_SCHEMA, model: 'opus', effort: 'low' })
-      .then(r => ({ id: `fix-r${round}-${i + 1}`, ...r }))))
-  implemented.push(...fixes.filter(Boolean))
+      .then(r => (r ? { id: `fix-r${round}-${i + 1}`, ...r } : null))))
+  // Same rule as Implement: a null or done:false fixer stops the loop instead of reading as fixed.
+  const fixFailed = review.findings.map((f, i) => ({ f, r: fixes[i], id: `fix-r${round}-${i + 1}` }))
+    .filter(x => !(x.r && x.r.done === true))
+  implemented.push(...fixes.filter(r => r && r.done === true))
+  if (fixFailed.length) {
+    failed = fixFailed.map(x => ({ id: x.id, reason: x.r ? 'fixer reported done:false' : 'fixer returned no result', report: x.r ? x.r.report : null }))
+    verdict = 'fix-failed'
+    break
+  }
 }
 if (verdict === 'fixes-pending') verdict = 'max-loops-reached'
 
@@ -188,5 +219,6 @@ return {
   plan,
   implemented,
   reviews,
+  failed,
   resumable: verdict !== 'approved',
 }
