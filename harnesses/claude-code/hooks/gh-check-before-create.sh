@@ -1,12 +1,47 @@
 #!/usr/bin/env bash
 # PreToolUse hook: enforce git/GitHub naming, block dangerous operations
 # Receives JSON via stdin from Claude Code hook system.
+#
+# Output contract (Claude Code PreToolUse):
+# - A block prints its reason to STDERR and exits 2. Claude Code shows stderr for exit 2.
+#   It does not show stdout, so a reason on stdout reads as "No stderr output".
+# - `gh pr merge` gets a JSON decision on stdout with permissionDecision "ask" and exit 0.
+#   The old hook printed "Approve to proceed" to stdout and exited 0, which Claude Code never
+#   showed, so the merge "gate" approved every merge.
+# - Soft warnings go into one JSON object as additionalContext, which Claude Code passes to
+#   the model. Several warnings combine into that one object.
+# - No check exits early. Each check falls through to the next, so a compound command such
+#   as `git branch -D x && gh pr merge 5` still reaches the merge check.
+#
+# The hook is one layer. settings.hooks.example.json also carries a permissions ask rule for
+# `Bash(gh pr merge *)`. An explicit ask rule prompts in every permission mode, including
+# bypassPermissions, and Claude Code checks each subcommand of a compound command against it.
+
+# The hook parses its input with jq. Without jq it cannot see the command, so it fails closed.
+if ! command -v jq >/dev/null 2>&1; then
+  echo "BLOCKED: gh-check-before-create.sh needs jq to read the tool input, and jq is not installed." >&2
+  echo "Install jq (for example: pacman -S jq) or remove this hook from settings.json." >&2
+  exit 2
+fi
 
 INPUT=$(cat)
-CMD=$(echo "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)
+CMD=$(printf '%s' "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)
 if [ -z "$CMD" ]; then
   exit 0
 fi
+
+WARNINGS=()
+ASK_REASON=""
+
+warn() {
+  WARNINGS+=("$*")
+}
+
+# Print each argument as one line on stderr, then block the tool call.
+block() {
+  printf '%s\n' "$@" >&2
+  exit 2
+}
 
 # Only enforce naming conventions in repos with an issue-branch-handler workflow.
 # All other repos get a pass on branch/PR naming.
@@ -20,22 +55,22 @@ fi
 # Valid types: feature, task, bug, bugfix, hotfix, refactor, docs, test, chore, perf, ci, release, saga, epic
 # task/ and bug/ match the issue-branch-handler hierarchy (Patch-level bumps).
 BRANCH_PATTERN='^(feature|task|bug|bugfix|hotfix|refactor|docs|test|chore|perf|ci|release|saga|epic)/[0-9]+-[a-z0-9][a-z0-9-]+$'
+BRANCH_HELP=(
+  "Required format: <type>/<issue-number>-<kebab-case-description>"
+  "Valid types: feature, task, bug, bugfix, hotfix, refactor, docs, test, chore, perf, ci, release, saga, epic"
+  "Example: feature/159-add-council-fix-loop"
+)
+REMOTE_CHECK="Check if the branch already exists on the remote first: git fetch origin && git branch -r | grep <keyword>"
 
 # Validate branch name on creation
 if echo "$CMD" | grep -qE 'git\s+(checkout\s+-b|switch\s+-c)\s'; then
   if [ "$HAS_HANDLER" = true ]; then
-    BRANCH=$(echo "$CMD" | grep -oE '(checkout -b|switch -c)\s+\S+' | awk '{print $NF}')
+    BRANCH=$(echo "$CMD" | grep -oE '(checkout -b|switch -c)\s+\S+' | head -1 | awk '{print $NF}')
     if [ -n "$BRANCH" ] && ! echo "$BRANCH" | grep -qE "$BRANCH_PATTERN"; then
-      echo "BLOCKED: Branch name '$BRANCH' does not match naming convention."
-      echo "Required format: <type>/<issue-number>-<kebab-case-description>"
-      echo "Valid types: feature, task, bug, bugfix, hotfix, refactor, docs, test, chore, perf, ci, release, saga, epic"
-      echo "Example: feature/159-add-council-fix-loop"
-      exit 2
+      block "BLOCKED: Branch name '$BRANCH' does not match naming convention." "${BRANCH_HELP[@]}"
     fi
-    echo "WARNING: Check if a branch already exists on the remote first."
-    echo "Run 'git fetch origin && git branch -r | grep <keyword>' to check."
+    warn "$REMOTE_CHECK"
   fi
-  exit 0
 fi
 
 # Validate branch name on `git branch <name>` — branch CREATION only.
@@ -52,18 +87,12 @@ if echo "$CMD" | grep -qE 'git\s+branch\b'; then
         : ;;  # deletion / move / listing / redirection — not a creation, skip
       *)
         if ! echo "$NEXT" | grep -qE "$BRANCH_PATTERN"; then
-          echo "BLOCKED: Branch name '$NEXT' does not match naming convention."
-          echo "Required format: <type>/<issue-number>-<kebab-case-description>"
-          echo "Valid types: feature, task, bug, bugfix, hotfix, refactor, docs, test, chore, perf, ci, release, saga, epic"
-          echo "Example: feature/159-add-council-fix-loop"
-          exit 2
+          block "BLOCKED: Branch name '$NEXT' does not match naming convention." "${BRANCH_HELP[@]}"
         fi
-        echo "WARNING: Check if a branch already exists on the remote first."
-        echo "Run 'git fetch origin && git branch -r | grep <keyword>' to check."
+        warn "$REMOTE_CHECK"
         ;;
     esac
   fi
-  exit 0
 fi
 
 # Validate PR title follows conventional commits, or the bracketed style
@@ -72,20 +101,17 @@ CONVENTIONAL_PATTERN='^(feat|fix|refactor|docs|test|chore|perf|ci|hotfix|saga|ep
 BRACKETED_PR_PATTERN='^(Adding|Implementing|Fixing)\s+\[(Feature|Task|Bug|Hotfix)\]:\s'
 if echo "$CMD" | grep -qE 'gh\s+pr\s+create'; then
   if [ "$HAS_HANDLER" = true ]; then
-    TITLE=$(echo "$CMD" | grep -oP -- '--title\s+["'"'"']\K[^"'"'"']+')
+    TITLE=$(echo "$CMD" | grep -oP -- '--title\s+["'"'"']\K[^"'"'"']+' | head -1)
     if [ -n "$TITLE" ]; then
       if ! echo "$TITLE" | grep -qE "$CONVENTIONAL_PATTERN" && ! echo "$TITLE" | grep -qE "$BRACKETED_PR_PATTERN"; then
-        echo "BLOCKED: PR title '$TITLE' does not follow conventional commits or the bracketed style."
-        echo "Required format: <type>[(scope)]: <description>"
-        echo "Example: feat(council): add bounded fix loop"
-        echo "Or the bracketed style: <Adding|Implementing|Fixing> [<Feature|Task|Bug|Hotfix>]: <name>"
-        echo "Example: Fixing [Hotfix]: pin the protobuf runtime floor"
-        exit 2
+        block "BLOCKED: PR title '$TITLE' does not follow conventional commits or the bracketed style." \
+          "Required format: <type>[(scope)]: <description>" \
+          "Example: feat(council): add bounded fix loop" \
+          "Or the bracketed style: <Adding|Implementing|Fixing> [<Feature|Task|Bug|Hotfix>]: <name>" \
+          "Example: Fixing [Hotfix]: pin the protobuf runtime floor"
       fi
     else
-      echo "WARNING: Could not extract PR title from command. Title validation skipped."
-      echo "Ensure the PR title follows conventional commits: <type>[(scope)]: <description>"
-      echo "Or the bracketed style: <Adding|Implementing|Fixing> [<Feature|Task|Bug|Hotfix>]: <name>"
+      warn "Could not extract the PR title from the command, so title validation was skipped. The title must follow conventional commits (<type>[(scope)]: <description>) or the bracketed style (<Adding|Implementing|Fixing> [<Feature|Task|Bug|Hotfix>]: <name>)."
     fi
   fi
 fi
@@ -97,76 +123,74 @@ if echo "$CMD" | grep -qE 'git\s+commit\s'; then
     # Check first line only (before any newline in heredoc-style messages)
     FIRST_LINE=$(echo "$MSG" | head -1)
     if ! echo "$FIRST_LINE" | grep -qE '^(feat|fix|refactor|docs|test|chore|perf|ci|hotfix|saga|epic|release)(\(.+\))?:\s'; then
-      echo "WARNING: Commit message does not follow conventional commits format."
-      echo "Expected: <type>[(scope)]: <description>"
-      echo "Got: '$FIRST_LINE'"
-      echo "Valid types: feat, fix, refactor, docs, test, chore, perf, ci, hotfix, saga, epic, release"
+      warn "Commit message '$FIRST_LINE' does not follow conventional commits. Expected: <type>[(scope)]: <description>. Valid types: feat, fix, refactor, docs, test, chore, perf, ci, hotfix, saga, epic, release."
     fi
   fi
 fi
 
 # Validate issue title is descriptive (no single-word titles)
 if echo "$CMD" | grep -qE 'gh\s+issue\s+(create|new)'; then
-  TITLE=$(echo "$CMD" | grep -oP -- '--title\s+["'"'"']\K[^"'"'"']+')
+  TITLE=$(echo "$CMD" | grep -oP -- '--title\s+["'"'"']\K[^"'"'"']+' | head -1)
   if [ -n "$TITLE" ]; then
     WORD_COUNT=$(echo "$TITLE" | wc -w)
     if [ "$WORD_COUNT" -lt 3 ]; then
-      echo "WARNING: Issue title '$TITLE' is too short (${WORD_COUNT} words)."
-      echo "Use a descriptive title with at least 3 words."
-      exit 0
+      warn "Issue title '$TITLE' is too short (${WORD_COUNT} words). Use a descriptive title with at least 3 words."
     fi
   fi
-  echo "WARNING: Verify the issue doesn't already exist before creating."
-  echo "Run 'gh issue list --search \"<keyword>\"' to check."
-  exit 0
+  warn "Verify that the issue does not already exist before you create it: gh issue list --search \"<keyword>\""
 fi
 
-# Block: any PR merge requires explicit user approval
+# Any PR merge asks the user. The draft check still blocks outright.
 if echo "$CMD" | grep -qE 'gh\s+pr\s+merge'; then
-  # Check for draft PR first
-  PR_NUM=$(echo "$CMD" | grep -oE '#[0-9]+|[0-9]+' | head -1)
+  # Read the PR number from the text after `gh pr merge` only. A number earlier in a compound
+  # command (a branch name such as feature/12-x) is not the PR.
+  MERGE_ARGS=$(echo "$CMD" | grep -oE 'gh[[:space:]]+pr[[:space:]]+merge.*' | head -1)
+  PR_NUM=$(echo "$MERGE_ARGS" | sed -E 's/^gh[[:space:]]+pr[[:space:]]+merge//' | grep -oE '(^|[[:space:]])#?[0-9]+([[:space:]]|$)' | head -1 | tr -d '# \t')
   if [ -n "$PR_NUM" ]; then
-    PR_NUM=$(echo "$PR_NUM" | tr -d '#')
     # Honor an explicit -R/--repo flag from the command. Without it the
     # check resolves against the hook's own cwd, which can be a DIFFERENT
     # repo whose PR numbers collide.
-    REPO_ARG=$(echo "$CMD" | grep -oE '(-R|--repo)[= ]+[^ ]+' | head -1 | sed -E 's/^(-R|--repo)[= ]+//')
+    REPO_ARG=$(echo "$MERGE_ARGS" | grep -oE '(-R|--repo)[= ]+[^ ]+' | head -1 | sed -E 's/^(-R|--repo)[= ]+//')
     if [ -n "$REPO_ARG" ]; then
       IS_DRAFT=$(gh pr view "$PR_NUM" -R "$REPO_ARG" --json isDraft -q '.isDraft' 2>/dev/null)
     else
       IS_DRAFT=$(gh pr view "$PR_NUM" --json isDraft -q '.isDraft' 2>/dev/null)
     fi
     if [ "$IS_DRAFT" = "true" ]; then
-      # Write the reason to STDERR: an exit-2 PreToolUse block surfaces stderr
-      # (not stdout) back to the caller. Emitting on stdout produced an opaque
-      # "hook error: No stderr output" with no explanation.
-      echo "BLOCKED: PR #$PR_NUM is still in DRAFT mode — not merging." >&2
-      echo "Confirm all required fixes are applied before merging." >&2
-      echo "To proceed: mark the PR as ready first with 'gh pr ready $PR_NUM'" >&2
-      exit 2
+      block "BLOCKED: PR #$PR_NUM is still in DRAFT mode — not merging." \
+        "Confirm all required fixes are applied before merging." \
+        "To proceed: mark the PR as ready first with 'gh pr ready $PR_NUM'"
     fi
   fi
-  # Default to squash merge if no merge strategy specified
-  if ! echo "$CMD" | grep -qE -- '--(squash|merge|rebase)'; then
-    echo "WARNING: No merge strategy specified. Prefer --squash."
+  if ! echo "$MERGE_ARGS" | grep -qE -- '--(squash|merge|rebase)'; then
+    warn "No merge strategy specified. Prefer --squash."
   fi
-  echo "WARNING: PR merge requested. Approve to proceed, deny to cancel."
-  exit 0
+  ASK_REASON="PR merge requested${PR_NUM:+ for PR #$PR_NUM}. Every gh pr merge needs explicit user approval."
 fi
 
 # Warn: branch rename can close open PRs
 if echo "$CMD" | grep -qE 'git\s+branch\s+-m\s'; then
-  echo "WARNING: Renaming a branch closes any PRs targeting the old name."
-  echo "Check for open PRs first: gh pr list --head <old-branch>"
-  exit 0
+  warn "Renaming a branch closes any PRs targeting the old name. Check for open PRs first: gh pr list --head <old-branch>"
 fi
 
 # Warn: issue relabeling can trigger automation (issue-branch-handler)
 if echo "$CMD" | grep -qE 'gh\s+issue\s+edit\s.*--add-label|gh\s+issue\s+edit\s.*--remove-label'; then
-  echo "WARNING: Relabeling issues may trigger workflow automation (e.g. issue-branch-handler)."
-  echo "This can create duplicate branches or ghost PRs."
-  echo "Check .github/workflows/ for label-triggered automation before proceeding."
-  exit 0
+  warn "Relabeling issues may trigger workflow automation (e.g. issue-branch-handler). This can create duplicate branches or ghost PRs. Check .github/workflows/ for label-triggered automation before proceeding."
+fi
+
+# Emit one JSON object that carries the ask decision and every warning.
+if [ -n "$ASK_REASON" ] || [ "${#WARNINGS[@]}" -gt 0 ]; then
+  CONTEXT=""
+  if [ "${#WARNINGS[@]}" -gt 0 ]; then
+    CONTEXT=$(printf 'WARNING: %s\n' "${WARNINGS[@]}")
+  fi
+  jq -n --arg reason "$ASK_REASON" --arg context "$CONTEXT" '{
+    hookSpecificOutput: (
+      { hookEventName: "PreToolUse" }
+      + (if $reason != "" then { permissionDecision: "ask", permissionDecisionReason: $reason } else {} end)
+      + (if $context != "" then { additionalContext: $context } else {} end)
+    )
+  }'
 fi
 
 exit 0
