@@ -12,8 +12,8 @@ description: >
 Claude Code hooks in `settings.json` run globally. But different repos need different
 lint/check commands. This skill detects the repo's language stack and writes a single
 PostToolUse hook script that dispatches the right checker based on the edited file's
-extension. The script lives in the repo itself (`.claude/hooks/repo-lint.sh`) and is
-added to `settings.json` as a PostToolUse hook on `Edit|Write`.
+extension. The script lives in the repo itself (`.claude/hooks/repo-lint.sh`). The skill
+adds it to `settings.json` as a PostToolUse hook on `Edit|Write`.
 
 The hook runs after every Edit or Write, checks if the edited file matches a known
 language, and runs the appropriate checker. Non-zero exit blocks the edit with feedback.
@@ -39,7 +39,7 @@ Scan the repo root for language indicators:
 | `Cargo.toml` | Rust | `cargo check` |
 | `package.json` (no tsconfig) | JavaScript | `npx eslint "$FILE" --no-error-on-unmatched-pattern` (if eslint configured) |
 
-Report what was detected: "Found: TypeScript, Python. No Go, Rust, or JS-only detected."
+Report what you detected: "Found: TypeScript, Python. No Go, Rust, or JS-only detected."
 
 ### Step 2 -- Generate Hook Script
 
