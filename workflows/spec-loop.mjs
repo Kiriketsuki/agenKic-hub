@@ -10,7 +10,8 @@
  *      subTasks[]); then routing assembly: routeFromTable(domain) JS table first → parallel() LLM
  *      fallback (one router per unique unclassified domain) → routeOverrides win-always on top.
  *   P2 Wave plan (PURE JS) — Kahn topo-sort of leaves by deps with a lexicographic key tiebreak,
- *      plus touchPoint-overlap serialization so no two wave-mates share a file. planOnly||!autonomous
+ *      plus touchPoint-overlap serialization so no two wave-mates share a file. Duplicate keys,
+ *      unknown deps and cycles stop the run before any build agent spawns. planOnly||!autonomous
  *      → log the plan and return {plan, resumable:true} WITHOUT spawning any build agent.
  *   P3 per wave — BUILD (parallel worktree agents) → intra-feature sub-task→one-feature-branch merge
  *      (serial agent; only for features whose sub-tasks ran in the SAME wave; no per-sub-task council)
@@ -60,6 +61,7 @@
  *     haltOnUnmerged,               // default true: stop resumable when a feature council ends
  *                                   // unconverged or unmerged, instead of building later waves on an
  *                                   // epic branch that is missing the dependency. false = old behavior.
+ *     allowNoTests,                 // default false: true lets each council merge when verify finds no test script
  *     minBudget,                    // budget-floor in tokens (default 80000)
  *     model,                        // optional per-role model overrides
  *   }
@@ -233,11 +235,36 @@ function uniqueRouterDomains(unclassifiedLeaves) {
  * a wave ever share a touchPoint file, and a dependent leaf is always in a strictly later wave
  * than its dependency. PURE: no agent() calls, no I/O, never mutates the input.
  *
+ * The planner rejects an invalid DAG before it plans any wave: a missing or duplicate leaf key, a
+ * leaf key that also names a different feature, a dependency on an unknown key, or a dependency
+ * cycle. It then returns no waves and lists every problem in `errors`. The old planner kept an
+ * unknown dep and dropped it in the topo-sort, and it appended cycle members as a final wave, so
+ * a bad decomposition still reached the build agents.
+ *
  * @param {Array<{key: string, deps?: string[], touchPoints?: string[], feature?: string}>} leavesIn
- * @returns {{ waves: Array<Array<object>>, collapses: Array<{feature: string, mergedKeys: string[], reason: string}> }}
+ * @returns {{ waves: Array<Array<object>>, collapses: Array<{feature: string, mergedKeys: string[], reason: string}>, errors: string[] }}
  */
 function planWaves(leavesIn) {
   const input = Array.isArray(leavesIn) ? leavesIn : []
+  // ---- 0. Validate keys before any grouping. The Maps below key on leaf.key and would silently
+  // merge two leaves that share a key. ----
+  const keyErrors = []
+  const seenKeys = new Set()
+  const dupKeys = []
+  for (const leaf of input) {
+    const k = leaf && leaf.key
+    if (typeof k !== 'string' || !k) { keyErrors.push('a leaf has no key'); continue }
+    if (seenKeys.has(k)) { if (!dupKeys.includes(k)) dupKeys.push(k) } else seenKeys.add(k)
+  }
+  for (const k of dupKeys) keyErrors.push(`duplicate key ${k}`)
+  // A leaf key that also names a DIFFERENT feature makes a dep on that key ambiguous: it could
+  // mean the leaf or every leaf of the feature.
+  const featureOfLeaf = (l) => ((l.feature !== undefined && l.feature !== null) ? l.feature : l.key)
+  const featureKeySet = new Set(input.filter((l) => l && l.key).map(featureOfLeaf))
+  for (const l of input) {
+    if (l && l.key && featureKeySet.has(l.key) && featureOfLeaf(l) !== l.key) keyErrors.push(`key ${l.key} is a leaf of feature ${featureOfLeaf(l)} and also a feature key`)
+  }
+  if (keyErrors.length) return { waves: [], collapses: [], errors: keyErrors }
   // ---- 1. Collapse same-feature sub-task leaves with overlapping touchPoints (immutably) ----
   const collapses = []
   const byFeature = new Map()
@@ -248,6 +275,7 @@ function planWaves(leavesIn) {
   }
   // Build the working leaf set, collapsing overlapping same-feature groups into one union leaf.
   let leaves = []
+  const collapsedAlias = new Map() // sub-task key -> the collapsed leaf key that now carries it
   for (const [fk, group] of byFeature) {
     if (group.length <= 1) { leaves.push({ ...group[0] }); continue }
     // Does any pair in this feature's sub-tasks overlap on touchPoints? If so, collapse ALL of
@@ -277,6 +305,7 @@ function planWaves(leavesIn) {
       collapsedFrom: group.map((g) => g.key),
     }
     leaves.push(merged)
+    for (const g of group) collapsedAlias.set(g.key, fk)
     collapses.push({ feature: fk, mergedKeys: group.map((g) => g.key), reason: 'overlapping touchPoints among same-feature sub-tasks — collapsed to a single leaf' })
   }
 
@@ -294,16 +323,22 @@ function planWaves(leavesIn) {
     if (!featureToLeafKeys.has(fk)) featureToLeafKeys.set(fk, [])
     featureToLeafKeys.get(fk).push(l.key)
   }
+  const depErrors = []
   leaves = leaves.map((l) => {
     const expanded = []
     for (const d of (l.deps || [])) {
       if (leafKeySet.has(d)) { expanded.push(d); continue }            // already a leaf key — keep
+      if (collapsedAlias.has(d)) {                                      // a sub-task key that collapsed
+        if (collapsedAlias.get(d) !== l.key) expanded.push(collapsedAlias.get(d))
+        continue
+      }
       const subKeys = featureToLeafKeys.get(d)                          // a split feature key?
       if (subKeys && subKeys.length) { for (const sk of subKeys) if (sk !== l.key) expanded.push(sk) }
-      else expanded.push(d)                                            // unknown dep — keep (filtered later)
+      else depErrors.push(`${l.key} depends on unknown key ${d}`)      // unknown dep — reject below
     }
     return { ...l, deps: Array.from(new Set(expanded)) }
   })
+  if (depErrors.length) return { waves: [], collapses, errors: depErrors }
 
   // ---- 2. Kahn topo-sort with lexicographic key tiebreak + touchPoint serialization ----
   const byKey = new Map(leaves.map((l) => [l.key, l]))
@@ -376,15 +411,14 @@ function planWaves(leavesIn) {
     waves.push(wave)
   }
 
-  // Any leaves left unplaced are part of a dependency cycle — append them as a final wave so the
-  // plan is total (the build agents will surface the cycle as a blocker rather than silently drop).
+  // Every pass with a ready leaf places at least one leaf, so a leaf left unplaced sits on a
+  // dependency cycle or depends on one. Reject the plan. A build agent cannot resolve a cycle,
+  // and a final catch-all wave would build leaves before their dependencies.
   if (remaining.size) {
-    const leftover = Array.from(remaining).sort().map((k) => byKey.get(k))
-    waves.push(leftover)
-    for (const l of leftover) doneWave.set(l.key, waves.length - 1)
+    return { waves: [], collapses, errors: [`dependency cycle: ${Array.from(remaining).sort().join(', ')} cannot be scheduled`] }
   }
 
-  return { waves, collapses }
+  return { waves, collapses, errors: [] }
 }
 
 // ── Test sentinel early-out: expose the pure helpers and STOP before any orchestration. ──
@@ -579,9 +613,10 @@ const EXTRA = A.extraRules ? `\n- ${A.extraRules}` : ''
  * agreement used by feature-loop.mjs / council-loop.mjs (immutability, small files, no console.log,
  * commit semantically + push, never merge/rebase). Pure string builder.
  * @param {string} parentRef - the branch this leaf builds on top of (dependencies already merged there)
+ * @param {string} branch - the leaf branch the agent may push
  * @returns {string} the rules block
  */
-function rulesBlock(parentRef) {
+function rulesBlock(parentRef, branch) {
   return `
 Project rules you MUST follow:
 - Immutability: never mutate inputs; return new objects/arrays.
@@ -589,7 +624,7 @@ Project rules you MUST follow:
 - Validate inputs at boundaries; never trust client data. No hardcoded secrets (env vars + .env.example only).
 - Preserve existing UX/visual treatment unless the feature explicitly changes it.
 - If you add deps, update the lockfile (CI runs a clean install). Do NOT edit version files (CI bumps on merge).
-- When your change builds clean, stage it and commit with a semantic conventional-commit message (feat/fix/refactor/...) describing THIS work, then push your branch. If there is nothing to commit (already committed on a prior attempt), do NOT error — skip the commit and ensure the branch is pushed (\`git push --force-with-lease\`). Do NOT merge or rebase, and do NOT create issues — prior features are already-merged dependencies in ${parentRef}.${EXTRA}`
+- When your change builds clean, stage it and commit with a semantic conventional-commit message (feat/fix/refactor/...) describing THIS work, then push your branch. If there is nothing to commit (already committed on a prior attempt), do NOT error — skip the commit and ensure the branch is pushed with a plain \`git push origin ${branch}\`. NEVER force-push. If the remote rejects the push, STOP: do not force, do not pull, do not rebase, and report the rejection as a blocker. Do NOT merge or rebase, and do NOT create issues — prior features are already-merged dependencies in ${parentRef}.${EXTRA}`
 }
 
 /**
@@ -602,11 +637,12 @@ function buildPrompt(leaf) {
   const scope = Array.isArray(leaf.scopeTasks) ? leaf.scopeTasks.join(', ') : String(leaf.scopeTasks || '')
   const touch = Array.isArray(leaf.touchPoints) ? leaf.touchPoints.join(', ') : ''
   return `Implement leaf ${leaf.key}: ${leaf.title} FULLY for ${NAME}. You run in your OWN fresh git worktree (isolation handles creation) — operate ONLY there, on the branch ${leaf.branch}.
+BRANCH BASE (critical): the worktree may start from any commit, so set the base explicitly before any edit. Run \`git fetch origin\`. If origin/${leaf.branch} exists (a prior attempt pushed it), run \`git checkout ${leaf.branch}\` (git creates a tracking branch when no local one exists), then \`git pull --ff-only origin ${leaf.branch}\`. Otherwise run \`git checkout -b ${leaf.branch} origin/${EPIC_BRANCH}\`. Never build on whatever commit the worktree started from.
 SCOPE GUARD (critical): implement ONLY this leaf — spec tasks ${scope}. Do NOT build other features. If the work seems to require another feature's code, treat that as a dependency already merged into ${EPIC_BRANCH} if present (read it, build on it) — do NOT re-implement it. If a genuine gap blocks you, STOP and report it as a blocker rather than expanding scope.
 Briefing: ${leaf.briefing || leaf.title}${ENV}
 Touch points (files/modules to add or change): ${touch || '(infer from the spec)'}
 Steps: (1) read ${SPEC} (the tasks for ${scope}) + the touch-point files; build on existing code. (2) Implement working code — no stubs/TODOs; cover the acceptance criteria for ${scope}. (3) Run \`${BUILD}\` and fix every error.${lvFor(leaf.feature) ? ' (4) Validate against the real backend per the project note.' : ''}
-${rulesBlock(EPIC_BRANCH)}
+${rulesBlock(EPIC_BRANCH, leaf.branch)}
 After the build passes, commit semantically and push your branch ${leaf.branch}. Report filesChanged, buildPassed, scopeKept, branch (echo ${leaf.branch}), and any blockers.`
 }
 
@@ -660,7 +696,13 @@ Keep features genuinely independent where possible; encode real ordering constra
 Return DECOMP_SCHEMA.`,
   { label: 'decompose', phase: 'Decompose', model: MODELS.decompose, agentType: 'Software Architect', schema: DECOMP_SCHEMA })
 
-const features = (decomp && Array.isArray(decomp.features)) ? decomp.features : []
+// A null or empty decomposition is a failed stage, not an empty epic. The old code turned it
+// into features=[] and ran straight to the epic council and its merge into main with nothing
+// built. Stop resumable so a resume re-runs the decompose agent.
+if (!decomp || !Array.isArray(decomp.features) || !decomp.features.length) {
+  return RESUMABLE(decomp ? 'the decompose agent returned no features' : 'the decompose agent returned no result')
+}
+const features = decomp.features
 log(`decompose: ${features.length} features — ${features.map((f) => `${f.key}(${(f.subTasks || []).length} sub)`).join(', ')}`)
 
 // Flatten features → leaves (sub-tasks when present, else the feature itself). IMMUTABLE: build a
@@ -753,6 +795,31 @@ log(`routed ${routedLeaves.length} leaves: ${routedLeaves.map((l) => `${l.key}->
 // ═══════════════════════════════════════════════════════════════════════════════════════════
 phase('Plan')
 planResult = planWaves(routedLeaves)
+// Two features that share a key fold into one feature group before planWaves sees them, so the
+// orchestrator checks feature keys here. planWaves checks leaf keys, deps and cycles.
+const featureKeyCounts = features.reduce((acc, f) => ({ ...acc, [f.key]: (acc[f.key] || 0) + 1 }), {})
+const planErrors = [
+  ...Object.keys(featureKeyCounts).filter((k) => featureKeyCounts[k] > 1).map((k) => `duplicate feature key ${k}`),
+  ...planResult.errors,
+]
+if (planErrors.length) {
+  // An invalid DAG is a decompose defect. A resume replays the same cached decomposition, so this
+  // stop is terminal. Re-run without resumeFromRunId to get a fresh decomposition.
+  log(`wave plan rejected: ${planErrors.join('; ')}`)
+  return {
+    epic: { issue: EPIC.issue, branch: EPIC_BRANCH, title: EPIC.title },
+    features,
+    planErrors,
+    waves: null,
+    waveIdx,
+    builds,
+    councils,
+    epicCouncil,
+    merged: false,
+    resumable: false,
+    reason: `invalid decomposition, no wave was built: ${planErrors.join('; ')}. Re-run without resumeFromRunId so the decompose agent runs again.`,
+  }
+}
 for (const c of planResult.collapses) log(`wave-plan collapse: feature ${c.feature} sub-tasks ${c.mergedKeys.join('+')} — ${c.reason}`)
 const planView = {
   waves: planResult.waves.map((w, i) => ({ wave: i, leaves: w.map((l) => ({ key: l.key, feature: l.feature, agentType: l.agentType, model: l.model, touchPoints: l.touchPoints })) })),
@@ -792,6 +859,13 @@ for (waveIdx = 0; waveIdx < planResult.waves.length; waveIdx++) {
       builds.push({ key: leaf.key, feature: leaf.feature, branch: leaf.branch, buildPassed: r.buildPassed === true, scopeKept: r.scopeKept !== false, blockers: r.blockers || [] })
       builtKeys.push(leaf.key)
     })
+    // A build result is a pass only with buildPassed true, scope kept, and no blockers. The old
+    // code counted any non-null result as built, so a failed build went on to a council and a
+    // merge into the epic.
+    const badBuilds = builds.filter((b) => chunk.some((l) => l.key === b.key) && (!b.buildPassed || !b.scopeKept || b.blockers.length))
+    if (badBuilds.length) {
+      return RESUMABLE(`build failed in wave ${waveIdx + 1}: ${badBuilds.map((b) => `${b.key} (buildPassed=${b.buildPassed} scopeKept=${b.scopeKept} blockers=${b.blockers.length})`).join(', ')} — fix the leaf, then resume`)
+    }
   }
   // if ANY leaf in this wave failed to build (null), stop resumable rather than merging a partial wave.
   if (builtKeys.length !== wave.length) return RESUMABLE(`only ${builtKeys.length}/${wave.length} leaves built in wave ${waveIdx + 1} (limit/blip nulled a build) — refusing a partial wave`)
@@ -825,7 +899,7 @@ for (waveIdx = 0; waveIdx < planResult.waves.length; waveIdx++) {
 Target feature branch: ${targetBranch}
 Sub-task branches to merge (in this order, by ascending key): ${subBranches.join(', ')}
 Do exactly this:
-1. Fetch all branches. Create or reset ${targetBranch} from the FIRST sub-task branch (${subBranches[0]}). IDEMPOTENCY (resume-safe): if ${targetBranch} already contains all sub-task commits (\`git log --oneline\`), do NOT re-merge — report merged:true and stop.
+1. Fetch all branches. IDEMPOTENCY (resume-safe): if ${targetBranch} already exists and contains all sub-task commits (\`git log --oneline\`), do NOT re-merge — report merged:true and stop. If ${targetBranch} does not exist, create it from the FIRST sub-task branch (\`git checkout -b ${targetBranch} origin/${subBranches[0]}\`). If it exists, check it out and continue from its tip. Never reset or force-push ${targetBranch}.
 2. Merge each remaining sub-task branch into ${targetBranch} serially, in the listed order.
 3. The sub-tasks were planned to edit DISJOINT files, so conflicts should be rare. For any file conflict NOT covered by that disjoint check (auto-generated lockfiles, shared config not in touchPoints): PREFER the sub-task with the LATER wave index / later key, OR abort and report conflict:true with the conflicting paths — NEVER silently corrupt the feature branch.
 4. Build (\`${BUILD}\`) the merged ${targetBranch}; fix only mechanical merge fallout, commit semantically, and push ${targetBranch}.
@@ -838,11 +912,17 @@ Return SUBMERGE_SCHEMA.`,
       log(`intra-feature merge ${feat}: NULL result — refusing to council an unverified feature branch`)
       return RESUMABLE(`intra-feature merge agent for ${feat} returned null — refusing to proceed with an unverified feature branch`)
     }
-    if (m && m.conflict) {
+    if (m.conflict) {
       log(`intra-feature merge ${feat} reported a conflict — stopping resumable rather than councilling a corrupt branch`)
       return RESUMABLE(`intra-feature sub-task merge for ${feat} hit a conflict the disjoint check missed`)
     }
-    featureBranches.set(feat, (m && m.featureBranch) || targetBranch)
+    // Only an explicit merged:true counts. The old code ignored merged:false and councilled a
+    // feature branch that did not hold every sub-task.
+    if (m.merged !== true) {
+      log(`intra-feature merge ${feat} reported merged=${m.merged} — refusing to council an incomplete feature branch`)
+      return RESUMABLE(`intra-feature sub-task merge for ${feat} did not report merged:true (${String(m.output || '').slice(0, 160)})`)
+    }
+    featureBranches.set(feat, m.featureBranch || targetBranch)
   }
 
   // ---- FEATURE COUNCIL: serial workflow('council-loop', {merge:true}) per feature in this wave ----
@@ -881,6 +961,7 @@ Return SUBMERGE_SCHEMA.`,
       liveValidate: lvFor(feat),
       envNote: A.envNote,
       merge: true,                                   // squash-merge the feature into the epic on unconditional FOR
+      allowNoTests: A.allowNoTests === true,         // council-loop blocks a tests:"none" merge unless the caller opts in
       extraRules: A.extraRules,
       council: A.council,
     })
@@ -922,6 +1003,7 @@ epicCouncil = await workflow({ scriptPath: `${WF_DIR}/council-loop.mjs` }, {
   // FOR). Pass epicMerge:false to run the epic council to unconditional FOR but HOLD the epic→main
   // merge for a human to land manually (feature→epic assembly merges are unaffected).
   merge: A.epicMerge !== false,
+  allowNoTests: A.allowNoTests === true,
   extraRules: A.extraRules,
   council: Object.assign({}, A.council, { model: Object.assign({ arbiter: 'opus' }, (A.council && A.council.model) || {}) }),
 })

@@ -1,15 +1,15 @@
-# spec-loop — parallel multi-feature epic orchestrator (global)
+# spec-loop: parallel multi-feature epic orchestrator (global)
 
-A project-agnostic top-level Workflow that turns a whole `*-spec.md` into a merged, reviewed epic
-by decomposing it into a routed dependency DAG, building independent units in **parallel worktree
-waves**, and councilling + auto-merging every PR at the feature tier (into the epic) and the epic
-tier (into `origin/main`). Lives in `~/.claude/workflows/` so it is reusable across repos.
+A project-agnostic top-level Workflow that turns a whole `*-spec.md` into a merged, reviewed epic.
+It decomposes the spec into a routed dependency DAG and builds independent units in **parallel
+worktree waves**. It then councils and auto-merges every PR at the feature tier (into the epic) and
+the epic tier (into `origin/main`). It lives in `~/.claude/workflows/`, so it is reusable across repos.
 
-Where `feature-loop.mjs` builds **one feature per invocation** and leaves cross-feature
-parallelism to a human driver, `spec-loop.mjs` does the decomposition, agent/model routing, and
-parallel scheduling automatically. **Builds parallelize; councils serialize** — the only platform-
-imposed constraint (`workflow()` nests one level, worktree isolation is an `agent()` option not a
-`workflow()` option).
+`feature-loop.mjs` builds **one feature per invocation** and leaves cross-feature parallelism to a
+human driver. `spec-loop.mjs` does the decomposition, agent/model routing, and parallel scheduling
+automatically. **Builds parallelize. Councils serialize.** This is the only platform-imposed
+constraint: `workflow()` nests one level, and worktree isolation is an `agent()` option, not a
+`workflow()` option.
 
 | Part | Runs in | Does |
 |---|---|---|
@@ -17,11 +17,11 @@ imposed constraint (`workflow()` nests one level, worktree isolation is an `agen
 | **`council-loop.mjs`** | nested `workflow()` (one level) | the serial review/fix/verify/squash-merge gate, reused per feature and once for the epic |
 
 > The orchestrator starts from an **existing epic branch**. Creating the epic issue/branch/PR and
-> the per-feature branches is the **driver's** job (human or a calling script) — `spec-loop.mjs`
+> the per-feature branches is the **driver's** job (human or a calling script). `spec-loop.mjs`
 > does not scaffold issues or branches. The `gh-pr-merge` approval hook still applies to each
 > auto-merge.
 
-Invoke by **absolute scriptPath** — the name registry does NOT resolve `~/.claude/workflows/*.mjs`
+Invoke by **absolute scriptPath**. The name registry does NOT resolve `~/.claude/workflows/*.mjs`
 (only built-ins like deep-research / code-review), so `{ name: "spec-loop" }` errors. Pass
 `workflowsDir` so the nested council-loop path is OS-correct without hardcoding the vault root:
 
@@ -34,7 +34,7 @@ Workflow({
 
 ---
 
-## `args` shape — all project-specifics are parameters
+## `args` shape: all project-specifics are parameters
 
 ```jsonc
 {
@@ -80,31 +80,31 @@ Workflow({
 
 The workflow returns
 `{ epic, features, waves, builds, councils, epicCouncil, merged, resumable, reason }`.
-A terminal run has `resumable: false`; `merged: true` means the epic squash-merged into `main`.
+A terminal run has `resumable: false`. `merged: true` means the epic squash-merged into `main`.
 
 ---
 
 ## What each phase does
 
-1. **Decompose & Route** — an **opus** decompose agent reads `specFile` and produces
-   `features[] = {key, title, scopeTasks, deps[], touchPoints[], domain, briefing}`, each feature
-   optionally split into **disjoint** `subTasks[]`. Routing assembly then runs in priority order:
-   `routeFromTable(domain)` (a JS table ported from the `agent-route` skill — **zero** LLM calls
-   for known domains) → one **parallel** LLM fallback router **per unique unclassified domain** →
-   `routeOverrides` **win-always** on top (a pinned feature is never sent to the router).
-2. **Wave plan (pure JS)** — Kahn topo-sort of the leaves by `deps` with a lexicographic key
+1. **Decompose & Route**: an **opus** decompose agent reads `specFile` and produces
+   `features[] = {key, title, scopeTasks, deps[], touchPoints[], domain, briefing}`. It may split each
+   feature into **disjoint** `subTasks[]`. Routing assembly then runs in priority order.
+   First, `routeFromTable(domain)` (a JS table ported from the `agent-route` skill, with **zero** LLM
+   calls for known domains). Second, one **parallel** LLM fallback router **per unique unclassified
+   domain**. Third, `routeOverrides` **win-always** on top (a pinned feature is never sent to the router).
+2. **Wave plan (pure JS)**: Kahn topo-sort of the leaves by `deps` with a lexicographic key
    tiebreak, plus a set-intersection check that serializes any leaves whose `touchPoints` overlap.
-   No two leaves in a wave share a file; a dependent leaf is always in a strictly later wave.
-   Sub-tasks of one feature that actually overlap are **collapsed back to a single leaf** (graceful
-   degradation) and the collapse is logged. `planOnly || !autonomous` returns the plan here and
+   No two leaves in a wave share a file. A dependent leaf is always in a strictly later wave.
+   The planner collapses overlapping sub-tasks of one feature **back to a single leaf**
+   (graceful degradation). The planner logs the collapse. `planOnly || !autonomous` returns the plan here and
    spawns no build agents.
-3. **Per wave** — `parallel()` worktree build agents (one per leaf, capped at `maxParallel`), each
-   implements its scope-guarded slice, runs `buildCmd`, commits semantically, pushes its branch →
-   a **serial** intra-feature merge agent folds a feature's same-wave sub-task branches into ONE
-   feature branch (no per-sub-task council) → a **serial** per-feature council via
+3. **Per wave**: `parallel()` worktree build agents run (one per leaf, capped at `maxParallel`).
+   Each implements its scope-guarded slice, runs `buildCmd`, commits semantically, and pushes its
+   branch. Next, a **serial** intra-feature merge agent folds a feature's same-wave sub-task branches
+   into ONE feature branch (no per-sub-task council). Then a **serial** per-feature council via
    `workflow('council-loop', {merge:true})` squash-merges the feature into the epic on an
    unconditional FOR.
-4. **Epic council** — one `workflow('council-loop', {scope:'integration', merge:true})` over the
+4. **Epic council**: one `workflow('council-loop', {scope:'integration', merge:true})` over the
    epic vs `origin/main` squash-merges the epic into `main` on an unconditional FOR (opus arbiter).
 
 ---
@@ -120,19 +120,19 @@ Workflow({
 })
 ```
 
-Returns `{ plan, features, waves, resumable: true }` with **no build agents spawned**. Confirm:
-no two leaves in a wave share a `touchPoint`; deps order is honoured; routing (`agentType`/`model`)
-looks right; any sub-task collapse was intended. Then re-invoke with `planOnly:false` to build.
+Returns `{ plan, features, waves, resumable: true }` with **no build agents spawned**. Confirm that
+no two leaves in a wave share a `touchPoint`. Confirm that deps order holds. Confirm that routing
+(`agentType`/`model`) looks right. Confirm that any sub-task collapse was intended. Then re-invoke with `planOnly:false` to build.
 
 ---
 
 ## Sequential vs parallel
 
 - **Within a wave**: independent leaves build **in parallel** in isolated worktrees (capped at
-  `maxParallel`; default `min(16, cores-2)`). Sub-tasks of the same feature build in parallel then
+  `maxParallel`, default `min(16, cores-2)`). Sub-tasks of the same feature build in parallel then
   merge serially to one branch.
-- **Across waves**: strictly sequential — a wave runs only after the prior wave's features are
-  councilled and merged into the epic, so a dependent leaf builds on top of its already-merged
+- **Across waves**: strictly sequential. A wave runs only after the council has merged the prior
+  wave's features into the epic. A dependent leaf therefore builds on top of its already-merged
   dependency.
 - **Councils**: always **serial** on the main tree (`workflow()` nesting + shared-tree constraint).
   Raise `council.critics` for more review lenses within a single council, not for parallel councils.
@@ -142,10 +142,10 @@ looks right; any sub-task collapse was intended. Then re-invoke with `planOnly:f
 ## Recovery / resume after a usage limit or budget stop
 
 `spec-loop.mjs` is **limit-resistant and resumable** (same `tryAgent` / budget-floor / `RESUMABLE()`
-pattern as `feature-loop.mjs`). On a hard usage/rate limit — or when `budget.remaining()` drops
-below the floor (`minBudget`, default 80k) before an expensive phase — it stops at the next **safe
-boundary** (never mid-merge) and returns `resumable: true` with a `waveIdx` so the log reads
-"resuming at wave N of M".
+pattern as `feature-loop.mjs`). On a hard usage/rate limit, it stops at the next **safe
+boundary** (never mid-merge). It does the same when `budget.remaining()` drops below the floor
+(`minBudget`, default 80k) before an expensive phase. It returns `resumable: true` with a `waveIdx`,
+so the log reads "resuming at wave N of M".
 
 To resume, re-invoke with the **same** `scriptPath` + **byte-identical** `args`, plus the `runId`
 from the stopped run:
@@ -158,13 +158,15 @@ Workflow({
 })
 ```
 
-The journal replays every completed `agent()` call from cache (~0 tokens) — the **opus decompose
-result replays from cache** and the deterministic wave planner **re-runs in pure JS** — so only the
-unfinished wave's agents run live. Git is the checkpoint: every commit/push/merge is idempotent
-(tolerates "nothing to commit", pushes `--force-with-lease`, checks "already merged" before acting).
+The journal replays every completed `agent()` call from cache (~0 tokens). The **opus decompose
+result replays from cache**, and the deterministic wave planner **re-runs in pure JS**. Only the
+unfinished wave's agents run live. Git is the checkpoint. Every commit, push and merge is
+idempotent. It accepts "nothing to commit", pushes with a plain `git push` that stops on a
+rejection, and checks "already merged" before it acts. No workflow prompt force-pushes or runs
+`git reset --hard`.
 Resume in a **fresh turn** so the token budget has reset.
 
-> A `resumable: true` result is NOT a failure — it means "paused at a safe point." A terminal result
+> A `resumable: true` result is NOT a failure. It means "paused at a safe point." A terminal result
 > has `resumable: false`.
 
 ---
@@ -174,44 +176,47 @@ Resume in a **fresh turn** so the token budget has reset.
 - **Non-collapsed sub-task leaves use branch `feature/<sub-task-key>`** (e.g. `feature/F1.1`).
   If a driver pre-creates PRs before building, run `planOnly` first to read the branch assignments
   so PRs target the correct branch for each leaf.
-- **Run `planOnly` first** — eyeball the wave plan (no shared `touchPoints` per wave, deps
+- **Run `planOnly` first**: eyeball the wave plan (no shared `touchPoints` per wave, deps
   honoured, routing sane) before spawning any build agent. Cheap insurance against a bad split.
-- **Decompose `touchPoints` must be precise** — they are the parallel-safety contract. A
-  mis-listed file lets two leaves collide in a wave; the planner only serializes overlaps it can
+- **Decompose `touchPoints` must be precise**: they are the parallel-safety contract. A
+  mis-listed file lets two leaves collide in a wave. The planner only serializes overlaps it can
   SEE. The intra-feature merge agent is the backstop for lockfiles/shared config not in the list.
-- **Sub-tasks must be order-free, not just file-disjoint** — sibling sub-tasks of one feature
-  build in PARALLEL worktrees off the epic branch in the SAME wave, so a sub-task cannot depend
-  on a sibling's not-yet-merged code (inter-feature ordering is expressible via `deps`, but
-  intra-feature ordering is NOT — that invariant keeps each feature to exactly one branch and one
-  council). If two slices are file-disjoint yet sequential (F1.1 scaffolds a module F1.2 extends),
-  the decompose must keep them as ONE feature unit, not split them. The prompt enforces this.
-- **Stable feature keys** — the decompose agent must emit short, stable alphanumeric keys (F1,
-  F2) and NEVER regenerate them on resume; the lexicographic tiebreak and wave assignment depend
+- **Sub-tasks must be order-free, not just file-disjoint**: sibling sub-tasks of one feature
+  build in PARALLEL worktrees off the epic branch in the SAME wave. A sub-task therefore cannot depend
+  on a sibling's not-yet-merged code. Inter-feature ordering is expressible via `deps`, but
+  intra-feature ordering is NOT. That invariant keeps each feature to exactly one branch and one
+  council. If two slices are file-disjoint yet sequential (F1.1 scaffolds a module F1.2 extends),
+  the decompose must keep them as ONE feature unit. It must not split them. The prompt enforces this.
+- **Stable feature keys**: the decompose agent must emit short, stable alphanumeric keys (F1,
+  F2). It must NEVER regenerate them on resume. The lexicographic tiebreak and wave assignment depend
   on key stability across runs.
-- **Councils serialize, builds parallelize** — never call `council-loop` from inside a build
+- **Councils serialize, builds parallelize**: never call `council-loop` from inside a build
   `agent()` (it would break the one-level `workflow()` nesting limit). Councils run at the
   orchestrator top level only.
-- **Null build result = stop, don't merge** — a limit/blip that nulls a build agent leaves an
-  unbuilt leaf; the orchestrator filters it, logs it, and stops `resumable` rather than
+- **Null build result = stop, do not merge**: a limit/blip that nulls a build agent leaves an
+  unbuilt leaf. The orchestrator filters it, logs it, and stops `resumable` rather than
   councilling/merging a partial wave.
-- **Draft-PR self-heal** — each council-loop merge runs `gh pr ready` before `gh pr merge`; a
+- **Draft-PR self-heal**: each council-loop merge runs `gh pr ready` before `gh pr merge`. A
   genuine block reports the REAL reason (draft / failing checks / conflict), never "approval hook".
-- **`workflowsDir` is required for portability** — it makes the nested council-loop path
+- **`workflowsDir` is required for portability**: it makes the nested council-loop path
   OS-correct without hardcoding the vault root (Arch vs Windows).
-- **`routeOverrides` win-always** — a pinned feature key bypasses both the table and the LLM
-  router; use it to force a specialist/opus where the auto-router would under-route.
-- **The epic council is integration-scoped** — it reviews cross-feature integration, not
-  intra-feature nits already cleared per-PR. Don't re-litigate.
+- **`routeOverrides` win-always**: a pinned feature key bypasses both the table and the LLM
+  router. Use it to force a specialist/opus where the auto-router would under-route.
+- **The epic council is integration-scoped**: it reviews cross-feature integration, not
+  intra-feature nits already cleared per-PR. Do not re-litigate.
 
 ---
 
 ## References
 
-- `feature-loop.md` / `feature-loop.mjs` — the single-feature loop this orchestrates in parallel;
-  source of the `tryAgent` / `RESUMABLE` pattern and the duplicated `ROUTE` table.
-- `council-loop.mjs` — the serial council gate reused per feature and for the epic; its merge step
+- `feature-loop.md` / `feature-loop.mjs`: the single-feature loop this orchestrates in parallel.
+  It is the source of the `tryAgent` / `RESUMABLE` pattern and the duplicated `ROUTE` table.
+- `council-loop.mjs`: the serial council gate reused per feature and for the epic. Its merge step
   self-heals draft PRs and reports the real block reason.
-- `spec-loop-spec.md` — the feature spec (tasks T1–T12, acceptance scenarios).
-- `~/.claude/skills/agent-route/SKILL.md` + `references/agent-catalog.md` — the routing table source.
-- `spec-loop.smoke.mjs` — standalone pure-function + syntax smoke test (`routeFromTable` + the wave
-  planner); the build/test target. Run: `node 000-System/Agents/Claude/workflows/spec-loop.smoke.mjs`.
+- `spec-loop-spec.md`: the feature spec (tasks T1 to T12, acceptance scenarios).
+- `~/.claude/skills/agent-route/SKILL.md` + `references/agent-catalog.md`: the routing table source.
+- `spec-loop.smoke.mjs`: standalone pure-function + syntax smoke test (`routeFromTable` + the wave
+  planner). It is the build/test target. Run: `node 000-System/Agents/Claude/workflows/spec-loop.smoke.mjs`.
+- `workflows.smoke.mjs` runs the full bodies of council-loop, spec-loop, feature-loop and both
+  ultracode scripts against scripted agents. It proves that a failed stage never reaches a merge, a
+  build or a council, and it syntax-checks every workflow. Run: `node workflows/workflows.smoke.mjs`.
