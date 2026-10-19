@@ -26,13 +26,13 @@ When the arbiter reports "Council complete. Recommendation saved to: [filename]"
    - Backtick path + `line`/`L:` + number: `` `path/file.ext` L:LINE `` or `` `path/file.ext`:LINE ``
    - Colon format: `path/file.ext:LINE` (bare, no backticks)
 
-   If no parseable citations are found after all fallback attempts, tag all findings
+   If you find no parseable citations after all fallback attempts, tag all findings
    "verification skipped" and proceed directly to step 3.
 
    **5.2.5.2 -- Spawn Verifier Agent**: Spawn a single standalone verifier agent
    (not a team member -- the team is already shut down). Use `subagent_type: diagnosis`
    and `model: [MODEL_VERIFIER]` (from Step 1.5 -- always sonnet). The `diagnosis` agent
-   type is read-only and optimized for code investigation, which is exactly what
+   type reads files only and suits code investigation. That is exactly what
    verification requires.
 
    **Communication model**: The verifier is a standalone Agent, NOT a team member.
@@ -82,7 +82,7 @@ When the arbiter reports "Council complete. Recommendation saved to: [filename]"
    | Mixed VERIFIED + UNVERIFIED | Tag with UNVERIFIED note, do not purge |
 
    Only PHANTOM triggers purging (deterministic: cited file/line does not exist).
-   UNVERIFIED findings (file exists but claim doesn't match) are retained for human review.
+   UNVERIFIED findings (file exists but claim does not match) stay for human review.
 
    **5.2.5.4 -- Amend Recommendation File**: Rewrite the recommendation file in place.
    - Remove purged findings from all Suggested Fixes sub-sections
@@ -120,7 +120,7 @@ When the arbiter reports "Council complete. Recommendation saved to: [filename]"
    Severity values: `Bug`, `Security`, `Improvement`, `Style`.
    Status values: `Verified`, `Unverified`, `Runtime`, `Skipped` (verification skipped -- no citations found).
    ALL findings appear in one flat list -- there is no "follow-on" or "non-blocking" column.
-   Purged findings are omitted from this table entirely (documented in Verification Results section only).
+   Leave purged findings out of this table entirely (document them in Verification Results section only).
    If there are no code-level findings, render one row: `| -- | -- | -- | -- | No findings identified. | -- | -- |`
 
    **GENERAL motion** -- action items table:
@@ -230,7 +230,7 @@ Responses (CODE):
   "Council result noted. No action taken."
 - `modify` -- ask the user how they want to amend the motion.
   Once clarified, call TeamDelete on the current team, then return to Step 1
-  with the updated motion and same N and roles. A fresh team will be created.
+  with the updated motion and same N and roles. Step 1 creates a fresh team.
 
 ---
 
@@ -258,10 +258,10 @@ Proceed? [y/N/modify]
 
 Responses (GENERAL):
 - `y` -- note the result. Inform the user: "Council result noted."
-  If action items were listed, ask: "Would you like to work through any of
+  If the result listed action items, ask: "Would you like to work through any of
   these action items now?"
 - `N` -- note the result, take no further action. Inform the user:
   "Council result noted. No action taken."
 - `modify` -- ask the user how they want to amend the motion.
   Once clarified, call TeamDelete on the current team, then return to Step 1
-  with the updated motion and same N and roles. A fresh team will be created.
+  with the updated motion and same N and roles. Step 1 creates a fresh team.

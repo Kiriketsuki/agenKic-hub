@@ -18,7 +18,7 @@ calling `Agent`, stop and restart with real agent spawns.
 
 ## Agent Communication Model
 
-| Agent type | How spawned | Has SendMessage? | How results are returned |
+| Agent type | How spawned | Has SendMessage? | How results come back |
 |:---|:---|:---|:---|
 | Debate agents (advocates, critics, questioner, arbiter) | `Agent` with `team_name` | Yes | Broadcast to team via SendMessage |
 | Verifier (Step 5) | `Agent` standalone (no team) | **No** | Final text output → Agent tool return value |
@@ -27,17 +27,17 @@ calling `Agent`, stop and restart with real agent spawns.
 Do not SendMessage to a standalone agent. It cannot receive one, so read the Agent tool's return value instead.
 Do not ask a standalone agent to SendMessage. Tell it to return results as final text output.
 
-If a spawned agent reports "I don't have SendMessage" — that agent's output IS its results.
-Read its response text; do not retry or ask it to send again.
+If a spawned agent reports "I don't have SendMessage", that agent's output IS its results.
+Read its response text. Do not retry or ask it to send again.
 
 ---
 
 ## Context
 
 Convenes an adversarial agent team to debate a motion. N advocate agents argue
-FOR, N-1 (or N, in `--skeptic` mode) critic agents argue AGAINST, one QUESTIONER
-monitors the live debate and probes unsubstantiated claims as they appear (non-blocking),
-and one ARBITER moderates and produces a final recommendation. The team lead
+FOR, and N-1 (or N, in `--skeptic` mode) critic agents argue AGAINST. One QUESTIONER
+monitors the live debate and probes unsubstantiated claims as they appear (non-blocking).
+One ARBITER moderates and produces a final recommendation. The team lead
 (main Claude) presents the recommendation to the user and gates action on approval.
 
 The QUESTIONER does not block the debate. It watches the live thread and fires
@@ -46,7 +46,7 @@ can with ANSWER -- the debate continues without waiting. This is a child asking
 "but why?" at the dinner table: relentless, parallel, and ultimately clarifying.
 
 For CODE motions, all agents independently read the relevant files before the
-debate opens (silent scan phase), ensuring positions are grounded in what the
+debate opens (silent scan phase). This grounds positions in what the
 code actually says rather than what agents assume it says.
 
 Use this skill whenever the user wants to stress-test a decision before acting on it.
@@ -118,7 +118,7 @@ Examples:
 
 ### Step 0 -- Supervisor Delegation
 
-If `--chain-fix` is passed, it implies `--supervised`.
+The `--chain-fix` flag implies `--supervised`.
 
 If `--supervised` or `--chain-fix` is set:
 1. Hand off to `/council-supervisor` with all options passed through
@@ -134,7 +134,7 @@ If neither flag is set, proceed normally to Step 1.
 Determine the motion from the invocation:
 
 **Slash command:** extract `--motion` text or read `--motion-file` contents.
-If neither is provided, ask: "What is the motion to debate?"
+If the user gives neither, ask: "What is the motion to debate?"
 
 **Natural language:** extract the motion from context -- the current file,
 recently written plan, or inline text in the user's message.
@@ -210,7 +210,7 @@ changes, classify it as a CODE motion and collect scan material:
 - If it is ambiguous, ask: "Which files or diff should the council examine?"
 
 Pass `SCAN_TARGETS` and/or `DIFF_CONTEXT` into all agent briefs in Step 3.
-For GENERAL motions, both are empty and the scan section is omitted.
+For GENERAL motions, both are empty, so skip the scan section.
 
 ---
 
@@ -228,7 +228,7 @@ explicit overrides (`--model` and `--model-*` flags). Overrides always win.
 3. **Auto-complexity** (below) fills in any roles not covered by flags.
 
 In other words: `--model opus --model-questioner sonnet` gives opus to advocates,
-critics, and arbiter, but sonnet to the questioner. `--model-arbiter opus` alone
+critics, and arbiter. It gives sonnet to the questioner. `--model-arbiter opus` alone
 only overrides the arbiter -- all other roles fall through to auto-complexity.
 
 #### Complexity classification (when no override covers a role)
@@ -338,9 +338,9 @@ Each agent uses the model assigned in Step 1.5:
 
 #### Role focus map
 
-When `--roles` names are provided, inject the matching focus area into the
+When the user gives `--roles` names, inject the matching focus area into the
 agent brief. Multiple keywords may match -- inject all matching focus areas.
-If a role name is unrecognised, no specific focus is injected (agent argues broadly).
+If a role name matches no known role, inject no specific focus (the agent argues broadly).
 
 | Role name contains | Focus area injected into brief |
 |:---|:---|
@@ -407,7 +407,7 @@ One round = one complete cycle where all advocates AND all critics have
 sent at least one message since the last round boundary.
 
 The arbiter manages its own round count and calls the debate when `ROUNDS`
-is reached. The team lead does not force-call the debate -- only the arbiter does.
+reaches its limit. The team lead does not force-call the debate -- only the arbiter does.
 
 #### Waiting for the arbiter
 

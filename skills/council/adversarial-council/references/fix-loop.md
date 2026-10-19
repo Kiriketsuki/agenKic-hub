@@ -80,7 +80,7 @@ FOR each fix in manifest.fixes:
 
 #### 7.4 -- Simplify Pass
 
-After all fixes are processed and before running the full suite:
+After you process all fixes and before running the full suite:
 
 1. Run `/simplify` on all files changed by the fix loop
    (`git diff --name-only` against the pre-fix-loop HEAD).
@@ -92,7 +92,7 @@ introduced by mechanical fix application.
 
 #### 7.5 -- Full Suite Verification & Auto-Commit
 
-After all fixes are processed and simplified:
+After you process and simplify all fixes:
 
 1. Run the full test suite: `[test_command]`
 2. If all green:
@@ -150,9 +150,9 @@ fix report to the same directory as the manifest:
 - **3-attempt ceiling per fix** -- prevents runaway token burn on edge cases
 - **No re-council** -- if fixes fail, escalate to human. A full council is too expensive
   for verification when targeted tests already prove correctness
-- **Red-first mandatory** -- if the regression test passes before the fix is applied,
-  the test is suspect. Skip, don't proceed with a potentially wrong test
-- **Revert on failure** -- if a fix can't be made green in 3 attempts, revert to avoid
+- **Red-first mandatory** -- if the regression test passes before you apply the fix,
+  the test is suspect. Skip it. Do not proceed with a potentially wrong test
+- **Revert on failure** -- if you cannot make a fix green in 3 attempts, revert to avoid
   leaving the codebase in a broken state
 - **Never force-push or amend** -- all fixes are new commits
 

@@ -133,7 +133,7 @@ prompt: |
 
   For runtime, environment, or external claims that cannot be verified in a file:
   ```
-  CITE: RUNTIME -- [brief description of what cannot be statically verified]
+  CITE: RUNTIME -- [brief description of what static checks cannot confirm]
   ```
 
   Example:
