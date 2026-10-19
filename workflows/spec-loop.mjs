@@ -10,7 +10,8 @@
  *      subTasks[]); then routing assembly: routeFromTable(domain) JS table first → parallel() LLM
  *      fallback (one router per unique unclassified domain) → routeOverrides win-always on top.
  *   P2 Wave plan (PURE JS) — Kahn topo-sort of leaves by deps with a lexicographic key tiebreak,
- *      plus touchPoint-overlap serialization so no two wave-mates share a file. planOnly||!autonomous
+ *      plus touchPoint-overlap serialization so no two wave-mates share a file. Duplicate keys,
+ *      unknown deps and cycles stop the run before any build agent spawns. planOnly||!autonomous
  *      → log the plan and return {plan, resumable:true} WITHOUT spawning any build agent.
  *   P3 per wave — BUILD (parallel worktree agents) → intra-feature sub-task→one-feature-branch merge
  *      (serial agent; only for features whose sub-tasks ran in the SAME wave; no per-sub-task council)
@@ -233,11 +234,36 @@ function uniqueRouterDomains(unclassifiedLeaves) {
  * a wave ever share a touchPoint file, and a dependent leaf is always in a strictly later wave
  * than its dependency. PURE: no agent() calls, no I/O, never mutates the input.
  *
+ * The planner rejects an invalid DAG before it plans any wave: a missing or duplicate leaf key, a
+ * leaf key that also names a different feature, a dependency on an unknown key, or a dependency
+ * cycle. It then returns no waves and lists every problem in `errors`. The old planner kept an
+ * unknown dep and dropped it in the topo-sort, and it appended cycle members as a final wave, so
+ * a bad decomposition still reached the build agents.
+ *
  * @param {Array<{key: string, deps?: string[], touchPoints?: string[], feature?: string}>} leavesIn
- * @returns {{ waves: Array<Array<object>>, collapses: Array<{feature: string, mergedKeys: string[], reason: string}> }}
+ * @returns {{ waves: Array<Array<object>>, collapses: Array<{feature: string, mergedKeys: string[], reason: string}>, errors: string[] }}
  */
 function planWaves(leavesIn) {
   const input = Array.isArray(leavesIn) ? leavesIn : []
+  // ---- 0. Validate keys before any grouping. The Maps below key on leaf.key and would silently
+  // merge two leaves that share a key. ----
+  const keyErrors = []
+  const seenKeys = new Set()
+  const dupKeys = []
+  for (const leaf of input) {
+    const k = leaf && leaf.key
+    if (typeof k !== 'string' || !k) { keyErrors.push('a leaf has no key'); continue }
+    if (seenKeys.has(k)) { if (!dupKeys.includes(k)) dupKeys.push(k) } else seenKeys.add(k)
+  }
+  for (const k of dupKeys) keyErrors.push(`duplicate key ${k}`)
+  // A leaf key that also names a DIFFERENT feature makes a dep on that key ambiguous: it could
+  // mean the leaf or every leaf of the feature.
+  const featureOfLeaf = (l) => ((l.feature !== undefined && l.feature !== null) ? l.feature : l.key)
+  const featureKeySet = new Set(input.filter((l) => l && l.key).map(featureOfLeaf))
+  for (const l of input) {
+    if (l && l.key && featureKeySet.has(l.key) && featureOfLeaf(l) !== l.key) keyErrors.push(`key ${l.key} is a leaf of feature ${featureOfLeaf(l)} and also a feature key`)
+  }
+  if (keyErrors.length) return { waves: [], collapses: [], errors: keyErrors }
   // ---- 1. Collapse same-feature sub-task leaves with overlapping touchPoints (immutably) ----
   const collapses = []
   const byFeature = new Map()
@@ -248,6 +274,7 @@ function planWaves(leavesIn) {
   }
   // Build the working leaf set, collapsing overlapping same-feature groups into one union leaf.
   let leaves = []
+  const collapsedAlias = new Map() // sub-task key -> the collapsed leaf key that now carries it
   for (const [fk, group] of byFeature) {
     if (group.length <= 1) { leaves.push({ ...group[0] }); continue }
     // Does any pair in this feature's sub-tasks overlap on touchPoints? If so, collapse ALL of
@@ -277,6 +304,7 @@ function planWaves(leavesIn) {
       collapsedFrom: group.map((g) => g.key),
     }
     leaves.push(merged)
+    for (const g of group) collapsedAlias.set(g.key, fk)
     collapses.push({ feature: fk, mergedKeys: group.map((g) => g.key), reason: 'overlapping touchPoints among same-feature sub-tasks — collapsed to a single leaf' })
   }
 
@@ -294,16 +322,22 @@ function planWaves(leavesIn) {
     if (!featureToLeafKeys.has(fk)) featureToLeafKeys.set(fk, [])
     featureToLeafKeys.get(fk).push(l.key)
   }
+  const depErrors = []
   leaves = leaves.map((l) => {
     const expanded = []
     for (const d of (l.deps || [])) {
       if (leafKeySet.has(d)) { expanded.push(d); continue }            // already a leaf key — keep
+      if (collapsedAlias.has(d)) {                                      // a sub-task key that collapsed
+        if (collapsedAlias.get(d) !== l.key) expanded.push(collapsedAlias.get(d))
+        continue
+      }
       const subKeys = featureToLeafKeys.get(d)                          // a split feature key?
       if (subKeys && subKeys.length) { for (const sk of subKeys) if (sk !== l.key) expanded.push(sk) }
-      else expanded.push(d)                                            // unknown dep — keep (filtered later)
+      else depErrors.push(`${l.key} depends on unknown key ${d}`)      // unknown dep — reject below
     }
     return { ...l, deps: Array.from(new Set(expanded)) }
   })
+  if (depErrors.length) return { waves: [], collapses, errors: depErrors }
 
   // ---- 2. Kahn topo-sort with lexicographic key tiebreak + touchPoint serialization ----
   const byKey = new Map(leaves.map((l) => [l.key, l]))
@@ -376,15 +410,14 @@ function planWaves(leavesIn) {
     waves.push(wave)
   }
 
-  // Any leaves left unplaced are part of a dependency cycle — append them as a final wave so the
-  // plan is total (the build agents will surface the cycle as a blocker rather than silently drop).
+  // Every pass with a ready leaf places at least one leaf, so a leaf left unplaced sits on a
+  // dependency cycle or depends on one. Reject the plan. A build agent cannot resolve a cycle,
+  // and a final catch-all wave would build leaves before their dependencies.
   if (remaining.size) {
-    const leftover = Array.from(remaining).sort().map((k) => byKey.get(k))
-    waves.push(leftover)
-    for (const l of leftover) doneWave.set(l.key, waves.length - 1)
+    return { waves: [], collapses, errors: [`dependency cycle: ${Array.from(remaining).sort().join(', ')} cannot be scheduled`] }
   }
 
-  return { waves, collapses }
+  return { waves, collapses, errors: [] }
 }
 
 // ── Test sentinel early-out: expose the pure helpers and STOP before any orchestration. ──
@@ -761,6 +794,31 @@ log(`routed ${routedLeaves.length} leaves: ${routedLeaves.map((l) => `${l.key}->
 // ═══════════════════════════════════════════════════════════════════════════════════════════
 phase('Plan')
 planResult = planWaves(routedLeaves)
+// Two features that share a key fold into one feature group before planWaves sees them, so the
+// orchestrator checks feature keys here. planWaves checks leaf keys, deps and cycles.
+const featureKeyCounts = features.reduce((acc, f) => ({ ...acc, [f.key]: (acc[f.key] || 0) + 1 }), {})
+const planErrors = [
+  ...Object.keys(featureKeyCounts).filter((k) => featureKeyCounts[k] > 1).map((k) => `duplicate feature key ${k}`),
+  ...planResult.errors,
+]
+if (planErrors.length) {
+  // An invalid DAG is a decompose defect. A resume replays the same cached decomposition, so this
+  // stop is terminal. Re-run without resumeFromRunId to get a fresh decomposition.
+  log(`wave plan rejected: ${planErrors.join('; ')}`)
+  return {
+    epic: { issue: EPIC.issue, branch: EPIC_BRANCH, title: EPIC.title },
+    features,
+    planErrors,
+    waves: null,
+    waveIdx,
+    builds,
+    councils,
+    epicCouncil,
+    merged: false,
+    resumable: false,
+    reason: `invalid decomposition, no wave was built: ${planErrors.join('; ')}. Re-run without resumeFromRunId so the decompose agent runs again.`,
+  }
+}
 for (const c of planResult.collapses) log(`wave-plan collapse: feature ${c.feature} sub-tasks ${c.mergedKeys.join('+')} — ${c.reason}`)
 const planView = {
   waves: planResult.waves.map((w, i) => ({ wave: i, leaves: w.map((l) => ({ key: l.key, feature: l.feature, agentType: l.agentType, model: l.model, touchPoints: l.touchPoints })) })),

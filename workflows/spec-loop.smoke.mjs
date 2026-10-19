@@ -345,6 +345,57 @@ async function main() {
       'a whole feature F depending on a SPLIT feature G is ordered after both G.1 and G.2')
   }
 
+  // (j) invalid DAGs are rejected with errors and no waves, before any build could run.
+  console.log('\nplanWaves() invalid-input assertions:')
+  {
+    const ok = planWaves([{ key: 'A', deps: [], touchPoints: ['a.ts'] }])
+    assert(Array.isArray(ok.errors) && ok.errors.length === 0, 'a valid plan reports an empty errors list')
+  }
+  {
+    const r = planWaves([
+      { key: 'A', deps: [], touchPoints: ['a.ts'] },
+      { key: 'A', deps: [], touchPoints: ['b.ts'] },
+    ])
+    assert(r.waves.length === 0 && r.errors.some((e) => /duplicate key A/.test(e)), 'duplicate leaf keys are rejected with no waves')
+  }
+  {
+    const r = planWaves([{ key: 'A', deps: ['ZZZ'], touchPoints: ['a.ts'] }])
+    assert(r.waves.length === 0 && r.errors.some((e) => /unknown key ZZZ/.test(e)), 'a dependency on an unknown key is rejected with no waves')
+  }
+  {
+    const r = planWaves([
+      { key: 'A', deps: ['B'], touchPoints: ['a.ts'] },
+      { key: 'B', deps: ['A'], touchPoints: ['b.ts'] },
+      { key: 'C', deps: [], touchPoints: ['c.ts'] },
+    ])
+    assert(r.waves.length === 0 && r.errors.some((e) => /cycle/.test(e) && /A/.test(e) && /B/.test(e)), 'a dependency cycle is rejected with no waves')
+  }
+  {
+    const r = planWaves([{ key: 'A', deps: ['A'], touchPoints: ['a.ts'] }])
+    assert(r.waves.length === 0 && r.errors.some((e) => /cycle/.test(e)), 'a self-dependency is rejected as a cycle')
+  }
+  {
+    const r = planWaves([
+      { key: 'G', feature: 'F', deps: [], touchPoints: ['f.ts'] },
+      { key: 'G.1', feature: 'G', deps: [], touchPoints: ['g.ts'] },
+    ])
+    assert(r.waves.length === 0 && r.errors.some((e) => /also a feature key/.test(e)), 'a leaf key that names a different feature is rejected')
+  }
+  {
+    const leaves = [
+      { key: 'F.1', feature: 'F', deps: [], touchPoints: ['shared.ts'] },
+      { key: 'F.2', feature: 'F', deps: [], touchPoints: ['shared.ts'] },
+      { key: 'H', deps: ['F.2'], touchPoints: ['h.ts'] },
+    ]
+    const r = planWaves(leaves)
+    const waveOf = (k) => r.waves.findIndex((w) => w.some((l) => l.key === k))
+    assert(r.errors.length === 0 && waveOf('H') > waveOf('F'), 'a dep on a collapsed sub-task key follows the collapsed leaf')
+  }
+  {
+    const bad = [{ key: 'A', deps: ['B'], touchPoints: [] }, { key: 'B', deps: ['A'], touchPoints: [] }]
+    assert(JSON.stringify(planWaves(bad)) === JSON.stringify(planWaves(bad)), 'invalid-input errors are deterministic across runs')
+  }
+
   console.log(`\n${checks} checks, ${failures} failed`)
   process.exit(failures === 0 ? 0 : 1)
 }
