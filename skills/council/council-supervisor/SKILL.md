@@ -5,7 +5,7 @@ description: "Wraps the full adversarial-council debate with a supervisor layer:
 
 ## Context
 
-This skill runs the full adversarial-council debate itself — it does NOT delegate to
+This skill runs the full adversarial-council debate itself. It does not delegate to
 `/adversarial-council` as a subprocess. It spawns all agents directly via TeamCreate,
 manages the multi-round exchange, and adds a supervisor layer for liveness monitoring,
 stall recovery, and structured output.
@@ -80,7 +80,7 @@ Auto-complexity table:
 | Questioner | haiku  | haiku  | haiku |
 | Verifier   | sonnet | sonnet | sonnet|
 
-`--model` does NOT cascade to questioner. Report assignments to user before proceeding.
+`--model` does not cascade to the questioner. Report assignments to user before proceeding.
 
 ---
 
@@ -137,8 +137,10 @@ Auto-complexity table:
 Spawn all agents simultaneously via the Agent tool. All use
 `subagent_type: general-purpose` and `team_name: [team from Step 2]`.
 
-Use the same prompt templates as adversarial-council (advocate, critic, questioner,
-arbiter). The prompts are identical -- the supervisor layer is external to the agents.
+Use the same prompt templates as adversarial-council. They live in
+`../adversarial-council/references/roles/` (`advocate.md`, `critic.md`,
+`questioner.md`, `arbiter.md`). Insert `../adversarial-council/references/evidence-protocol.md`
+into the advocate and critic prompts. The prompts are identical -- the supervisor layer is external to the agents.
 
 Key prompt fields per role:
 - Motion, role designation, team roster
@@ -220,12 +222,12 @@ adversarial-council):
 2. ARBITER synthesizes into a recommendation: FOR / AGAINST / CONDITIONAL with findings.
 3. A separate verifier agent (sonnet) reads all cited file:line references and confirms
    each finding matches the actual source. Findings that don't verify are marked phantom.
-   **The verifier is a standalone Agent (no team_name) — it does NOT have SendMessage.**
-   Do NOT use SendMessage to communicate with it. Read its results from the Agent tool
-   return value. The verifier prompt MUST include:
+   **The verifier is a standalone Agent (no team_name). It has no SendMessage.**
+   Do not use SendMessage to communicate with it, because it cannot receive one. Read its results from the Agent tool
+   return value. The verifier prompt must include:
    ```
    ## Output
-   You are a standalone agent. You do NOT have SendMessage -- do not attempt to use it.
+   You are a standalone agent. You have no SendMessage, so do not try to use it.
    Return your results as your final text output. The caller reads your response directly.
    ```
 4. Parse the recommendation into structured data.

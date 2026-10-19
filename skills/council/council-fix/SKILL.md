@@ -53,7 +53,7 @@ Determine what to review:
 
 ### Step 2 -- Invoke the Pipeline
 
-**HARD REQUIREMENT**: Invoke the adversarial-council skill via the `Skill` tool — do NOT run the debate inline as text. The skill will call `TeamCreate` and spawn real agents. If you write ADVOCATE/CRITIC/ARBITER sections yourself without calling `Skill`, you are doing it wrong. Stop and invoke the skill.
+Invoke the adversarial-council skill through the `Skill` tool. The skill calls `TeamCreate` and spawns real agents. An inline text debate has no independent reasoning, so it defeats the council. If you catch yourself writing ADVOCATE, CRITIC or ARBITER sections yourself, stop and invoke the skill.
 
 Invoke `/adversarial-council` with these defaults:
 
