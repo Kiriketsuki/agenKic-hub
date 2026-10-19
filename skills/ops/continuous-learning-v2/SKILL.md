@@ -22,28 +22,6 @@ An advanced learning system that turns your Claude Code sessions into reusable k
 - Managing project-scoped vs global instincts
 - Promoting instincts from project to global scope
 
-## What's New in v2.1
-
-| Feature | v2.0 | v2.1 |
-|---------|------|------|
-| Storage | Global (~/.claude/homunculus/) | Project-scoped (projects/<hash>/) |
-| Scope | All instincts apply everywhere | Project-scoped + global |
-| Detection | None | git remote URL / repo path |
-| Promotion | N/A | Project → global when seen in 2+ projects |
-| Commands | 4 (status/evolve/export/import) | 6 (+promote/projects) |
-| Cross-project | Contamination risk | Isolated by default |
-
-## What's New in v2 (vs v1)
-
-| Feature | v1 | v2 |
-|---------|----|----|
-| Observation | Stop hook (session end) | PreToolUse/PostToolUse (100% reliable) |
-| Analysis | Main context | Background agent (Haiku) |
-| Granularity | Full skills | Atomic "instincts" |
-| Confidence | None | 0.3-0.9 weighted |
-| Evolution | Direct to skill | Instincts -> cluster -> skill/command/agent |
-| Sharing | None | Export/import instincts |
-
 ## The Instinct Model
 
 An instinct is a small learned behavior:
