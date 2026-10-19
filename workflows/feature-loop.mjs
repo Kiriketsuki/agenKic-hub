@@ -202,6 +202,16 @@ async function tryAgent(prompt, opts, retries = 2) {
 const FLOOR = (F.minBudget !== undefined && F.minBudget !== null) ? F.minBudget : 80000
 const lowBudget = () => (typeof budget !== 'undefined' && budget && budget.total && typeof budget.remaining === 'function' && budget.remaining() < FLOOR)
 
+// BRANCH PIN. The same rule as council-loop.mjs, duplicated because workflow scripts cannot import
+// each other. The shared checkout serves many agents, and a previous agent can leave it on main or
+// on another branch. This workflow passes merge:true to council-loop, so an implement agent that
+// commits on the wrong branch can land unreviewed work on the parent. Every agent that writes to
+// the tree checks the branch first.
+const PARENT_BRANCH = PARENT.replace(/^origin\//, '')
+const branchPin = () => F.branch
+  ? `\nBRANCH PIN (critical): all work for this feature happens ON BRANCH ${F.branch}. FIRST run \`git rev-parse --abbrev-ref HEAD\`; if the checkout is not on ${F.branch}, run \`git checkout ${F.branch}\` (then \`git pull --ff-only origin ${F.branch}\` if it has an upstream) BEFORE doing anything else. If the working tree is dirty with ANOTHER branch's work, STOP and report it instead of checking out over it. NEVER run \`git commit\` or \`git push\` while on ${PARENT_BRANCH} or main, and NEVER push to ${PARENT_BRANCH} or main — the ONLY branch you may push is ${F.branch}.`
+  : `\nBRANCH PIN (critical, reduced — no target branch was given): FIRST run \`git rev-parse --abbrev-ref HEAD\`. If the checkout is on ${PARENT_BRANCH} or main, STOP and report — NEVER commit or push there. Work only on the branch already checked out, and never push any ref you did not verify by name.`
+
 // --- hard scope guard: the #1 lesson — do NOT let one feature become the whole spec ---
 const SCOPE = `SCOPE GUARD (critical): implement ONLY feature ${F.key} — spec tasks ${F.scopeTasks}. Do NOT build other features. If the work seems to require another feature's code, treat that as an already-merged dependency in ${PARENT} (read it, build on it) — do NOT re-implement it. If a genuine gap blocks you, STOP and report it as a blocker rather than expanding scope.`
 
@@ -241,6 +251,9 @@ Briefing: ${F.briefing}
 ${SCOPE}
 Read ${SPEC} (relevant tasks + technical plan + acceptance scenarios) and the current code for the touch points. Surface the 2-4 genuinely consequential design decisions for THIS feature (library/version, data flow, contract shape, error/edge handling). For each give 2-3 options with honest trade-offs and a recommended default. Do NOT write code.`,
   { label: `brainstorm:${F.key}`, phase: 'Brainstorm', model: 'opus', schema: QUESTIONS_SCHEMA })
+// agent() resolves to null when a subagent dies. Each later prompt embeds the earlier result, so a
+// null here would hand the next stage the literal text "null" as its input.
+if (!questions) return RESUMABLE('brainstorm agent returned no result')
 
 decisions = await tryAgent(
 `Decide each design question below for feature ${F.key}: ${F.title} (${NAME}). Use WebSearch/WebFetch to confirm CURRENT best practice and exact API/version usage for any library or platform involved. Prefer battle-tested defaults; respect the spec's locked decisions. Cite sources you used; note residual risks.
@@ -248,6 +261,7 @@ Questions:
 ${JSON.stringify(questions, null, 2)}
 Do NOT write code — decisions only.`,
   { label: `answer:${F.key}`, phase: 'Brainstorm', model: 'opus', schema: DECISIONS_SCHEMA })
+if (!decisions) return RESUMABLE('decision agent returned no result')
 
 // ---------------- Phase 2: Spec (feature spec from decisions) ----------------
 phase('Spec')
@@ -257,6 +271,7 @@ Decisions:
 ${JSON.stringify(decisions, null, 2)}
 Output: acceptance criteria (testable), touch points (files/modules to change or add), a test plan (unit/integration/e2e as appropriate), and an explicit out-of-scope list. Do NOT write code.`,
   { label: `spec:${F.key}`, phase: 'Spec', model: 'opus', schema: SPEC_SCHEMA })
+if (!spec) return RESUMABLE('spec agent returned no result')
 
 // ---------------- Phase 3: Implement ----------------
 phase('Implement')
@@ -267,10 +282,17 @@ ${SCOPE}
 Briefing: ${F.briefing}${ENV}
 Approved decisions: ${JSON.stringify(decisions)}
 Feature spec: ${JSON.stringify(spec)}
-Steps: (1) read ${SPEC} + the touch-point files; build on existing code. (2) Implement working code — no stubs/TODOs; cover the acceptance criteria. (3) Run \`${BUILD}\` and fix every error. ${F.liveValidate ? '(4) Apply/validate against the real backend (see Validate phase note).' : ''}
+Steps: (1) read ${SPEC} + the touch-point files; build on existing code. (2) Implement working code — no stubs/TODOs; cover the acceptance criteria. (3) Run \`${BUILD}\` and fix every error. ${F.liveValidate ? '(4) Apply/validate against the real backend (see Validate phase note).' : ''}${branchPin()}
 ${RULES}
 Report what you changed and confirm you stayed in scope.`,
   { label: `impl:${F.key}`, phase: 'Implement', model: MODEL, agentType: AGENT, schema: IMPL_SCHEMA })
+// Implement gate. council-loop runs with merge:true, so a failed implement must stop here. A null
+// result, a failed build, a scope breach, or a reported blocker all return RESUMABLE before any
+// review or merge stage runs.
+if (!impl) return RESUMABLE('implement agent returned no result')
+if (impl.buildPassed !== true || impl.scopeKept === false || (Array.isArray(impl.blockers) && impl.blockers.length)) {
+  return RESUMABLE(`implement did not pass (buildPassed=${impl.buildPassed} scopeKept=${impl.scopeKept} blockers=${(impl.blockers || []).length}: ${(impl.blockers || []).join('; ').slice(0, 200)})`)
+}
 
 // ---------------- Phase 4: Validate (optional, real backend) — the lesson: unit tests aren't enough ----------------
 if (F.liveValidate) {
@@ -280,12 +302,16 @@ if (F.liveValidate) {
 `Validate feature ${F.key} against a REAL running backend (not mocks). ${F.envNote ? 'Env: ' + F.envNote : ''}
 Prove each behavior below by actually exercising it; fix defects you find (code/SQL/config), then re-run.
 ${F.liveValidate}
-If you fixed anything, commit it with a semantic message (e.g. \`fix: live-validation fixes for ${F.key}\`) and push to update the PR. Do NOT merge.
+If you fixed anything, commit it with a semantic message (e.g. \`fix: live-validation fixes for ${F.key}\`) and push to update the PR with a plain \`git push\`. NEVER force-push. Do NOT merge.${branchPin()}
 Report pass/fail per check, files fixed, residual risk.`,
     { label: `validate:${F.key}`, phase: 'Validate', model: F.model || 'sonnet', agentType: AGENT, schema: VALIDATE_SCHEMA })
   // agent() returns null (not a throw) when the subagent dies terminally (e.g. session limit
   // mid-run) — treat as resumable, NOT as a passed validation.
   if (!validate) return RESUMABLE('live-validate agent died (limit/terminal error) — resume to re-run validate')
+  // A failed live check is a failed stage. Passing it on would let the council merge behavior
+  // that the real backend just disproved.
+  const failedChecks = (validate.checks || []).filter((c) => c && c.result === 'fail')
+  if (failedChecks.length) return RESUMABLE(`live-validate reported ${failedChecks.length} failing check(s): ${failedChecks.map((c) => c.check).join('; ').slice(0, 200)}`)
 }
 
 // ---------------- Phase 5: Review gate (review: 'council' | 'budget' | 'none') ----------------
@@ -312,9 +338,10 @@ Report BLOCKERS only: correctness, security, or data-loss defects that must be f
     if (lowBudget()) return RESUMABLE('turn token budget nearly exhausted before budget fix round')
     fix = await tryAgent(
 `Fix ONLY these blocking review findings for feature ${F.key} on branch ${F.branch} — nothing else (non-blockers are informational and must NOT be applied):
-${JSON.stringify(blockers, null, 2)}
+${JSON.stringify(blockers, null, 2)}${branchPin()}
 ${RULES}`,
       { label: `fix:${F.key}`, phase: 'Council', model: MODEL, agentType: AGENT, schema: IMPL_SCHEMA })
+    if (!fix) return RESUMABLE('budget fix agent returned no result')
     recheck = await tryAgent(
 `Verify each blocker below is actually fixed on branch ${F.branch}: read the code at the cited locations and run \`${BUILD}\` and \`${TEST}\`. Do NOT re-review the whole feature — check only these findings.
 ${JSON.stringify(blockers, null, 2)}`,

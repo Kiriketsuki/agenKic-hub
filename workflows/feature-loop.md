@@ -5,10 +5,14 @@ Lives in `~/.claude/workflows/` so it's reusable across repos.
 
 | Part | Runs in | Does | Why it lives there |
 |---|---|---|---|
-| **`feature-loop.mjs`** | background **Workflow** | per-feature: brainstorm → spec → implement → (live-validate) → council-to-FOR → verify | heavy multi-agent work; keeps the main-loop context lean |
-| **Driver** (this doc) | **main loop** (you/Claude) | scaffold issues+branches, checkout/rebase, commit, PR, **squash-merge**, version-bump wait, finalize | a background workflow *cannot* answer the merge-approval hook, can't reliably poll an async issue→branch automation, and runs under a `gh` account that can flip |
+| **`feature-loop.mjs`** | background **Workflow** | per-feature: brainstorm → spec → implement (commit + push) → (live-validate) → council-to-FOR (commit + push per fix round) → verify → **squash-merge** (default `merge: true`) | heavy multi-agent work. It keeps the main-loop context lean |
+| **Driver** (this doc) | **main loop** (you/Claude) | scaffold issues+branches, checkout/rebase, PR, version-bump wait, finalize. Squash-merge only when you pass `merge: false` | it can poll an async issue→branch automation, and it asserts the `gh` account, which can flip between sessions |
 
-> Don't try to make the Workflow do `gh pr merge`/issue creation — it will stall or fail. That's the driver's job.
+> The workflow does git. Each phase commits and pushes to the feature branch. council-loop
+> squash-merges when the council converges and the verify gate passes. The gate needs build pass,
+> tests pass, and `mergeable: true`. Every `gh pr merge` asks the user: the hook returns an `ask` decision and the
+> settings carry an `ask` rule, so an unattended run waits at the merge. Pass `merge: false` to stop
+> at a verified convergence and merge from the driver. Issue creation stays the driver's job.
 
 Invoke the workflow per feature by **absolute scriptPath** — the name registry does NOT resolve
 `~/.claude/workflows/*.mjs` (only built-ins like deep-research / code-review), so `{ name: ... }`
@@ -58,8 +62,12 @@ Workflow({
 }
 ```
 
-The workflow **does no git** and returns `{ converged, council.finalVerdict, impl, spec, verify, ... }`.
-Merge only when `converged === true`.
+The workflow **does git**. Every agent that writes to the tree checks out the feature branch first
+(branch pin), commits semantically, and pushes with a plain `git push`. It never force-pushes. The
+run stops `resumable` before the council when implement fails (no result, build failed, scope
+breached, or blockers reported). It returns `{ converged, merged, council, impl, spec, ... }`.
+`converged` is true only when the council converged AND the verify gate passed. With
+`merge: false`, merge from the driver only when `converged === true`.
 
 ---
 
@@ -94,12 +102,14 @@ Process features in **dependency order**. For each:
 
 ```bash
 git fetch -q origin && git checkout <feature-branch> && git rebase origin/$EPICSLUG
+git push --force-with-lease origin <feature-branch>   # publish the rebase BEFORE the run
 ```
+The workflow pushes with a plain `git push` and stops on a rejection, so the driver publishes its
+own rebase first.
 Run `Workflow({ scriptPath:"/absolute/path/to/.claude/workflows/feature-loop.mjs", args:{ ...<FEATURE>, workflowsDir:"/absolute/path/to/.claude/workflows" } })` and **wait for the completion notification**.
-Read the result. If `converged`:
+Read the result. With the default `merge: true`, `merged` says whether council-loop landed the PR.
+If you ran with `merge: false` and the result is `converged`:
 ```bash
-git add -A && git commit -m "feat(<scope>): <feature> (#<issue>)"
-git push --force-with-lease origin HEAD               # force-with-lease: you rebased
 gh pr create -R $R --base $EPICSLUG --head <feature-branch> --title "feat: ..." --body "..."
 gh pr checks <pr> -R $R                                # wait for required checks
 gh pr merge <pr> -R $R --squash --delete-branch        # approval hook prompts — you approve
@@ -152,10 +162,10 @@ Workflow({
 ```
 
 The journal replays every completed `agent()` call from cache (~0 tokens); only the unfinished phase
-re-runs live. Git **is** the checkpoint — every commit/push/promote/merge prompt is idempotent
-(tolerates "nothing to commit", pushes with a plain `git push` that stops on a rejection, and checks
-"already merged / already on branch" before acting), so a re-run of the interrupted agent never
-double-commits or double-merges. No workflow prompt force-pushes or runs `git reset --hard`.
+re-runs live. Git **is** the checkpoint. Every commit, push, promote and merge prompt is idempotent.
+It accepts "nothing to commit", pushes with a plain `git push` that stops on a rejection, and checks
+"already merged" or "already on branch" before it acts. A re-run of the interrupted agent therefore
+never commits or merges twice. No workflow prompt force-pushes or runs `git reset --hard`.
 Resume in a **fresh turn** so the token budget has reset.
 
 > A `resumable: true` result is NOT a failure — it means "paused at a safe point." A terminal result
