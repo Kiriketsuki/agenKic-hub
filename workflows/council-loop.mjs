@@ -16,8 +16,9 @@
  *      conventional-commit message, then pushes to update the PR — so the branch carries a
  *      readable per-round history. On an unconditional FOR it optionally squash-merges into
  *      the parent (set `merge: true`); otherwise it leaves the converged, pushed branch for
- *      the caller (the driver or feature-loop) to merge. The gh-pr-merge approval hook still
- *      applies — allow/approve `gh pr merge --squash` for an unattended merge.
+ *      the caller (the driver or feature-loop) to merge. Every `gh pr merge` asks the user:
+ *      the gh-check-before-create hook returns an ask decision and the settings carry an ask
+ *      rule. An allow rule does not override an ask, so a run waits at the merge for approval.
  *
  * Invoke (from the driver, or nested via workflow()) BY ABSOLUTE scriptPath — the name registry
  * does NOT resolve ~/.claude/workflows/*.mjs (only built-ins), so `{ name: "council-loop" }` errors.
@@ -35,7 +36,8 @@
  *   liveValidate,                             // optional: instructions to prove behavior on a REAL backend
  *   envNote,                                  // optional: env/setup note
  *   agentType,                                // fix-agent routing (default "Senior Developer")
- *   merge,                                    // optional: true to squash-merge into parentRef on an unconditional FOR (default false)
+ *   merge,                                    // optional: true to squash-merge into parentRef on an unconditional FOR that also passes the verify gate (default false)
+ *   allowNoTests,                             // optional: true lets a verify that reports tests "none" pass the merge gate (default false)
  *   extraRules,                               // optional: project-specific rules appended
  *   council: {                                // ---- flexible tuning (all optional) ----
  *     advocates,         // default 1
@@ -75,6 +77,9 @@ const PRREF = T.pr ? ` (PR ${T.pr})` : (T.branch ? ` (branch ${T.branch})` : '')
 const TITLE = A.title || 'the changes on this branch'
 const AGENT = A.agentType || 'Senior Developer'
 const MERGE = A.merge === true
+// A project with no test script reports tests "none". That only passes the merge gate when the
+// caller opts in. Otherwise a missing test suite reads the same as a green one.
+const ALLOW_NO_TESTS = A.allowNoTests === true
 
 // council knobs — defaults: 1v1, no questioner, 2 debate rounds, bounded at 10 councils, unconditional FOR + zero findings
 const C = Object.assign(
@@ -94,8 +99,10 @@ for (const role of Object.keys(M)) {
 // fan-out. Per workflow-model-tiering they never run below opus. An override map that
 // demotes them (the usual mistake: fixPlan classed as fan-out) is clamped back up.
 // The clamp reads the whole chain, so a chain that names no top tier falls back to opus.
+// Fable is not kept. The account cannot serve it (spend limit, 2026-09-09), and a dead model
+// returns an empty result that reads as a success, so a fallback chain does not rescue it.
 for (const role of ['arbiter', 'fixPlan', 'fixReview']) {
-  const kept = M[role].filter(m => m === 'opus' || m === 'fable')
+  const kept = M[role].filter(m => m === 'opus')
   M[role] = kept.length ? kept : ['opus']
 }
 // per-role reasoning effort. Bounds spend on the opus roles.
@@ -182,7 +189,7 @@ const PARENT_BRANCH = PARENT.replace(/^origin\//, '')
 const branchPin = () => T.branch
   ? `\nBRANCH PIN (critical): all work for this council happens ON BRANCH ${T.branch}. FIRST run \`git rev-parse --abbrev-ref HEAD\`; if the checkout is not on ${T.branch}, run \`git checkout ${T.branch}\` (then \`git pull --ff-only origin ${T.branch}\` if it has an upstream) BEFORE doing anything else. If the working tree is dirty with ANOTHER branch's work, STOP and report it instead of checking out over it. NEVER run \`git commit\` or \`git push\` while on ${PARENT_BRANCH} or main, and NEVER push to ${PARENT_BRANCH} or main — the ONLY branch you may push is ${T.branch}.`
   : `\nBRANCH PIN (critical, reduced — no target branch was resolved): FIRST run \`git rev-parse --abbrev-ref HEAD\`. If the checkout is on ${PARENT_BRANCH} or main, STOP and report — NEVER commit or push there. Work only on the branch already checked out, and never push any ref you did not verify by name.`
-const COMMIT = (n) => `When the fixes build clean, commit them SEMANTICALLY: one conventional commit per logical fix (or per tightly related group), never one opaque "round ${n} fixes" blob. Each subject is \`<type>(<scope>): <what changed>\` and each body states (a) the council finding it addresses and (b) why the fix matters (the failure it prevents). STE form: short sentences, no em-dash, no semicolon, no contraction. Then push${T.branch ? ` with \`git push origin ${T.branch}\`` : ' to update the PR'}${PRREF}. Before committing, re-verify \`git rev-parse --abbrev-ref HEAD\`${T.branch ? ` prints ${T.branch}` : ' is the PR branch'} — if not, STOP and report. If there is nothing to commit (the work was already committed on a prior attempt), do NOT error — skip the commit and just ensure the branch is pushed${T.branch ? ` (\`git push --force-with-lease origin ${T.branch}\`)` : ' (plain \`git push\` of the verified current branch only — NEVER force-push an unresolved ref)'}. AFTER pushing, VERIFY the push landed: \`git ls-remote origin ${T.branch || '<branch>'}\` must print the same SHA as \`git rev-parse HEAD\`; report pushed:true/false accordingly. Do NOT squash, rebase, or merge — just commit + push this round's work.`
+const COMMIT = (n) => `When the fixes build clean, commit them SEMANTICALLY: one conventional commit per logical fix (or per tightly related group), never one opaque "round ${n} fixes" blob. Each subject is \`<type>(<scope>): <what changed>\` and each body states (a) the council finding it addresses and (b) why the fix matters (the failure it prevents). STE form: short sentences, no em-dash, no semicolon, no contraction. Then push${T.branch ? ` with \`git push origin ${T.branch}\`` : ' to update the PR'}${PRREF}. Before committing, re-verify \`git rev-parse --abbrev-ref HEAD\`${T.branch ? ` prints ${T.branch}` : ' is the PR branch'} — if not, STOP and report. If there is nothing to commit (the work was already committed on a prior attempt), do NOT error — skip the commit and just ensure the branch is pushed${T.branch ? ` with a plain \`git push origin ${T.branch}\`` : ' with a plain \`git push origin <the verified current branch>\`'}. NEVER force-push. If the remote rejects the push (non-fast-forward or any other error), STOP: do not force, do not pull, do not rebase. Report pushed:false with the rejection text in notes. AFTER pushing, VERIFY the push landed: \`git ls-remote origin ${T.branch || '<branch>'}\` must print the same SHA as \`git rev-parse HEAD\`; report pushed:true/false accordingly. Do NOT squash, rebase, or merge — just commit + push this round's work.`
 
 const SCOPENOTE = A.scope ? `\nReview scope: ${A.scope}` : ''
 // Council review follow-up (2026-07-30): ENV was defined but never injected — envNote silently
@@ -211,9 +218,12 @@ const review = () => T.branch
 // intends to demote (council review F2, 2026-07-30: a free-form "minor" landed in blocking,
 // which the convergence test then discarded).
 const VERDICT_SCHEMA = { type: 'object', additionalProperties: false, required: ['verdict', 'unconditional', 'rationale'], properties: { verdict: { type: 'string', enum: ['FOR', 'AGAINST', 'CONDITIONAL'] }, unconditional: { type: 'boolean' }, conditions: { type: 'array', items: { type: 'string' } }, findings: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['description', 'severity'], properties: { description: { type: 'string' }, file: { type: 'string' }, line: { type: 'integer' }, severity: { type: 'string', enum: ['critical', 'high', 'medium', 'low', 'cosmetic'] }, fix: { type: 'string' } } } }, followUps: { type: 'array', items: { type: 'string' } }, rationale: { type: 'string' } } }
-const FIX_SCHEMA = { type: 'object', additionalProperties: false, required: ['applied', 'buildPassed'], properties: { applied: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['item'], properties: { item: { type: 'string' }, file: { type: 'string' }, change: { type: 'string' } } } }, buildPassed: { type: 'boolean' }, pushed: { type: 'boolean' }, notes: { type: 'string' } } }
+// `pushed` is required. An optional flag that the model omits reads as undefined, and the
+// stop check below must not depend on the model remembering to send it. `tests` and `testTail`
+// carry the fix round's test evidence to the next arbiter.
+const FIX_SCHEMA = { type: 'object', additionalProperties: false, required: ['applied', 'buildPassed', 'pushed', 'tests', 'testTail'], properties: { applied: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['item'], properties: { item: { type: 'string' }, file: { type: 'string' }, change: { type: 'string' } } } }, buildPassed: { type: 'boolean' }, pushed: { type: 'boolean' }, tests: { type: 'string', enum: ['pass', 'fail', 'none'] }, testTail: { type: 'string' }, notes: { type: 'string' } } }
 const FIXREVIEW_SCHEMA = { type: 'object', additionalProperties: false, required: ['ok'], properties: { ok: { type: 'boolean' }, issues: { type: 'array', items: { type: 'string' } }, notes: { type: 'string' } } }
-const VERIFY_SCHEMA ={ type: 'object', additionalProperties: false, required: ['build', 'mergeable'], properties: { build: { type: 'string', enum: ['pass', 'fail'] }, tests: { type: 'string', enum: ['pass', 'fail', 'none'] }, output: { type: 'string' }, mergeable: { type: 'boolean' } } }
+const VERIFY_SCHEMA ={ type: 'object', additionalProperties: false, required: ['build', 'tests', 'mergeable'], properties: { build: { type: 'string', enum: ['pass', 'fail'] }, tests: { type: 'string', enum: ['pass', 'fail', 'none'] }, output: { type: 'string' }, mergeable: { type: 'boolean' } } }
 const MERGE_SCHEMA = { type: 'object', additionalProperties: false, required: ['merged'], properties: { merged: { type: 'boolean' }, blocked: { type: 'boolean' }, output: { type: 'string' } } }
 
 const isCosmetic = (sev) => /^(low|cosmetic|nit|info|trivial)/i.test(sev || '')
@@ -238,12 +248,18 @@ if (!T.branch && T.pr) {
   }
 }
 
-const advNames = Array.from({ length: C.advocates }, (_, i) => `ADVOCATE${C.advocates > 1 ? i + 1 : ''}`)
-const critNames = Array.from({ length: C.critics }, (_, i) => `CRITIC${C.critics > 1 ? i + 1 : ''}`)
+// Every lens carries a numbered role name. The arbiter input labels each block with it, so the
+// arbiter knows which side wrote what and a failed lens cannot shift the numbers of the others.
+const advNames = Array.from({ length: C.advocates }, (_, i) => `ADVOCATE-${i + 1}`)
+const critNames = Array.from({ length: C.critics }, (_, i) => `CRITIC-${i + 1}`)
+const roleNames = [...advNames, ...critNames, ...(C.questioner ? ['QUESTIONER'] : [])]
+// A lens that returns only whitespace did no review. It counts the same as a null lens.
+const hasText = (s) => typeof s === 'string' && s.trim().length > 0
 let verdict = null, pending = null, iter = 0, stalled = false, converged = false
 let sweeps = 0                         // non-blocker sweeps already spent (bounded by C.nonBlockerSweeps)
-let stopReason = null                  // 'budget' | 'limit' | 'review-incomplete' | 'fix-failed' → resumable stop (never merges)
+let stopReason = null                  // 'budget' | 'limit' | 'review-incomplete' | 'fix-plan-null' | 'fix-failed' | 'fix-review-null' | 'fix-review-empty' → resumable stop (never merges)
 let lastBlocking = []                  // blocking findings from the most recent judged round (surfaced top-level)
+let lastFixTests = null                // { iter, tests, testTail } from the most recent fix round, shown to the arbiter
 const history = []
 
 try {
@@ -257,25 +273,39 @@ for (iter = 1; iter <= C.maxLoops; iter++) {
 ${pending.map((b, i) => `${i + 1}. ${b}`).join('\n')}`,
       { label: `fix-plan#${iter}`, phase: 'Council', model: M.fixPlan, effort: E.fixPlan })
     if (limitHit) { stopReason = 'limit'; break }
+    // agent() resolves to null when the subagent dies. A fix agent with no plan used to run
+    // anyway. On 2026-09-09 two fix-plan agents died this way and the loop pushed four commits
+    // with no plan behind them. A null or blank plan stops the run.
+    if (typeof plan !== 'string' || !plan.trim()) {
+      log(`fix plan round ${iter} returned no plan. Stopping before any fix is applied.`)
+      stopReason = 'fix-plan-null'
+      break
+    }
     const fix = await tryAgent(
-`Apply these council-raised fixes to ${TITLE}${PRREF} as IN-PR updates in the working tree. Follow the plan below. Implement each fully, verify by reading the result, then run \`${BUILD}\`${A.liveValidate ? ' and re-validate the backend if a fix touched it' : ''}.${branchPin()}
+`Apply these council-raised fixes to ${TITLE}${PRREF} as IN-PR updates in the working tree. Follow the plan below. Implement each fully, verify by reading the result, then run \`${BUILD}\`${A.liveValidate ? ' and re-validate the backend if a fix touched it' : ''}. Then run \`${TEST}\` and report tests as pass, fail, or none (no test script), with testTail set to the last 40 lines of the test output. The test result is evidence for the next council round.${branchPin()}
 ${pending.map((b, i) => `${i + 1}. ${b}`).join('\n')}
-${plan ? `\nPLAN (from the planning agent — deviate only with a stated reason in notes):\n${plan}\n` : ''}
+
+PLAN (from the planning agent — deviate only with a stated reason in notes):
+${plan}
+
 ${RULES}
 ${COMMIT(iter)}`,
       { label: `fix#${iter}`, phase: 'Council', model: M.fix, effort: E.fix, agentType: AGENT, schema: FIX_SCHEMA })
+    if (limitHit) { stopReason = 'limit'; break }
     // Council review F3 (2026-07-30): the fix result used to be discarded. A build failure or
     // an unlanded push means the next review would re-read IDENTICAL committed code and
     // re-litigate the same findings until maxLoops — a silent budget burn misreported as
     // "did not converge". Stop resumable with the real cause instead.
-    // Ultracode review (2026-08-02): FIX_SCHEMA does not require `pushed`, so a
-    // model that omits it yields undefined, and `undefined === false` let the
-    // unlanded-push arm never fire. In branch mode only an explicit true counts.
-    if (fix && (fix.buildPassed === false || (T.branch && fix.pushed !== true))) {
-      log(`fix round ${iter} did not land (buildPassed=${fix.buildPassed} pushed=${fix.pushed}): ${(fix.notes || '').slice(0, 200)}`)
+    // Every term needs a positive result. A null fix is a dead agent, so it stops too. The old
+    // check started with `fix &&`, which let a null fix fall through to the fix review.
+    if (!fix || fix.buildPassed !== true || (T.branch && fix.pushed !== true)) {
+      log(fix
+        ? `fix round ${iter} did not land (buildPassed=${fix.buildPassed} pushed=${fix.pushed}): ${(fix.notes || '').slice(0, 200)}`
+        : `fix round ${iter} returned no result. Stopping before review.`)
       stopReason = 'fix-failed'
       break
     }
+    lastFixTests = { iter, tests: fix.tests, testTail: String(fix.testTail || '').slice(-2000) }
     // fix review: a cheap pass that checks each pending item actually landed as planned
     // BEFORE the full council re-reviews. On a reject, the issues become the next round's
     // pending and we re-fix (bounded by maxLoops and the budget guard) instead of burning a
@@ -286,7 +316,21 @@ Check ONLY that each item below was fully and correctly implemented (read the co
 ${pending.map((b, i) => `${i + 1}. ${b}`).join('\n')}`,
       { label: `fix-review#${iter}`, phase: 'Council', model: M.fixReview, effort: E.fixReview, schema: FIXREVIEW_SCHEMA })
     if (limitHit) { stopReason = 'limit'; break }
-    if (fr && fr.ok === false && Array.isArray(fr.issues) && fr.issues.length) {
+    // A null fix review never checked the fix. Treating it as a pass let unchecked work reach
+    // the council and the merge.
+    if (!fr) {
+      log(`fix review round ${iter} returned no result. Stopping.`)
+      stopReason = 'fix-review-null'
+      break
+    }
+    if (fr.ok !== true) {
+      // A reject with no issues gives the next fix round nothing to act on. Clearing pending
+      // here used to treat the reject as a pass.
+      if (!Array.isArray(fr.issues) || !fr.issues.length) {
+        log(`fix review round ${iter} rejected the fix but listed no issues. Stopping.`)
+        stopReason = 'fix-review-empty'
+        break
+      }
       log(`fix review round ${iter} rejected ${fr.issues.length} item(s) — re-fixing next round`)
       pending = fr.issues
       continue
@@ -312,8 +356,12 @@ You do NOT argue for or against merging. Probe every claim — from any agent �
   if (limitHit) { stopReason = 'limit'; break }
   // NEVER judge unreviewed code as converged: require every critic to have actually run this round.
   // A limit/blip that silently nulls the critics would otherwise read as "no findings" → spurious merge.
-  if (!critNames.every((_, j) => raw[advNames.length + j] != null)) { stopReason = 'review-incomplete'; break }
-  const sides = raw.filter(Boolean)
+  // An empty or whitespace critic is the same failure, so the check reads the text, not only null.
+  if (!critNames.every((_, j) => hasText(raw[advNames.length + j]))) { stopReason = 'review-incomplete'; break }
+  // Label every block with its role. A failed lens keeps its slot with a placeholder. The old
+  // input dropped nulls and numbered the rest 1..n, so the arbiter could not tell an advocate
+  // from a critic, and one failed lens renumbered every block after it.
+  const sides = roleNames.map((role, i) => `--- ${role} ---\n${hasText(raw[i]) ? raw[i] : '(no output: this lens failed or returned nothing this round)'}`)
 
   // CONVERGENCE TRAP (do not regress): with liveValidate:true the unconditional bar below includes
   // "backend behavior validated live" — UNSATISFIABLE when the change under review precedes its own
@@ -326,8 +374,8 @@ You do NOT argue for or against merging. Probe every claim — from any agent �
   verdict = await tryAgent(
 `You are the ARBITER of an adversarial council on ${TITLE}${PRREF} (${NAME}). Independently verify contested claims by reading the cited code. ${review()}
 "unconditional" = true ONLY if FOR with ZERO blocking conditions/findings: build+tests pass${SPEC ? `, acceptance criteria in ${SPEC} met` : ''}, no security gaps${A.liveValidate ? ', backend behavior validated live' : ''}. Drop findings you cannot verify in code, that are pre-existing/unrelated${C.questioner ? ', or that the QUESTIONER marked UNSUBSTANTIATED' : ''}. Demote LOW/cosmetic nits to in-PR follow-ups (put them in followUps; do NOT block on them). Each blocking finding needs file+line+fix. ${NOISSUE}
-Council positions:
-${sides.map((s, i) => `--- ${i + 1} ---\n${s}`).join('\n\n')}`,
+${lastFixTests ? `Test evidence from fix round ${lastFixTests.iter} (\`${TEST}\`, reported tests=${lastFixTests.tests}). Last lines of the output:\n${lastFixTests.testTail || '(no output reported)'}\n` : ''}Council positions:
+${sides.join('\n\n')}`,
     { label: `arbiter#${iter}`, phase: 'Council', model: M.arbiter, schema: VERDICT_SCHEMA })
 
   // agent() resolves to null (not a throw) on a terminal API error — e.g. a hard session limit
@@ -370,7 +418,9 @@ ${sides.map((s, i) => `--- ${i + 1} ---\n${s}`).join('\n\n')}`,
   // The cap is what stops a "fresh optional nit every round" arbiter from holding the FOR
   // hostage to maxLoops. Blockers are unaffected: they still gate convergence with no cap.
   if (verdictOk && !blocking.length) {
-    if (C.applyNonBlockers && nonBlocking.length && sweeps < C.nonBlockerSweeps) {
+    // Sweep only when another iteration remains. A sweep on the last iteration set pending and
+    // then left the loop, so an unconditional FOR with zero blockers reported "did not converge".
+    if (C.applyNonBlockers && nonBlocking.length && sweeps < C.nonBlockerSweeps && iter < C.maxLoops) {
       sweeps++
       log(`unconditional FOR with ${nonBlocking.length} non-blocker(s) — sweep ${sweeps}/${C.nonBlockerSweeps} applying them in-PR before converging`)
       pending = nonBlocking
@@ -395,14 +445,17 @@ ${sides.map((s, i) => `--- ${i + 1} ---\n${s}`).join('\n\n')}`,
 if (stopReason && !converged) {
   const why = stopReason === 'budget' ? 'turn token budget nearly exhausted'
             : stopReason === 'review-incomplete' ? 'a council reviewer did not complete (likely a limit/blip) — refusing to judge unreviewed code'
-            : stopReason === 'fix-failed' ? 'a fix round did not land (build failed or the push never reached the remote) — re-reviewing identical code would burn rounds for nothing'
+            : stopReason === 'fix-failed' ? 'a fix round did not land (no result, build failed, or the push never reached the remote) — re-reviewing identical code would burn rounds for nothing'
+            : stopReason === 'fix-plan-null' ? 'the fix plan agent returned no plan. No fix runs without a plan'
+            : stopReason === 'fix-review-null' ? 'the fix review agent returned no result. Unchecked fixes do not reach the council'
+            : stopReason === 'fix-review-empty' ? 'the fix review rejected the fix but listed no issues, so the next fix round has nothing to act on'
             : 'hit a usage/rate limit'
   log(`council-loop stopping (resumable): ${why} at round ${iter}`)
   return {
     title: TITLE,
     target: { branch: T.branch, parentRef: PARENT, pr: T.pr },
     council: { config: C, iterations: history.length, stoppedAtRound: iter, history, finalVerdict: verdict },
-    verify: null, merge: null, converged: false, resumable: true,
+    verify: null, verified: false, merge: null, councilConverged: false, converged: false, resumable: true,
     reason: `stopped early — ${why}. Resume after limits/budget reset: Workflow({ scriptPath, args, resumeFromRunId }).`,
     unresolvedBlockers: lastBlocking,
     inPrFollowUps: [],
@@ -412,12 +465,27 @@ if (stopReason && !converged) {
 // ---------------- Phase 2: Verify ----------------
 phase('Verify')
 let verify = null, merge = null
+// The merge gate. Every term needs a positive result. A null verify, a failed build, failing
+// tests, tests "none" without allowNoTests, or a mergeable flag that is not exactly true all
+// block the merge. The old gate read only `mergeable !== false`, so a verify that reported a
+// failed build or failing tests still merged.
+const verifyGate = (v) => {
+  if (!v) return { ok: false, why: 'the verify agent returned no result' }
+  if (v.build !== 'pass') return { ok: false, why: `the build did not pass (build=${v.build})` }
+  if (v.tests === 'none' && !ALLOW_NO_TESTS) return { ok: false, why: 'the verify agent found no tests and allowNoTests is not set' }
+  if (v.tests !== 'pass' && v.tests !== 'none') return { ok: false, why: `the tests did not pass (tests=${v.tests})` }
+  if (v.mergeable !== true) return { ok: false, why: `the verify agent did not report mergeable:true (mergeable=${v.mergeable})` }
+  return { ok: true, why: null }
+}
+let gate = { ok: false, why: 'verify did not run' }
 try {
   verify = await tryAgent(
 `Final verification of ${TITLE}${PRREF} — do NOT change code, only verify and report.${branchPin()}
 1. \`${BUILD}\` (must pass). 2. \`${TEST}\` (report pass/fail+counts; "none" if no test script).${A.liveValidate ? ' 3. Re-run the backend reset/health to confirm it still applies cleanly.' : ''}
 Report concise excerpts + whether mergeable.`,
     { label: 'verify', phase: 'Verify', model: M.verify, schema: VERIFY_SCHEMA })
+  gate = verifyGate(verify)
+  if (!gate.ok) log(`verify gate failed: ${gate.why}`)
 
   // ---------------- Phase 3: Merge (optional — squash-merge on an unconditional FOR) ----------------
   // Ultracode review (2026-08-02): in pure working-tree mode T.branch and T.pr
@@ -426,17 +494,17 @@ Report concise excerpts + whether mergeable.`,
   // merge phase requires a resolved target.
   if (MERGE && converged && !T.branch && !T.pr) {
     log('merge requested but no branch or PR was resolved (working-tree mode). Skipping squash-merge to avoid a bare gh pr merge.')
-  } else if (MERGE && converged && verify && verify.mergeable !== false) {
+  } else if (MERGE && converged && gate.ok) {
     phase('Merge')
     merge = await tryAgent(
 `${TITLE}${PRREF} reached an UNCONDITIONAL FOR and verification passed. Squash-merge it now. Stop and report if any step fails — never force.
 TARGET LOCK (critical): the ONLY thing you may merge is the PR whose head branch is EXACTLY ${T.branch || '(the target branch)'} and whose base is ${PARENT.replace(/^origin\//, '')}. NEVER run \`gh pr view\`, \`gh pr ready\`, or \`gh pr merge\` WITHOUT an explicit PR number or branch argument — a bare call resolves against the checkout's current branch, which may be a DIFFERENT PR (e.g. the epic PR). Before step 3, confirm with \`gh pr view <ref> --json headRefName,baseRefName\` that headRefName is ${T.branch || 'the target branch'}; if it is anything else, report blocked:true and STOP.
 0. IDEMPOTENCY (resume-safe): first run \`gh pr view ${T.pr || T.branch || ''} --json state,mergedAt,headRefName\`. If state is MERGED AND headRefName is ${T.branch || 'the target branch'}, do NOT merge again — report merged:true with that state and stop.
 0b. ENSURE A PR EXISTS: if step 0 reported "no pull requests found" (the branch was pushed by a build agent without opening a PR), create one now targeting the parent: \`gh pr create --base ${PARENT.replace(/^origin\//, '')} --head ${T.branch || ''} --title "<type>(<scope>): <description>" --body "<one-paragraph summary of the change>"\` — the title MUST follow the conventional-commit format (e.g. \`feat(scaffold): ...\`). Then continue with the new PR number.
-1. Make sure the latest work is committed and pushed (the PR should be up to date).
+1. Do NOT commit, push, or edit any file. The fix rounds already committed and pushed the branch. If \`git status --porcelain\` shows uncommitted changes, leave them alone and report them in output.
 2. SELF-HEAL DRAFT STATE (a draft PR is the real merge blocker, not the approval hook): run \`gh pr ready ${T.pr || T.branch || ''} 2>&1 || true\` BEFORE attempting the merge (\`2>&1\` folds stderr into stdout so it is captured, not discarded; the \`|| true\` only guards the exit code). Capture and report the combined output verbatim regardless of exit code (so unexpected output, e.g. a permissions error, is surfaced rather than swallowed). If the PR was already out of draft this is a harmless no-op.
 3. Squash-merge into ${PARENT}: \`gh pr merge ${T.pr || T.branch || ''} --squash --delete-branch\`.
-3b. SYNC THE LOCAL PARENT AFTER A SUCCESSFUL MERGE (critical for stacked runs): the squash-merge happened on GitHub only, so the LOCAL ${PARENT.replace(/^origin\//, '')} branch is now stale — any later worktree branched from it will carry pre-squash lineage and its PR will hit a phantom merge conflict against the squashed parent. Run \`git fetch origin\` then update the local branch: if it is not checked out anywhere, \`git branch -f ${PARENT.replace(/^origin\//, '')} origin/${PARENT.replace(/^origin\//, '')}\`; if it IS the current checkout, \`git reset --hard origin/${PARENT.replace(/^origin\//, '')}\` (the tree must be clean at this point — everything was committed and pushed before the merge). Report that the sync ran.
+3b. SYNC THE LOCAL PARENT AFTER A SUCCESSFUL MERGE (critical for stacked runs): the squash-merge happened on GitHub only, so the LOCAL ${PARENT_BRANCH} branch is now stale — any later worktree branched from it will carry pre-squash lineage and its PR will hit a phantom merge conflict against the squashed parent. Run \`git fetch origin\`. Then check \`git worktree list\` and \`git rev-parse --abbrev-ref HEAD\`. If ${PARENT_BRANCH} is the current checkout, run \`git merge --ff-only origin/${PARENT_BRANCH}\`. If ${PARENT_BRANCH} is not checked out in any worktree, run \`git fetch origin ${PARENT_BRANCH}:${PARENT_BRANCH}\` (git refuses a non-fast-forward update, which is the point). If ${PARENT_BRANCH} is checked out in a different worktree, do not touch it. NEVER reset a branch, move it with a force flag, or force-push. If the sync command fails, STOP and report the failure verbatim in output. The merge itself still counts, so keep merged:true. Report which sync command ran and its result.
 4. IF THE MERGE FAILS, diagnose the REAL reason — run \`gh pr view ${T.pr || T.branch || ''} --json isDraft,statusCheckRollup,mergeable\` and report exactly ONE of these as the stop reason, set blocked:true, and do NOT retry:
    - "draft state" when isDraft is true (you should have cleared this in step 2; if it persists, report it).
    - "failing required checks" when statusCheckRollup contains ANY check whose state is FAILURE or CANCELLED (statusCheckRollup is an ARRAY of check objects — treat any FAILURE/CANCELLED entry as failing; an empty array means no checks are configured, so do NOT attribute the failure to checks).
@@ -445,7 +513,7 @@ TARGET LOCK (critical): the ONLY thing you may merge is the PR whose head branch
 Report the merge result (merged, blocked, and output including the gh pr ready stdout/stderr and any gh pr view diagnostic).`,
       { label: 'merge', phase: 'Merge', model: M.merge, agentType: AGENT, schema: MERGE_SCHEMA })
   } else if (MERGE && converged) {
-    log('converged but verify reported not mergeable — skipping squash-merge')
+    log(`converged but the verify gate failed (${gate.why}). Skipping squash-merge.`)
   }
 } catch (e) {
   if (e && e.limit) {
@@ -453,7 +521,7 @@ Report the merge result (merged, blocked, and output including the gh pr ready s
     return {
       title: TITLE, target: { branch: T.branch, parentRef: PARENT, pr: T.pr },
       council: { config: C, iterations: history.length, history, finalVerdict: verdict },
-      verify, merge: null, converged, resumable: true,
+      verify, verified: false, merge: null, councilConverged: converged, converged: false, resumable: true,
       reason: 'hit a usage/rate limit during verify/merge. Resume with resumeFromRunId once limits reset.',
       unresolvedBlockers: lastBlocking,
       inPrFollowUps: [],
@@ -462,17 +530,39 @@ Report the merge result (merged, blocked, and output including the gh pr ready s
   throw e
 }
 
+// A null verify is a dead agent, not a verdict. Stop resumable so a resume re-runs verify.
+// Nothing merged on this path because the gate above needs a verify result.
+if (!verify) {
+  log('council-loop stopping (resumable): the verify agent returned no result')
+  return {
+    title: TITLE, target: { branch: T.branch, parentRef: PARENT, pr: T.pr },
+    council: { config: C, iterations: history.length, history, finalVerdict: verdict },
+    verify: null, verified: false, merge: null, councilConverged: converged, converged: false, resumable: true,
+    reason: 'stopped early. The verify agent returned no result, so the merge gate refused to merge. Resume with resumeFromRunId to re-run verify.',
+    unresolvedBlockers: lastBlocking,
+    inPrFollowUps: [],
+  }
+}
+
 // outstanding in-PR follow-ups (explicit follow-ups + cosmetic findings). With applyNonBlockers these are empty on convergence;
 // otherwise the driver folds them into the PR — NEVER an issue.
 const inPrFollowUps = [
   ...((verdict && verdict.followUps) || []),
   ...(((verdict && verdict.findings) || []).filter(f => isCosmetic(f.severity)).map(fmt)),
 ]
-const reason = converged
-  ? (inPrFollowUps.length ? 'unconditional FOR — zero blocking findings (remaining non-blockers returned as in-PR follow-ups)' : 'unconditional FOR — zero findings remaining')
-  : stalled
+// Convergence and verification stay separate fields. `converged` is the AND of both, because
+// every caller reads it as "ready to merge". A council FOR on code that fails its build is not.
+const verified = gate.ok
+const reason = !converged
+  ? (stalled
     ? 'non-unconditional verdict with no actionable findings left — could not progress without re-litigating identical code'
-    : `did not converge within ${C.maxLoops} council(s)`
+    : `did not converge within ${C.maxLoops} council(s)`)
+  : !verified
+    ? `the council converged, but the verify gate failed: ${gate.why}. Nothing was merged.`
+    : (inPrFollowUps.length ? 'unconditional FOR — zero blocking findings (remaining non-blockers returned as in-PR follow-ups)' : 'unconditional FOR — zero findings remaining')
+// A merge agent that died leaves a verified branch unmerged. The merge prompt is idempotent,
+// so a resume can re-run it.
+const mergeDied = MERGE && converged && verified && !!(T.branch || T.pr) && !merge
 
 return {
   title: TITLE,
@@ -481,10 +571,12 @@ return {
   // maxLoops exhaustion (council review F4, 2026-07-30).
   council: { config: C, iterations: history.length, history, finalVerdict: verdict },
   verify,
-  merge,                // squash-merge result when merge:true + converged + mergeable; null otherwise
-  converged,
-  resumable: false,     // reached a terminal verdict (converged or honestly stalled) — nothing to resume
-  reason,
+  verified,             // true only when the verify gate passed (build pass, tests pass or allowed none, mergeable true)
+  merge,                // squash-merge result when merge:true + converged + verified; null otherwise
+  councilConverged: converged,  // the council verdict alone
+  converged: converged && verified,
+  resumable: mergeDied, // true only when the merge agent died after a passed gate
+  reason: mergeDied ? `${reason} The merge agent returned no result. Resume with resumeFromRunId to re-run the merge.` : reason,
   unresolvedBlockers: lastBlocking,  // blocking findings from the last judged round — empty on convergence
   inPrFollowUps,        // apply in-PR / fold into the PR — never file as a GitHub issue
 }

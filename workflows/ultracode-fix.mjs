@@ -1,10 +1,16 @@
 /**
  * ultracode-fix.mjs — reusable "ultracode fix it" pipeline.
  *
- * Model tiering (fixed by design, per user directive 2026-08-03):
+ * Model tiering:
  *   Explore   → sonnet (only when the plan needs more context)
  *   Plan      → opus, effort medium
- *   Implement → opus, effort low (fan-out per plan task)
+ *   Implement → per task. The planner tags each task routine or hard. A routine task runs on
+ *               sonnet. A hard task (design, cross-system, or safety-relevant work) runs on
+ *               opus. A task with no tag runs on sonnet. args.implementModel overrides every
+ *               implementer and fixer. This replaces the fixed opus implementer of the
+ *               2026-08-03 directive (user decision 2026-10-19, issue #20).
+ *   Fix       → one fixer per review round, same rule: opus when any finding is hard,
+ *               else sonnet, unless args.implementModel is set.
  *   Review    → opus, effort medium (also arbiters the fix loop)
  *
  * Invoke BY ABSOLUTE scriptPath (the name registry does not resolve
@@ -18,19 +24,22 @@
  *   testCmd,       // optional: command that must pass (e.g. "npm test")
  *   maxLoops,      // optional: max review→fix rounds (default 3)
  *   explore,       // optional: 'auto' (default, planner decides) | 'always' | 'never'
+ *   implementModel, // optional: model for every implementer and fixer, overrides the per-task tag
  *   commit,        // optional: true → implementer commits with a conventional message (default false)
  * }
  *
- * Returns { verdict, plan, implemented, reviews, resumable }.
+ * Returns { verdict, plan, implemented, reviews, failed, resumable }. verdict is one of
+ * approved, impl-failed, fix-failed, review-agent-died, review-rejected-without-findings,
+ * max-loops-reached. failed lists the tasks or fixes that did not finish.
  */
 
 export const meta = {
   name: 'ultracode-fix',
-  description: 'Fix a task: sonnet explores, opus plans (medium), opus implements (low), opus reviews and loops fixes until approved',
+  description: 'Fix a task: sonnet explores, opus plans (medium), each task runs on sonnet or opus by planner-tagged complexity, opus reviews and loops fixes until approved',
   phases: [
     { title: 'Explore', detail: 'sonnet scouts the codebase when the plan needs context', model: 'sonnet' },
     { title: 'Plan', detail: 'opus at medium effort produces a task-list fix plan', model: 'opus' },
-    { title: 'Implement', detail: 'opus at low effort applies each plan task', model: 'opus' },
+    { title: 'Implement', detail: 'one task at a time: sonnet for routine tasks, opus for hard ones', model: 'sonnet' },
     { title: 'Review', detail: 'opus at medium effort reviews, requests fixes, loops until approved', model: 'opus' },
   ],
 }
@@ -64,6 +73,7 @@ const PLAN_SCHEMA = {
           id: { type: 'string' },
           instruction: { type: 'string', description: 'self-contained instruction for one implementer agent, with file paths' },
           dependsOn: { type: 'array', items: { type: 'string' } },
+          complexity: { type: 'string', enum: ['routine', 'hard'], description: 'hard for design, cross-system, or safety-relevant work, else routine. Picks the implementer model.' },
         },
       },
     },
@@ -84,6 +94,7 @@ const REVIEW_SCHEMA = {
           file: { type: 'string' },
           summary: { type: 'string' },
           fixInstruction: { type: 'string', description: 'self-contained fix instruction for an implementer' },
+          complexity: { type: 'string', enum: ['routine', 'hard'], description: 'hard for design, cross-system, or safety-relevant fixes, else routine. Picks the fixer model.' },
         },
       },
     },
@@ -91,6 +102,15 @@ const REVIEW_SCHEMA = {
 }
 
 const RESULT_SCHEMA = { type: 'object', required: ['done', 'report'], properties: { done: { type: 'boolean' }, report: { type: 'string' } } }
+
+// Implementer model per task (user decision 2026-10-19, issue #20). Most plan tasks are routine
+// edits that sonnet handles. Only hard tasks earn opus. An explicit args.implementModel wins.
+// A missing or unknown tag falls to sonnet, so a planner that skips the field does not
+// silently put every task back on the top tier.
+const IMPLEMENT_MODEL = (typeof A.implementModel === 'string' && A.implementModel.trim()) ? A.implementModel.trim() : null
+const modelFor = (complexity) => IMPLEMENT_MODEL || (complexity === 'hard' ? 'opus' : 'sonnet')
+// One fixer handles every finding of a round, so one hard finding is enough to need opus.
+const fixModelFor = (findings) => modelFor((findings || []).some(f => f && f.complexity === 'hard') ? 'hard' : 'routine')
 
 // --- Phase 1+2: optional explore, then plan (opus, medium) ---
 let exploreNotes = ''
@@ -101,7 +121,7 @@ Task: ${TASK}${CTX}
 Questions:
 ${questions.map((q, i) => `${i + 1}. ${q}`).join('\n')}`
 
-const planPrompt = () => `${CWD}You are the planner. Produce a fix plan for this task. Break it into the smallest set of independent, self-contained implementation tasks. Each instruction must name the files to touch and the expected behavior after the change. If you lack the context to write a trustworthy plan, set needsExplore=true and list exploreQuestions instead of guessing.
+const planPrompt = () => `${CWD}You are the planner. Produce a fix plan for this task. Break it into the smallest set of independent, self-contained implementation tasks. Each instruction must name the files to touch and the expected behavior after the change. Tag each task with complexity: "hard" for design work, cross-system changes, or safety-relevant code (auth, data loss, concurrency, money), else "routine". A routine task runs on a faster model, so do not tag a task hard without cause. If you lack the context to write a trustworthy plan, set needsExplore=true and list exploreQuestions instead of guessing.
 
 Task: ${TASK}${CTX}${TEST}
 ${exploreNotes ? `\nExploration findings:\n${exploreNotes}` : ''}`
@@ -125,7 +145,7 @@ if (plan.needsExplore && EXPLORE !== 'never') {
 }
 log(`Plan: ${plan.summary} (${plan.tasks.length} task(s))`)
 
-// --- Phase 3: implement (opus, low). Sequential per dependency waves, parallel within a wave. ---
+// --- Phase 3: implement. Dependency waves, one task at a time (see the single-writer note below). ---
 phase('Implement')
 const implPrompt = (t) => `${CWD}You are the implementer for one plan task. Apply exactly this change, verify it compiles/runs, and return a short report of what you changed (files + reasoning). Stay inside the task scope.${TEST}${COMMIT_RULE}
 
@@ -136,24 +156,46 @@ Your task (${t.id}): ${t.instruction}`
 
 const done = new Set()
 const implemented = []
+// A stop result for a task that did not finish. agent() resolves to null when the subagent dies,
+// and the old `.then(r => ({ id: t.id, ...r }))` turned that null into a truthy `{ id }` that
+// counted as done. Only an explicit done:true counts now, and any failure stops the run.
+const implFailed = (failed) => {
+  log(`Implement stopped: ${failed.map(f => `${f.id} (${f.reason})`).join(', ')}`)
+  return { verdict: 'impl-failed', failed, plan, implemented, reviews: [], resumable: true }
+}
 let remaining = [...plan.tasks]
+// Each pass either completes at least one task or returns, so the loop ends within
+// plan.tasks.length passes. The guard is a backstop in case a later edit breaks that property.
+let passes = plan.tasks.length + 1
 while (remaining.length) {
+  if (passes-- <= 0) return implFailed(remaining.map(t => ({ id: t.id, reason: 'never scheduled (loop guard)', report: null })))
   const wave = remaining.filter(t => (t.dependsOn || []).every(d => done.has(d)))
-  if (!wave.length) { log('Dependency cycle in plan. Running remaining tasks sequentially.'); wave.push(remaining[0]) }
-  const results = await parallel(wave.map(t => () =>
-    agent(implPrompt(t), { label: `impl:${t.id}`, phase: 'Implement', schema: RESULT_SCHEMA, model: 'opus', effort: 'low' })
-      .then(r => ({ id: t.id, ...r }))))
-  for (const r of results.filter(Boolean)) { done.add(r.id); implemented.push(r) }
+  if (!wave.length) { log('Dependency cycle or unknown dependency in plan. Running the first remaining task alone.'); wave.push(remaining[0]) }
+  // One writer at a time. Every implementer edits the same working tree, and with commit:true
+  // they also share one git index. Parallel writers raced on files and on index.lock, and one
+  // task could commit the half-done edits of another. Worktree isolation would need a merge
+  // step, and the default commit:false mode leaves nothing committed to merge. Sequential runs
+  // in dependency order are the simpler safe option. The first failure stops the wave.
+  for (const t of wave) {
+    const raw = await agent(implPrompt(t), { label: `impl:${t.id}`, phase: 'Implement', schema: RESULT_SCHEMA, model: modelFor(t.complexity), effort: 'low' })
+    const r = raw ? { id: t.id, ...raw } : null
+    if (!(r && r.done === true)) {
+      return implFailed([{ id: t.id, reason: r ? 'implementer reported done:false' : 'implementer returned no result', report: r ? r.report : null }])
+    }
+    done.add(t.id)
+    implemented.push(r)
+  }
   remaining = remaining.filter(t => !done.has(t.id))
 }
 
-// --- Phase 4: review loop (opus, medium) with opus fix rounds ---
+// --- Phase 4: review loop (opus, medium) with one fixer per round (model by finding complexity) ---
 phase('Review')
 const reviews = []
 let verdict = 'unreviewed'
+let failed = []
 for (let round = 1; round <= MAX_LOOPS; round++) {
   const review = await agent(
-    `${CWD}You are the reviewer and orchestrator of a fix pipeline. Review the CURRENT working-tree change against the task. Verify correctness against actual source (read the files, do not trust the reports alone). ${A.testCmd ? `Run \`${A.testCmd}\` and treat a failure as a blocking finding. ` : ''}Approve only if the task is genuinely done. For each blocking finding, write a self-contained fixInstruction.
+    `${CWD}You are the reviewer and orchestrator of a fix pipeline. Review the CURRENT working-tree change against the task. Verify correctness against actual source (read the files, do not trust the reports alone). ${A.testCmd ? `Run \`${A.testCmd}\` and treat a failure as a blocking finding. ` : ''}Approve only if the task is genuinely done. For each blocking finding, write a self-contained fixInstruction and tag its complexity: "hard" for design, cross-system, or safety-relevant fixes, else "routine".
 
 Task: ${TASK}${CTX}
 Plan: ${plan.summary}
@@ -163,13 +205,24 @@ ${implemented.map(r => `- [${r.id}] ${r.report}`).join('\n')}`,
   if (!review) { verdict = 'review-agent-died'; break }
   reviews.push(review)
   if (review.approved) { verdict = 'approved'; log(`Approved on round ${round}.`); break }
+  // A reject with no findings gives the fixers nothing to do. Another round would re-review the
+  // same tree, so stop.
+  if (!Array.isArray(review.findings) || !review.findings.length) { verdict = 'review-rejected-without-findings'; break }
   verdict = 'fixes-pending'
   log(`Round ${round}: ${review.findings.length} finding(s). Dispatching fixes.`)
-  const fixes = await parallel(review.findings.map((f, i) => () =>
-    agent(implPrompt({ id: `fix-r${round}-${i + 1}`, instruction: `${f.summary} (${f.file})\n${f.fixInstruction}` }),
-      { label: `fix:r${round}-${i + 1}`, phase: 'Implement', schema: RESULT_SCHEMA, model: 'opus', effort: 'low' })
-      .then(r => ({ id: `fix-r${round}-${i + 1}`, ...r }))))
-  implemented.push(...fixes.filter(Boolean))
+  // One fixer per round gets every finding. Parallel fixers shared one working tree and raced
+  // on the same files, which is the single-writer problem described in Implement.
+  const fixId = `fix-r${round}`
+  const fixRaw = await agent(implPrompt({ id: fixId, instruction: `Fix every review finding below. Each one is blocking.\n${review.findings.map((f, i) => `${i + 1}. ${f.summary} (${f.file})\n${f.fixInstruction}`).join('\n\n')}` }),
+    { label: `fix:r${round}`, phase: 'Implement', schema: RESULT_SCHEMA, model: fixModelFor(review.findings), effort: 'low' })
+  const fix = fixRaw ? { id: fixId, ...fixRaw } : null
+  // Same rule as Implement: a null or done:false fixer stops the loop instead of reading as fixed.
+  if (!(fix && fix.done === true)) {
+    failed = [{ id: fixId, reason: fix ? 'fixer reported done:false' : 'fixer returned no result', report: fix ? fix.report : null }]
+    verdict = 'fix-failed'
+    break
+  }
+  implemented.push(fix)
 }
 if (verdict === 'fixes-pending') verdict = 'max-loops-reached'
 
@@ -178,5 +231,6 @@ return {
   plan,
   implemented,
   reviews,
+  failed,
   resumable: verdict !== 'approved',
 }
