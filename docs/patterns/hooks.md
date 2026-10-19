@@ -22,7 +22,8 @@ Mechanics:
 - The **matcher** is a regex against the tool name. `"Bash"` matches Bash calls. `"Edit|Write"` matches both file-write tools. An empty matcher matches every tool.
 - The hook receives the tool call as **JSON on stdin**. A Bash hook reads `.tool_input.command`. A file hook reads `.tool_input.file_path`. Most scripts here extract these with `jq`.
 - **Exit code 2 blocks the tool call.** For a blocking `PreToolUse` hook, write the reason to stderr. The harness surfaces stderr back to the model, which can then correct course.
-- **Exit code 0 lets the call proceed.** Anything the hook prints on stdout is shown to the model as feedback. This is how suggestion hooks nudge without blocking.
+- **Exit code 0 lets the call proceed.** For `PreToolUse` and `PostToolUse`, plain stdout goes to the debug log only, and the model never sees it. To reach the model, print JSON with `hookSpecificOutput.additionalContext` for a note, or `permissionDecision` (`allow`, `deny`, `ask`) for a decision. `SessionStart` stdout is the exception: the model reads it as context.
+- A handler `if` field holds one permission rule, such as `"if": "Bash(git commit *)"`. It checks each part of a compound command and keeps the hook off unrelated calls.
 - A `SessionStart` hook must never exit non-zero. It reports, it does not gate.
 
 ## Design philosophy
@@ -33,7 +34,7 @@ The hooks in this repo fall into three families.
 
 **Auth safety** removes a class of mistake entirely. When one machine holds two GitHub accounts, a push under the wrong identity is silent and hard to undo. A hook that switches the account to match the remote owner makes the mistake impossible.
 
-**Suggestion hooks** nudge instead of block. They print a one-line hint and always exit 0. Each one carries a cooldown file so it does not fire on every matching call. The model stays free to ignore the hint when it has a reason to.
+**Suggestion hooks** nudge instead of block. They return the hint as `additionalContext` JSON and always exit 0. Each one carries a cooldown file so it does not fire on every matching call. The model stays free to ignore the hint when it has a reason to.
 
 ## The ported hooks
 
@@ -41,7 +42,7 @@ The hooks in this repo fall into three families.
 
 **`gh-check-before-create.sh`** enforces git and GitHub naming. Branch names must match `<type>/<issue>-<kebab-description>`. PR titles must follow conventional commits or a documented bracketed style. Both violations exit 2. Commit messages and short issue titles get warnings only. The hook also blocks merging a PR that is still in draft, and warns before branch renames and issue relabels that can trigger repo automation. It only enforces naming in repos that carry an `issue-branch-handler` workflow, so ordinary repos pass through untouched.
 
-**`lint-precommit.sh`** intercepts `git commit` and runs the project's linter. It detects the stack from manifest files: `npm run lint` and `tsc --noEmit` for JS/TS, `ruff` or `flake8` for Python, `go vet` and `gofmt` for Go. Where the tool supports it, the hook auto-fixes and re-stages before re-checking. Unfixed errors block the commit with the full lint output.
+**`lint-precommit.sh`** intercepts `git commit` and runs the project's linter. It detects the stack from manifest files: `npm run lint` and `tsc --noEmit` for JS/TS, `ruff` or `flake8` for Python, `go vet` and `gofmt` for Go. The hook only checks. It never edits or stages files. Errors block the commit with the lint output and the command that fixes them.
 
 **`large-file-check.sh`** blocks `git commit` when the tree carries any file over 100MB. GitHub rejects such pushes anyway, so failing early saves a wasted commit.
 
@@ -51,21 +52,21 @@ The hooks in this repo fall into three families.
 
 ### Suggestion hooks
 
-**`explore-suggest.sh`** (PreToolUse, matcher `Grep|Glob`) detects richer exploration tooling, such as a code-graph index or a semantic search CLI, and prints a one-line nudge to prefer it over broad text search. A 2-minute cooldown keeps it quiet.
-
 **`agent-route-suggest.sh`** (PreToolUse, matcher `Agent`) fires when a subagent is spawned without an explicit `subagent_type` or `model`. It suggests the routing skills that pick a specialist and a model tier. When both fields are set, it stays silent: the caller made a deliberate choice.
 
 **`context7-suggest.sh`** (PostToolUse, matcher `Read`) fires when a dependency manifest is read: `package.json`, `requirements.txt`, `pyproject.toml`, `go.mod`, or `Cargo.toml`. It extracts the top dependencies and hints at a docs lookup before writing code against an unfamiliar library.
 
 ### Correctness checks (PostToolUse, matcher `Edit|Write`)
 
-**`python-syntax-check.sh`** compiles any edited `.py` file with `py_compile`. A syntax error exits 2, which forces the model to fix the file before it moves on.
+**`python-syntax-check.sh`** parses any edited `.py` file with `ast`. A syntax error exits 2 with the line and message on stderr, which forces the model to fix the file before it moves on.
 
-**`submodule-check.sh`** updates git submodules when an edit touches submodule files.
+### Verification gate (Stop)
+
+**`stop-verify-gate.sh`** runs the project's `.claude/verify.sh` when Claude tries to end its turn. A failure blocks the stop and returns the output tail, so Claude keeps working until the check passes. On a second consecutive block it allows the stop, so it never loops.
 
 ### Environment health (SessionStart)
 
-**`preflight-check.sh`** prints structured `[PREFLIGHT]` lines at session start: package-manager lock files, node availability, and stale git `index.lock` files. It always exits 0. The model reads the report and resolves blockers before they surface mid-task.
+**`preflight-check.sh`** prints `[PREFLIGHT]` warnings at session start: package-manager lock files, node availability, and stale git `index.lock` files. A healthy host prints nothing. It always exits 0. The model reads the report and resolves blockers before they surface mid-task.
 
 ## Not ported
 
