@@ -35,6 +35,17 @@ cp setup/answers.example.yml my-answers.yml
 Add `--dry-run` (bash) or `-DryRun` (PowerShell) to print actions without
 touching the filesystem.
 
+`setup.sh` also takes `--force`. Without it, the installer leaves two kinds of
+target alone and prints why: a real directory that differs from the repo copy
+(`differs, merge by hand`) and an existing link that points outside the repo
+(the message shows the old target). With `--force`, it backs up the directory
+and replaces the link.
+
+`setup.sh` counts every failed `mkdir`, `ln`, copy, render and clone. It prints
+each failure as a `FAILED:` line and exits non-zero at the end when any failed.
+A template with a `{{placeholder}}` that has no answer counts as a failure, and
+the installer writes nothing for that file.
+
 ## Profile format
 
 Flat `key: value` lines. Comments start with `#`. Arrays are comma lists.
@@ -65,9 +76,25 @@ To add a component, add one manifest file. Two types exist:
 
 ## Idempotence and backups
 
-Re-running the installer replaces links it created. It never overwrites a
-real file or directory at a target path. It moves the existing path to
-`<path>.bak` first.
+Re-running the installer replaces links it created. A dangling link at a
+target path is removed and created again. It never overwrites a real file or
+directory at a target path. It moves the existing path to `<path>.bak` first.
+When `<path>.bak` already exists, it uses `<path>.bak.<YYYYmmddHHMMSS>`, so an
+older backup is never deleted. When the existing file is byte-identical to the
+new one, it skips both the backup and the write.
+
+`setup.ps1` follows the dangling-link, backup-name and UTF-8 (no BOM) rules. It
+does not yet port `--force`, the outside-the-repo link check or the failure
+count.
+
+## Repairing links after the rename
+
+`relink.sh` repairs the vault skill links after the skills regroup. Run
+`relink.sh --sweep --dry-run` to list stale links under `~/.claude`,
+`~/.claude-aurrigo`, `~/.codex` and `~/.config/opencode` (depth 3). A link is
+stale when its target holds `agenKic-sKills`, or when it is dangling and points
+into `agenKic-hub`. The sweep repoints a stale link only when the new target
+exists in this repo. Run it without `--dry-run` to apply the change.
 
 ## Symlinks per OS
 
