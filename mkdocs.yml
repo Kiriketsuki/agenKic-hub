@@ -1,4 +1,4 @@
-site_name: agenKic sKills
+site_name: agenKic-hub
 site_description: A public hub of agent skills, workflows, harness configs, and patterns.
 site_url: https://kiriketsuki.github.io/agenKic-hub/
 repo_url: https://github.com/Kiriketsuki/agenKic-hub
@@ -25,7 +25,7 @@ theme:
 extra_css:
   - stylesheets/chrysaki.css
 
-copyright: agenKic sKills · MIT · built by Kiriketsuki
+copyright: agenKic-hub · MIT · built by Kiriketsuki
 
 extra:
   social:

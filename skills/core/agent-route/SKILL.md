@@ -18,51 +18,64 @@ There are three layers of agents, checked in this order:
 |:---|:---|:---|
 | **Built-in** | Claude Code core | `subagent_type` param on Agent tool (e.g., `Explore`, `Plan`) |
 | **Custom** | `~/.claude/agents/*.md` | `subagent_type` param matching the agent name from frontmatter |
-| **Plugin** | Installed plugins | `subagent_type` with qualified name (e.g., `pr-review-toolkit:code-simplifier`) |
+| **Plugin** | Installed plugins | `subagent_type` with qualified name (e.g., `codex:codex-rescue`) |
+
+Check the Agent tool's own list of agent types before you route. A name that is not
+in that list does not exist, so do not recommend it. `references/agent-catalog.md`
+lists the agent types on the author's machine. It is a snapshot, not the source of truth.
 
 ## Quick Routing Table
 
 | Task Domain | First Choice | Fallback |
 |:---|:---|:---|
-| Codebase search/exploration | `Explore` (built-in) | `general-purpose` |
-| Architecture/planning | `Plan` (built-in) | `Software Architect` |
-| Bug investigation | `diagnosis` | `general-purpose` |
+| Codebase search/exploration (read-only) | `Explore` | `general-purpose` |
+| Architecture/planning (read-only) | `Plan` | `Software Architect` |
+| Bug investigation (read-only, never edits) | `diagnosis` | `general-purpose` |
 | Implementation (full-stack) | `Senior Developer` | `general-purpose` |
-| Backend/API design | `Backend Architect` | `Software Architect` |
+| Backend/API design and build | `Backend Architect` | `Software Architect` |
 | Frontend/UI build | `Frontend Developer` | `Senior Developer` |
-| Code review | `Code Reviewer` | `superpowers:code-reviewer` |
-| PR review | `pr-review-toolkit:code-reviewer` | `coderabbit:code-reviewer` |
-| Security analysis | `Security Engineer` | `pr-review-toolkit:silent-failure-hunter` |
-| DevOps/CI/CD | `DevOps Automator` | `SRE` |
-| Database work | `Database Optimizer` | `Backend Architect` |
+| Python scripts, data processing, automation | `Python Specialist` | `general-purpose` |
+| Code review | `Code Reviewer` | `general-purpose` |
+| Security analysis | `Security Engineer` | `Code Reviewer` |
+| Git, branching, CI/CD workflow | `Git Workflow Master` | `general-purpose` |
 | Documentation | `Technical Writer` | `general-purpose` |
-| Testing/QA | `API Tester` or `Performance Benchmarker` | `pr-review-toolkit:pr-test-analyzer` |
+| Testing/QA | `Code Reviewer` | `general-purpose` |
 | Pipeline orchestration | `Agents Orchestrator` | `general-purpose` |
 | MCP server building | `MCP Builder` | `Senior Developer` |
-| Claude Code questions | `claude-code-guide` (built-in) | -- |
-| Type design review | `pr-review-toolkit:type-design-analyzer` | `Code Reviewer` |
-| Code simplification | `pr-review-toolkit:code-simplifier` | `Code Reviewer` |
+| Robotics, ROS, vehicle control | `Robotics & ROS Engineer` | `general-purpose` |
+| Aurrigo Visual Explainer pages | `Aurrigo Visual Explainer` | `general-purpose` |
+| Teaching material, lectures, assessments | `Lecturer Assistant` | `Technical Writer` |
+| Note linking, knowledge base upkeep | `ZK Steward` | `general-purpose` |
+| Claude Code questions | `claude-code-guide` | -- |
+| Second model on a diagnosis or implementation | `codex:codex-rescue` | `clodeks:codex-exec` |
+| One scripted Codex task with a JSON result | `clodeks:codex-exec` | `codex:codex-rescue` |
 
-For domains not listed above (marketing, sales, game dev, XR, etc.), read `references/agent-catalog.md` for the full categorized list.
+Gaps: no agent exists for DevOps, SRE, database tuning, API testing or performance
+benchmarking. Route that work to `Backend Architect` (databases, APIs),
+`Git Workflow Master` (CI/CD) or `general-purpose`. Say so in the Reason line.
+
+For the full list with tool access, read `references/agent-catalog.md`.
 
 ## Decision Factors
 
-- **Scope**: Read-only investigation = `diagnosis`; implementation = developer agents; review = reviewer agents
-- **Domain specificity**: Generic coding = `Senior Developer`; specialized domain (Unity, Godot, embedded) = domain-specific agent
-- **Blast radius**: Narrow file search = `Explore`; multi-file refactor = `Software Architect` then `Senior Developer`
-- **Pipeline stage**: Planning = `Plan`; building = developer agents; hardening = testing/QA agents; review = reviewer agents
-- **Tool access**: Some agents have restricted tools (e.g., `diagnosis` is read-only). Match the agent's tool access to what the task requires.
+- **Scope**: Read-only investigation = `diagnosis`, implementation = developer agents, review = reviewer agents
+- **Read-only types**: `Explore`, `Plan` and `diagnosis` cannot edit files. Do not route build work to them.
+- **Domain specificity**: Generic coding = `Senior Developer`, specialized domain (ROS, MCP, Python) = domain agent
+- **Blast radius**: Narrow file search = `Explore`, multi-file refactor = `Software Architect` then `Senior Developer`
+- **Pipeline stage**: Planning = `Plan`, building = developer agents, review = `Code Reviewer`
+- **Tool access**: Match the agent's tool access to what the task requires.
 
 ## Model Pairing
 
-Combine with `/model-route` for optimal cost/quality:
+Combine with `/model-route`, which holds the tier rule and the effort levels.
+`/model-route` also links back here.
 
-| Agent Category | Default Model | When to Upgrade |
+| Agent Category | Default Model | When to Change |
 |:---|:---|:---|
-| `Explore`, search agents | haiku | Large or unfamiliar codebase |
-| Developer agents, reviewers | sonnet | Default for implementation |
-| `diagnosis`, architects, orchestrators | sonnet | Upgrade to opus for cross-cutting bugs or system design |
-| `Plan`, `Software Architect` | opus | Default for architecture — downgrade to sonnet for simple plans |
+| `Explore` and other search agents | haiku | Use sonnet for a large or unfamiliar codebase |
+| Developer agents, reviewers (fan-out work) | sonnet | Use opus for a subtle or high-risk review |
+| `diagnosis` | sonnet | Use opus for a root cause that survived a failed sonnet attempt |
+| `Plan`, `Software Architect`, `Agents Orchestrator` | opus | Use sonnet for a simple plan |
 
 ## Output Format
 
@@ -73,6 +86,7 @@ Recommended: [Agent Name]
 Layer: [built-in / custom / plugin]
 subagent_type: "[exact value for Agent tool]"
 Model: [haiku / sonnet / opus]
+Effort: [low / medium / high / xhigh / max]
 Reason: [one sentence]
 Fallback: [Agent Name] if [condition]
 ```

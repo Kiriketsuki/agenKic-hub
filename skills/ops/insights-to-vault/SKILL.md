@@ -20,7 +20,7 @@ $INSIGHTS_ARCHIVE_DIR
 
 ## Step 1: Determine the file name
 
-The naming convention is a delta window — from the previous report's end date to today:
+The naming convention is a delta window, from the previous report's end date to today:
 
 ```
 Claude Code Insights — [Mon-DD] to [Mon-DD] YYYY
@@ -72,7 +72,7 @@ Pull `sessions` and `messages` from the insights data in the conversation.
 
 ### Body sections
 
-Write all sections using the insights data from the conversation. Be specific — pull actual
+Write all sections using the insights data from the conversation. Be specific. Pull actual
 numbers, examples, and quotes. Do not pad with generic filler.
 
 ```
@@ -141,14 +141,14 @@ One paragraph from fun_ending.
 
 ## Step 4: Create the vault symlink (if missing)
 
-If your vault links skills by symlink, ensure the vault-side symlink for this skill
+If your vault links skills by symlink, make sure the vault-side symlink for this skill
 exists. Skip this step otherwise.
 
 ## Guidelines
 
 - No emojis anywhere in the markdown output.
-- Pull every number and example directly from the insights JSON — never invent stats.
+- Pull every number and example directly from the insights JSON. Never invent stats.
 - The `report-html` path in frontmatter uses the resolved absolute path (not `~`).
 - If the insights data is not in the conversation context, ask the user to run `/insights` first.
 - After creating both files, confirm: "Archived to vault as `<FILENAME>`."
-- Sign with your current model's Clault Kiper signature per 000-System/Agents/AGENTS.md (Sonnet KiperS 4.6, Opus KiperO 4.8, Haiku KiperH 4.5) — derive from the model you are running as; never hardcode.
+- Sign with your current model's Clault Kiper signature per 000-System/Agents/AGENTS.md (suffix and version for the model family). Derive it from the model you are running as. Do not hardcode a version.

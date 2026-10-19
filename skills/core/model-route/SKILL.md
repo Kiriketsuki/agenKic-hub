@@ -1,9 +1,9 @@
 ---
 name: model-route
 description: >
-  Recommend the optimal model tier (Haiku/Sonnet/Opus) for a task based on complexity
-  and cost sensitivity. Use when the user wants to know which model to use, wants to
-  save tokens, or is about to start a long/expensive task.
+  Recommend the model tier (haiku, sonnet, opus) and effort level for a task based on
+  its role, complexity and cost sensitivity. Use when the user wants to know which
+  model to use, wants to save tokens, or is about to start a long or expensive task.
   Triggers: "which model should I use", "model route", "is this worth Opus",
   "save tokens", "model recommendation", "/model-route".
 origin: ECC (adapted)
@@ -11,30 +11,59 @@ origin: ECC (adapted)
 
 ## Routing Heuristic
 
+Assign the tier by the role the agent plays, not by the main-loop model.
+
 | Model | Use When |
 |:---|:---|
-| **Haiku** | Deterministic, low-risk mechanical tasks: formatting, simple lookups, single-file edits with clear spec, log parsing, regex generation |
-| **Sonnet** | Default for implementation, refactors, multi-file edits, routine project operations, code review, skill execution |
-| **Opus** | Architecture decisions, deep ambiguous requirements, adversarial review, unfamiliar codebases, anything where being wrong is expensive |
+| **opus** | Synthesis singletons, arbiters, plan and spec composers, high-level design, and hard-to-diagnose root causes. Also deep review of a subtle or high-risk change. |
+| **sonnet** | Implementers and fan-out: code writers, per-repo appliers, porters, mechanical review lenses, routine multi-file edits. Most agent volume lives here. |
+| **haiku** | Cheap mechanical reads only: formatting, simple lookups, log parsing, regex generation, single-file edits with a clear spec. |
+
+Fable is unavailable. Do not recommend it. Use opus as the top tier.
+
+Never put opus on a fan-out stage, such as N review lenses across rounds or per-repo
+appliers. Token spend concentrates there and hits the session limit.
+
+Escalate an agent to opus in three cases. A sonnet attempt failed on the root cause.
+The task needs cross-system reasoning. The result becomes the canonical fix that
+others copy.
+
+## Effort
+
+Pair the tier with an effort level. Lower the effort for fan-out.
+
+| Effort | Use When |
+|:---|:---|
+| `low` | Fan-out workers, mechanical reads, lookups |
+| `medium` | Routine implementation and routine review |
+| `high` | Default for design, planning and non-trivial debugging |
+| `xhigh` | Hard root-causing, high-risk review, canonical fixes |
+| `max` | Rare. One-off decisions where being wrong is expensive |
 
 ## Decision Factors
 
-- **Reversibility**: irreversible actions (git push, file deletes, schema changes) warrant Opus
-- **Ambiguity**: clear spec = Haiku/Sonnet; vague or conflicting requirements = Opus
-- **Blast radius**: single file = Haiku; repo-wide = Sonnet/Opus depending on complexity
-- **Stakes**: personal note = Haiku; production code = Sonnet; architecture = Opus
-- **Budget sensitivity**: if user signals cost concern, bias toward Haiku/Sonnet
+- **Role**: synthesis and arbitration = opus, implementation and fan-out = sonnet, mechanical reads = haiku
+- **Reversibility**: irreversible actions (git push, file deletes, schema changes) warrant opus
+- **Ambiguity**: clear spec = haiku or sonnet, vague or conflicting requirements = opus
+- **Blast radius**: single file = haiku or sonnet, repo-wide design = opus
+- **Budget sensitivity**: if the user signals cost concern, bias toward sonnet and lower effort
 
 ## Output Format
 
 When invoked, produce:
 
 ```
-Recommended: [Model]
-Confidence: [high/medium/low]
+Recommended: [haiku / sonnet / opus]
+Effort: [low / medium / high / xhigh / max]
+Confidence: [high / medium / low]
 Reason: [one sentence]
-Fallback: [Model] if [condition]
+Fallback: [model] if [condition]
 ```
+
+## Related
+
+Use `/agent-route` to pick the agent type. Use this skill to pick the model and
+effort for that agent. The two skills work as a pair.
 
 ## Usage
 
