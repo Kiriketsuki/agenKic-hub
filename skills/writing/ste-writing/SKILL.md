@@ -23,8 +23,8 @@ controlled technical prose. See `references/kilint.md`.
 | PR description | `references/pr-descriptions.md` | flavored | 25 words |
 | README / docs | `references/documentation.md` | flavored | 25 words |
 | Error message | `references/error-messages.md` | strict | 20 words |
-| Docstring / public API comment | `references/code-comments.md` | flavored, relaxed cap | +10 words |
-| Inline "why this is weird" comment | `references/code-comments.md` | exempt | needs voice |
+| Docstring / public API comment | `references/code-comments.md` | prose | 35 words |
+| Inline comment, including "why this is weird" | `references/code-comments.md` | prose | 35 words |
 
 ## Step 2 -- apply the rules
 

@@ -1,5 +1,5 @@
 ---
-title: agenKic sKills
+title: agenKic-hub
 hide:
   - navigation
   - toc
@@ -10,7 +10,7 @@ hide:
 <img class="ck-hero__hex" src="assets/chrysaki-mark.svg" alt="">
 <span class="ck-eyebrow"><span class="ck-chip">⬢ public hub</span> agentic tooling, symlinked</span>
 <h1>Skills that<br><em>think in rounds.</em></h1>
-<p>20+ Claude Code skills, 10+ multi-agent workflow scripts, harness scaffolds for five runtimes, and an installer that symlinks the lot into your machine. Adversarial councils, spec loops, and a prose linter that refuses to let AI slop through.</p>
+<p>26 Claude Code skills, 10+ multi-agent workflow scripts, harness scaffolds for five runtimes, and an installer that symlinks the lot into your machine. Adversarial councils, spec loops, and a prose linter that refuses to let AI slop through.</p>
 <div class="ck-hero__actions">
 <a class="ck-btn" href="setup/install/">⬢ Install</a>
 <a class="ck-btn ck-btn--ghost" href="skills/">Browse skills →</a>
@@ -24,7 +24,7 @@ hide:
 The installer does not copy files. It links them, so a `git pull` updates every harness in place.
 
 <div class="ck-grid ck-grid--5">
-<div class="ck-card"><div class="ck-card__kicker">20+ skills</div><div class="ck-card__title">skills/</div><div class="ck-card__desc">One SKILL.md each, symlinked into ~/.claude/skills/.</div></div>
+<div class="ck-card"><div class="ck-card__kicker">26 skills</div><div class="ck-card__title">skills/</div><div class="ck-card__desc">One SKILL.md each, symlinked into ~/.claude/skills/.</div></div>
 <div class="ck-card ck-card--teal"><div class="ck-card__kicker">10+ scripts</div><div class="ck-card__title">workflows/</div><div class="ck-card__desc">.mjs coordinators for the Workflow tool.</div></div>
 <div class="ck-card ck-card--amethyst"><div class="ck-card__kicker">5 runtimes</div><div class="ck-card__title">harnesses/</div><div class="ck-card__desc">Claude Code, Codex, OpenCode, Pi, Hermes.</div></div>
 <div class="ck-card ck-card--blue"><div class="ck-card__kicker">terminal</div><div class="ck-card__title">config/</div><div class="ck-card__desc">tmux, zsh fragments, statusline.</div></div>

@@ -10,7 +10,7 @@ version: 2.1.0
 
 An advanced learning system that turns your Claude Code sessions into reusable knowledge through atomic "instincts" - small learned behaviors with confidence scoring.
 
-**v2.1** adds **project-scoped instincts** — React patterns stay in your React project, Python conventions stay in your Python project, and universal patterns (like "always validate input") are shared globally.
+**v2.1** adds **project-scoped instincts**. React patterns stay in your React project, and Python conventions stay in your Python project. Universal patterns (like "always validate input") apply globally.
 
 ## When to Activate
 
@@ -21,28 +21,6 @@ An advanced learning system that turns your Claude Code sessions into reusable k
 - Evolving instincts into full skills, commands, or agents
 - Managing project-scoped vs global instincts
 - Promoting instincts from project to global scope
-
-## What's New in v2.1
-
-| Feature | v2.0 | v2.1 |
-|---------|------|------|
-| Storage | Global (~/.claude/homunculus/) | Project-scoped (projects/<hash>/) |
-| Scope | All instincts apply everywhere | Project-scoped + global |
-| Detection | None | git remote URL / repo path |
-| Promotion | N/A | Project → global when seen in 2+ projects |
-| Commands | 4 (status/evolve/export/import) | 6 (+promote/projects) |
-| Cross-project | Contamination risk | Isolated by default |
-
-## What's New in v2 (vs v1)
-
-| Feature | v1 | v2 |
-|---------|----|----|
-| Observation | Stop hook (session end) | PreToolUse/PostToolUse (100% reliable) |
-| Analysis | Main context | Background agent (Haiku) |
-| Granularity | Full skills | Atomic "instincts" |
-| Confidence | None | 0.3-0.9 weighted |
-| Evolution | Direct to skill | Instincts -> cluster -> skill/command/agent |
-| Sharing | None | Export/import instincts |
 
 ## The Instinct Model
 
@@ -130,7 +108,7 @@ The system automatically detects your current project:
 1. **`CLAUDE_PROJECT_DIR` env var** (highest priority)
 2. **`git remote get-url origin`** -- hashed to create a portable project ID (same repo on different machines gets the same ID)
 3. **`git rev-parse --show-toplevel`** -- fallback using repo path (machine-specific)
-4. **Global fallback** -- if no project is detected, instincts go to global scope
+4. **Global fallback** -- if the skill detects no project, instincts go to global scope
 
 Each project gets a 12-character hash ID (e.g., `a1b2c3d4e5f6`). A registry file at `~/.claude/homunculus/projects.json` maps IDs to human-readable names.
 
@@ -287,7 +265,7 @@ Other behavior (observation capture, instinct thresholds, project scoping, promo
 
 ## Instinct Promotion (Project -> Global)
 
-When the same instinct appears in multiple projects with high confidence, it's a candidate for promotion to global scope.
+When the same instinct appears in multiple projects with high confidence, it is a candidate for promotion to global scope.
 
 **Auto-promotion criteria:**
 - Same instinct ID in 2+ projects
@@ -320,13 +298,13 @@ Confidence evolves over time:
 | 0.9 | Near-certain | Core behavior |
 
 **Confidence increases** when:
-- Pattern is repeatedly observed
-- User doesn't correct the suggested behavior
+- The pattern recurs
+- The user does not correct the suggested behavior
 - Similar instincts from other sources agree
 
 **Confidence decreases** when:
 - User explicitly corrects the behavior
-- Pattern isn't observed for extended periods
+- The pattern does not appear for extended periods
 - Contradicting evidence appears
 
 ## Why Hooks vs Skills for Observation?
@@ -334,9 +312,9 @@ Confidence evolves over time:
 > "v1 relied on skills to observe. Skills are probabilistic -- they fire ~50-80% of the time based on Claude's judgment."
 
 Hooks fire **100% of the time**, deterministically. This means:
-- Every tool call is observed
-- No patterns are missed
-- Learning is comprehensive
+- Every tool call produces an observation
+- No pattern escapes
+- Learning is complete
 
 ## Backward Compatibility
 
@@ -349,10 +327,10 @@ v2.1 is fully compatible with v2.0 and v1:
 ## Privacy
 
 - Observations stay **local** on your machine
-- Project-scoped instincts are isolated per project
-- Only **instincts** (patterns) can be exported — not raw observations
-- No actual code or conversation content is shared
-- You control what gets exported and promoted
+- Each project keeps its project-scoped instincts to itself
+- You can export only **instincts** (patterns), not raw observations
+- The skill shares no actual code or conversation content
+- You control what the skill exports and promotes
 
 ## Related
 

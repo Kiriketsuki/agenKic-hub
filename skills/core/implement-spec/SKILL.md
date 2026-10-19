@@ -1,5 +1,6 @@
 ---
 name: implement-spec
+disable-model-invocation: true
 description: "Implement a feature from a *-spec.md file by routing tasks to optimal subagents, executing in dependency-aware parallel waves, and committing after each logical chunk. Use whenever the user says \"implement this spec\", \"implement [name]-spec.md\", \"build from spec\", \"execute the spec\", \"start implementing\", \"implement with subagents\", or references a spec file and wants it built. Also trigger when the user pastes or points to a spec and says \"go\", \"build it\", \"make it happen\", or \"let's do this\". This is the primary skill for turning any feature spec into working code through coordinated multi-agent execution."
 ---
 
@@ -10,13 +11,14 @@ Turn a feature spec into working code through coordinated subagent execution.
 ## Context
 
 The user has a `*-spec.md` (from `/feature-spec`, `/brainstorm`, or hand-written) and
-wants it implemented. They're already on a feature branch. The spec has a Task Breakdown
+wants it implemented. They are already on a feature branch. The spec has a Task Breakdown
 table with IDs, descriptions, priorities, and dependencies.
 
 **Spec location**: if the user names the spec without a path, look in the repo's
-`docs/specs/todo/` first (the default output location of feature-spec), then the repo
-root, then `docs/specs/`. **Spec lifecycle**: when implementation is complete and the
-final commit/PR is made, `git mv` the spec from `docs/specs/todo/` to `docs/specs/done/`
+`docs/specs/todo/` first (the default output location of feature-spec). Then look in the repo
+root, then `docs/specs/`.
+
+**Spec lifecycle**: when implementation is complete, make the final commit/PR and `git mv` the spec from `docs/specs/todo/` to `docs/specs/done/`
 as part of that commit (see the repo's `docs/specs/README.md`).
 
 ## Workflow
@@ -34,7 +36,7 @@ as part of that commit (see the repo's `docs/specs/README.md`).
 
 3. **Check for blockers** before proceeding:
    - Unresolved Open Questions -> stop, ask the user to resolve them first
-   - Missing Task Breakdown -> stop, there's nothing to execute without tasks
+   - Missing Task Breakdown -> stop, there is nothing to execute without tasks
    - Ambiguous dependencies (circular or referencing nonexistent IDs) -> stop, clarify
 
 4. **Route each task to a subagent type.** Read the task description and match it
@@ -95,10 +97,10 @@ For each wave, in order:
    - Spawn all agents in the same turn so they run concurrently.
 
 2. **Collect results.** When all agents in the wave complete:
-   - If worktree isolation was used, review each agent's changes and apply them
+   - If the wave used worktree isolation, review each agent's changes and apply them
      back to the current branch. Resolve conflicts if any arise.
    - Run the detected test command. If tests fail, **stop** -- show the output,
-     don't commit broken code, and ask the user how to proceed.
+     do not commit broken code, and ask the user how to proceed.
    - Run the detected build command if separate from tests. Same stop-on-failure.
 
 3. **Commit.** Stage changes and commit with a conventional message:
@@ -112,7 +114,7 @@ For each wave, in order:
    Grouping logic for commits within a wave:
    - Tasks modifying the same files or feature area -> one commit
    - Unrelated tasks (different modules, no shared files) -> separate commits
-   - Use judgment: if T1 adds a utility and T3 imports it, that's one chunk
+   - Use judgment: if T1 adds a utility and T3 imports it, that is one chunk
 
 4. **Update the spec file.** Mark completed tasks as "done" in the Task Breakdown
    table so progress is visible in the spec itself.
@@ -129,7 +131,7 @@ Repeat for every wave until all tasks are done.
 
 1. **Run exit criteria.** Go through each Exit Criteria checkbox in the spec:
    - Run test suites, grep checks, build verification
-   - Flag any criteria that can't be verified automatically
+   - Flag any criteria that you cannot verify automatically
 
 2. **Push.** `git push` to remote (one push at the end, not per-commit).
 
@@ -161,8 +163,8 @@ decisions, or changes spanning 5+ files, upgrade to opus.
 
 ## Subagent Briefing Template
 
-Each subagent gets a prompt built from these sections. Include only what's relevant
-to the specific task -- don't dump the entire spec.
+Each subagent gets a prompt built from these sections. Include only what is relevant
+to the specific task -- do not dump the entire spec.
 
 ```
 You are implementing task [ID] from [spec-name]-spec.md.
@@ -191,15 +193,15 @@ what's already in place and can build on it rather than duplicate it]
 - Report back: files changed, tests added, decisions made, blockers hit
 ```
 
-Tailor the prompt to the task's scope. A documentation task doesn't need API contracts;
-a test task doesn't need data model context.
+Tailor the prompt to the task's scope. A documentation task does not need API contracts.
+A test task does not need data model context.
 
 ## Error Recovery
 
 | Situation | Action |
 |:---|:---|
 | Subagent fails or times out | Report which task failed and why. Ask: retry, skip, or abort. |
-| Tests fail after wave | Show output. Don't commit. Ask user to fix or retry. |
+| Tests fail after wave | Show output. Do not commit. Ask user to fix or retry. |
 | Merge conflict from worktree | Report conflicting files and both sides. Ask user to resolve. |
 | Build fails | Same as test failure -- pause and report. |
 | Circular dependency in tasks | Stop during planning. Ask user to fix the spec. |
@@ -213,4 +215,4 @@ This skill does NOT:
 - Run `/brainstorm` or `/feature-spec` (those happen before this skill)
 - Make architectural decisions not in the spec
 - Deploy, release, or create PRs
-- Modify tasks the user didn't approve in the execution plan
+- Modify tasks the user did not approve in the execution plan

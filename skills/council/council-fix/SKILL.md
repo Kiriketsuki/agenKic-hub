@@ -24,7 +24,7 @@ Plan file written to ~/.claude/plans/council-fix-<slug>-<date>.md
 Human clears context, opens plan, implements findings in priority order.
 ```
 
-No auto-applying of code. The council identifies and verifies findings; you implement them.
+No auto-applying of code. The council identifies and verifies findings. You implement them.
 
 ## Triggers
 
@@ -53,7 +53,7 @@ Determine what to review:
 
 ### Step 2 -- Invoke the Pipeline
 
-**HARD REQUIREMENT**: Invoke the adversarial-council skill via the `Skill` tool — do NOT run the debate inline as text. The skill will call `TeamCreate` and spawn real agents. If you write ADVOCATE/CRITIC/ARBITER sections yourself without calling `Skill`, you are doing it wrong. Stop and invoke the skill.
+Invoke the adversarial-council skill through the `Skill` tool. The skill calls `TeamCreate` and spawns real agents. An inline text debate has no independent reasoning, so it defeats the council. If you catch yourself writing ADVOCATE, CRITIC or ARBITER sections yourself, stop and invoke the skill.
 
 Invoke `/adversarial-council` with these defaults:
 
@@ -65,7 +65,7 @@ Invoke `/adversarial-council` with these defaults:
 --rounds 4
 ```
 
-All other council options can still be appended by the user:
+The user can still append all other council options:
 
 ```
 /council-fix PR #42 --n 3 --rounds 5 --model opus
@@ -80,7 +80,7 @@ After the council writes `council-result.json` and `fix-manifest.md`, generate a
 ~/.claude/plans/council-fix-<motion-slug>-<YYYY-MM-DD>.md
 ```
 
-The slug is derived from the motion text (lowercase, spaces to hyphens, truncated at 40 chars) — the same slug `council-supervisor` already computes internally.
+Derive the slug from the motion text (lowercase, spaces to hyphens, truncated at 40 chars). It is the same slug that `council-supervisor` already computes internally.
 
 Plan file content:
 
@@ -125,7 +125,7 @@ Source: .council/council-result.json
 - Fix manifest:   .council/fix-manifest.md
 ```
 
-If there are no verified/unverified findings (all phantom), the Blockers and Non-blockers sections are omitted and a note is added: "No actionable findings. All findings were marked phantom after source verification."
+If there are no verified/unverified findings (all phantom), omit the Blockers and Non-blockers sections and add this note: "No actionable findings. All findings proved phantom after source verification."
 
 ### Step 4 -- Report
 
@@ -159,5 +159,5 @@ Next steps:
 
 - **PR has no code changes** (docs-only): Council runs normally, plan file still generated, but "No code changes to fix" note added to Implementation Notes.
 - **PR is already merged**: Report "PR #N is already merged. Nothing to review." Stop.
-- **No test framework detected**: Note "not detected — specify manually" in the plan's test command field.
+- **No test framework detected**: Write the placeholder from the template above in the plan's test command field.
 - **All findings are phantom after verification**: Report "No actionable findings. PR looks good." Plan file is still written with a phantom-only section so the user has the record.

@@ -1,0 +1,131 @@
+name: CI
+
+# Runs the tests the repo already has. The kilint job runs its pytest suite.
+# The workflows job runs every smoke test and checks the syntax of every
+# workflow script. The skills job checks the SKILL.md frontmatter.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  kilint-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run the kilint tests
+        working-directory: skills/writing/kilint
+        run: |
+          pip install pytest
+          python -m pytest -q
+
+  workflow-scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Run every workflow smoke test
+        run: |
+          shopt -s nullglob
+          files=(workflows/*.smoke.mjs)
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "::error::No workflows/*.smoke.mjs file found"
+            exit 1
+          fi
+          for f in "${files[@]}"; do
+            echo "::group::$f"
+            node "$f"
+            echo "::endgroup::"
+          done
+      - name: Check the syntax of every workflow script
+        # A workflow script runs inside an async function, so it may use a
+        # top-level return. Wrap each script the same way before the check.
+        # A smoke test is a real module and gets a plain check.
+        run: |
+          shopt -s nullglob
+          tmp="$(mktemp -d)"
+          status=0
+          for f in workflows/*.mjs; do
+            case "$f" in
+              *.smoke.mjs)
+                node --check "$f" || status=1
+                ;;
+              *)
+                {
+                  echo 'async function __workflow() {'
+                  sed 's/^export const meta/const meta/' "$f"
+                  echo
+                  echo '}'
+                } > "$tmp/check.mjs"
+                node --check "$tmp/check.mjs" || { echo "::error file=$f::Syntax error"; status=1; }
+                ;;
+            esac
+          done
+          exit "$status"
+
+  skill-frontmatter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check every SKILL.md frontmatter
+        run: |
+          pip install pyyaml
+          python - <<'PY'
+          import glob
+          import sys
+
+          import yaml
+
+          DESC_LIMIT = 1536
+          LINE_WARN = 500
+
+          errors = 0
+          paths = sorted(glob.glob("skills/*/*/SKILL.md"))
+          if not paths:
+              print("::error::No skills/*/*/SKILL.md file found")
+              sys.exit(1)
+
+          for path in paths:
+              text = open(path, encoding="utf-8").read()
+              lines = text.split("\n")
+              if lines[0].strip() != "---" or "---" not in [l.strip() for l in lines[1:]]:
+                  print(f"::error file={path}::Missing frontmatter")
+                  errors += 1
+                  continue
+              end = [l.strip() for l in lines[1:]].index("---") + 1
+              try:
+                  meta = yaml.safe_load("\n".join(lines[1:end])) or {}
+              except yaml.YAMLError as exc:
+                  print(f"::error file={path}::Invalid YAML: {exc}")
+                  errors += 1
+                  continue
+              if not isinstance(meta, dict):
+                  print(f"::error file={path}::Frontmatter is not a mapping")
+                  errors += 1
+                  continue
+              for key in ("name", "description"):
+                  if not str(meta.get(key) or "").strip():
+                      print(f"::error file={path}::Missing {key}")
+                      errors += 1
+              size = len(str(meta.get("description") or "")) + len(str(meta.get("when_to_use") or ""))
+              if size > DESC_LIMIT:
+                  print(f"::error file={path}::description plus when_to_use is {size} characters, over {DESC_LIMIT}")
+                  errors += 1
+              if len(lines) > LINE_WARN:
+                  print(f"::warning file={path}::SKILL.md has {len(lines)} lines, over {LINE_WARN}")
+
+          print(f"Checked {len(paths)} skills, {errors} error(s)")
+          sys.exit(1 if errors else 0)
+          PY

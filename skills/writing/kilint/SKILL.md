@@ -1,6 +1,5 @@
 ---
 name: kilint
-user-invocable: true
 argument-hint: "[path] [--profile strict|flavored|prose]"
 description: "Lint prose for AI-slop patterns without rewriting it. Checks sentence length, passive voice, filler, marketing adjectives, punctuation, terminology, and structure in Markdown, text, code comments, and docstrings. Triggers: \"kilint this\", \"lint this writing\", \"check this prose\", \"score this writing\", \"find AI slop\", \"/kilint\". Use ste-writing when the user also wants a rewrite."
 ---

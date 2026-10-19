@@ -15,9 +15,9 @@ When neither is set, skip Step 5. The rest of the skill needs no configuration.
 
 ## Purpose
 
-Produce a filled `[feature-name]-spec.md` in the target repo's `docs/specs/todo/` directory — the repo is the current working directory by default, or a path the caller/handoff specifies (e.g. a brand-new repo created for the feature); create `docs/specs/todo/` if missing — by interviewing the user section-by-section. Enter plan mode at the start and stay there — this is a planning exercise from first question to final file.
+Produce a filled `[feature-name]-spec.md` in the target repo's `docs/specs/todo/` directory by interviewing the user section-by-section. The repo is the current working directory by default, or a path the caller/handoff specifies (e.g. a brand-new repo created for the feature). Create `docs/specs/todo/` if missing. Enter plan mode at the start and stay there. This is a planning exercise from first question to final file.
 
-**Hard boundary**: this skill ends when the spec file is written and any downstream updates (daily note, PR) are fired. Do not begin implementation, do not suggest code changes, do not offer to "start on T1". The spec is the deliverable.
+**Hard boundary**: this skill ends when you have written the spec file and fired any downstream updates (daily note, PR). Do not begin implementation, do not suggest code changes, do not offer to "start on T1". The spec is the deliverable.
 
 ## Template
 
@@ -27,7 +27,7 @@ Bundled at `assets/template.md` (relative to this skill's directory).
 
 ## Handoff from Brainstorming
 
-When invoked after the brainstorming skill, the conversation already contains a user-approved design with decisions about architecture, approach, scope, and trade-offs. **Do not re-interview what was already decided.** Instead:
+When invoked after the brainstorming skill, the conversation already contains a design the user approved. It holds decisions about architecture, approach, scope, and trade-offs. **Do not re-interview what was already decided.** Instead:
 
 1. Review the brainstorming conversation for confirmed decisions (feature name, user story, scope, architecture, components, data flow, error handling).
 2. Pre-fill every template section you can from those decisions.
@@ -42,18 +42,18 @@ This avoids the frustrating pattern of re-asking questions the user already answ
 
 ### Step 1: Enter Plan Mode + Read Context
 
-- Call `EnterPlanMode` immediately — before saying anything else to the user.
-- Scan the CWD for context: README, package.json, pyproject.toml, go.mod, existing specs, migration files, API route files — anything that reveals the stack, architecture, and domain vocabulary.
-- Run `git branch --show-current` and `gh pr view --json number,title,body 2>/dev/null` to detect if the user is on a non-default branch with an open PR. Store branch name and PR number/body if found — you'll need them in Step 4. (Skip quietly if the target repo is not a git repo, e.g. a brand-new repo that has not been `git init`-ed.)
-- Copy the bundled template (`assets/template.md` relative to this skill's directory) verbatim to `./docs/specs/todo/feature_spec.md` (create the directory if missing). This is the working draft you'll progressively fill in.
+- Call `EnterPlanMode` immediately, before saying anything else to the user.
+- Scan the CWD for context: README, package.json, pyproject.toml, go.mod, existing specs, migration files, API route files. Anything that reveals the stack, architecture, and domain vocabulary.
+- Run `git branch --show-current` and `gh pr view --json number,title,body 2>/dev/null` to detect if the user is on a non-default branch with an open PR. Store branch name and PR number/body if found. You will need them in Step 4. (Skip quietly if the target repo is not a git repo, e.g. a brand-new repo that has not been `git init`-ed.)
+- Copy the bundled template (`assets/template.md` relative to this skill's directory) verbatim to `./docs/specs/todo/feature_spec.md` (create the directory if missing). This is the working draft you will progressively fill in.
 - **If following a brainstorming handoff**: immediately pre-fill sections from the approved design before starting the interview. Only interview for gaps.
-- Keep a mental working state of what's been confirmed so you don't re-ask.
+- Keep a mental working state of what the user has confirmed so you do not re-ask.
 
-### Step 2: Interview — Section by Section
+### Step 2: Interview, Section by Section
 
-Work through each section in order. The golden rule: **read first, ask second**. If the repo context answers the question, fill it in and show the user what you wrote ("I've assumed X — correct?"). Only ask outright when you genuinely don't know.
+Work through each section in order. The golden rule: **read first, ask second**. If the repo context answers the question, fill it in and show the user what you wrote ("I've assumed X. Correct?"). Only ask outright when you genuinely do not know.
 
-Keep questions focused — one topic per turn. No form dumps.
+Keep questions focused: one topic per turn. No form dumps.
 
 ---
 
@@ -61,10 +61,10 @@ Keep questions focused — one topic per turn. No form dumps.
 
 Gather: feature name, user story (role / capability / business outcome), problem statement, explicit out-of-scope exclusions.
 
-- Infer the domain and likely roles from the codebase (e.g., if it's a SaaS app with user tables, the role is probably "user" or "admin").
-- Ask for the feature name first — every subsequent question can be framed around it.
-- The problem statement should be 1–2 sentences: what breaks or is missing without this feature? Often the user's original request already contains this — extract it rather than asking.
-- Out-of-scope: prompt with "anything explicitly not included in this?" — if the user draws a blank, suggest 1–2 reasonable exclusions based on what you know and ask them to confirm.
+- Infer the domain and likely roles from the codebase (e.g., a SaaS app with user tables probably has the role "user" or "admin").
+- Ask for the feature name first. Frame every later question around it.
+- The problem statement should be one or two sentences: what breaks or is missing without this feature? Often the user's original request already contains this. Extract it rather than asking.
+- Out-of-scope: prompt with "anything explicitly not included in this?" If the user draws a blank, suggest one or two reasonable exclusions based on what you know. Ask them to confirm.
 
 Once confirmed, derive the kebab-case output filename: `[feature-name]-spec.md`.
 
@@ -72,9 +72,9 @@ Once confirmed, derive the kebab-case output filename: `[feature-name]-spec.md`.
 
 #### 2.2 Success Condition
 
-Ask: "In one sentence — when is this feature done? What's the verifiable state that means it shipped?"
+Ask: "In one sentence, when is this feature done? What is the verifiable state that means it shipped?"
 
-This should be a completion-state sentence: "This feature is complete when [X]." It anchors every later decision — scope disputes, task prioritisation, exit criteria all refer back to this sentence. If the user's answer is vague ("when it works"), push for something testable ("when a user can do X and Y is true in the system").
+This should be a completion-state sentence: "This feature is complete when [X]." It anchors every later decision. Scope disputes, task prioritisation, and exit criteria all refer back to this sentence. If the user's answer is vague ("when it works"), push for a testable one. Example: ("when a user can do X and Y is true in the system").
 
 If the user already stated something concrete in the overview, propose it and confirm rather than re-asking.
 
@@ -82,7 +82,7 @@ If the user already stated something concrete in the overview, propose it and co
 
 #### 2.3 Open Questions
 
-Ask once: "Any known unknowns or blockers before we plan?" If the user has none, leave the table's placeholder row and move on. Don't labour this section.
+Ask once: "Any known unknowns or blockers before we plan?" If the user has none, leave the table's placeholder row and move on. Do not labour this section.
 
 ---
 
@@ -90,7 +90,7 @@ Ask once: "Any known unknowns or blockers before we plan?" If the user has none,
 
 Ask for must-haves first. Each must-have needs a brief acceptance condition (what does "done" look like for that behaviour?).
 
-Then ask together: "Anything lower priority — nice to have but not blocking launch?"
+Then ask together: "Anything lower priority, nice to have but not blocking launch?"
 
 ---
 
@@ -148,30 +148,30 @@ Ask: "Any related specs, tickets, or docs I should link?" If none, omit the plac
 
 ### Step 3: Finalise the Spec
 
-**Spec self-review** — before writing the final file, look at the draft with fresh eyes:
+**Spec self-review**: before writing the final file, look at the draft with fresh eyes:
 
 1. **Placeholder scan:** Any "TBD", "TODO", incomplete sections, or vague requirements? Fix them.
 2. **Internal consistency:** Do any sections contradict each other? Does the technical plan match the scope?
 3. **Scope check:** Is this focused enough for a single implementation plan, or does it need decomposition?
-4. **Ambiguity check:** Could any requirement be interpreted two different ways? If so, pick one and make it explicit.
+4. **Ambiguity check:** Could any requirement have two different readings? If so, pick one and make it explicit.
 
-Fix any issues inline. No need to re-review — just fix and move on. Then:
+Fix any issues inline. No need to re-review. Just fix and move on. Then:
 
 - Write the complete, filled spec to `./docs/specs/todo/feature_spec.md`.
 - Rename it to `./docs/specs/todo/[kebab-case-feature-name]-spec.md`.
-- Sign the bottom (above any existing `---`) with **your Clault Kiper signature for the model you are currently running as** — derive it, do NOT hardcode:
+- Sign the bottom (above any existing `---`) with **your Clault Kiper signature for the model you are currently running as**. Derive it. Do not hardcode:
   ```
   ---
   *Authored by: Clault Kiper{S|O|H} {major.minor}*
   ```
-  Suffix + version per `000-System/Agents/AGENTS.md`: Sonnet → `Clault KiperS 4.6`, Opus → `Clault KiperO 4.8`, Haiku → `Clault KiperH 4.5`. Use your own current model identity (e.g. running as Opus 4.8 → `Clault KiperO 4.8`). The spec file gets this signature; the Step 5 daily note does not (it is a shared, auto-generated note).
+  Take the suffix and version from `000-System/Agents/AGENTS.md`, using your own current model identity. The spec file gets this signature. The Step 5 daily note does not (it is a shared, auto-generated note).
 - Tell the user the final filename and path.
 
 ---
 
 ### Step 4: PR Description Update (if on a branch with an open PR)
 
-If Step 1 found an open PR, spawn a **background** subagent for this — do not await it:
+If Step 1 found an open PR, spawn a **background** subagent for this. Do not await it:
 
 ```
 Update the GitHub PR description for PR #[number] in the current repo.
@@ -196,11 +196,11 @@ Rules:
 
 ### Step 5: Daily Note Update (Background Subagent)
 
-Spawn a **background** subagent — fire and forget, do not await it. **Resolve two things yourself first** and substitute them as literals (do not make the subagent guess):
+Spawn a **background** subagent. Fire and forget, and do not await it. **Resolve two things yourself first**. Substitute them as literals (do not make the subagent guess):
 
-- **Link form** — check whether the spec file lives inside the vault (`$VAULT_PATH/...`, see Configuration):
+- **Link form**: check whether the spec file lives inside the vault (`$VAULT_PATH/...`, see Configuration):
   - Inside the vault → use an Obsidian wikilink: `[[<feature-name>-spec]]`.
-  - Outside the vault (e.g. a separate code repo) → a wikilink would dangle, so reference the spec by absolute path in backticks, and link a related in-vault note if one exists (e.g. `` `~/dev/Personal/foo/foo-spec.md` · see [[Some Related Note]] ``).
+  - Outside the vault (e.g. a separate code repo) → a wikilink would dangle. Reference the spec by absolute path in backticks. Link a related in-vault note if one exists (e.g. `` `~/dev/Personal/foo/foo-spec.md` · see [[Some Related Note]] ``).
 - **Today's daily note path**: `$DAILY_NOTE_PATH` (see Configuration). Skip Step 5 entirely when no daily-note path is configured.
 
 Pass the subagent this task (substitute real values):
@@ -231,11 +231,11 @@ Rules:
 
 ## Guidelines
 
-- **Stay in plan mode throughout.** You entered it in Step 1 — don't exit until the skill is fully complete.
-- **Do not begin implementation.** The skill ends when the spec is written and downstream updates are fired. Do not suggest starting on tasks, writing code, or making any implementation changes.
+- **Stay in plan mode throughout.** You entered it in Step 1. Do not exit until the skill is fully complete.
+- **Do not begin implementation.** The skill ends when you have written the spec and fired the downstream updates. Do not suggest starting on tasks, writing code, or making any implementation changes.
 - **No emojis** anywhere: questions, file content, log entries.
-- **Don't ask what you can read.** Repo context is free — spend it.
+- **Do not ask what you can read.** Repo context is free, so spend it.
 - **One topic per turn.** Long lists of questions kill momentum.
-- **The spec lives in the target repo's `docs/specs/todo/`** — repo is CWD by default, or a caller/handoff-specified path. It is not copied back into the vault unless the vault itself is the target repo. (If the spec lands outside the vault, the Step 5 daily-note link references it by path, not a wikilink.)
+- **The spec lives in the target repo's `docs/specs/todo/`**. The repo is CWD by default, or a path the caller or handoff names. It is not copied back into the vault unless the vault itself is the target repo. (If the spec lands outside the vault, the Step 5 daily-note link references it by path, not a wikilink.)
 - **Spec lifecycle**: `docs/specs/` buckets are `todo` (born here), `done` (moved on implementation merge, by implement-spec or merge-next), `superseded`, `obsolete`, and `archive` (pre-system legacy). See the repo's `docs/specs/README.md`.
-- **Infer, show, confirm** — faster than blank-slate questions every time.
+- **Infer, show, confirm**: faster than blank-slate questions every time.

@@ -1,8 +1,9 @@
 ---
 name: merge-next
-user-invocable: true
+disable-model-invocation: true
 argument-hint: "[optional: next branch name]"
-description: "End-of-work merge and advance skill. Commits, pushes, verifies the PR targets the correct parent branch, squash merges, then checks out the next sibling branch and rebases onto the parent. Use this skill whenever the user says \"merge and next\", \"merge-next\", \"done with this feature\", \"merge this and move on\", \"advance to next feature/task/phase\", \"ship this and pick up the next one\", \"wrap up this branch\", or after a council review cycle when the user is satisfied with the work. Also use when the user wants to merge an epic into main or a saga, or any child-to-parent merge followed by advancing to the next sibling. Covers the full hierarchy: task -> feature -> epic -> saga -> main."
+description: "Squash merge the current branch into its parent, then check out the next sibling branch and rebase it onto the parent."
+when_to_use: "Use when the user says \"merge and next\", \"merge-next\", \"done with this feature\", \"merge this and move on\", \"advance to next feature/task/phase\", \"ship this and pick up the next one\", \"wrap up this branch\", or after a council review cycle when the user is satisfied. Also use for any child-to-parent merge followed by advancing to the next sibling, such as an epic into main or a saga. Covers the full hierarchy: task -> feature -> epic -> saga -> main."
 ---
 
 # merge-next
@@ -32,7 +33,7 @@ ask the user before continuing.
 
 ### Step 1: Assess uncommitted work
 
-Run `git status` and `git diff --stat`. If there are uncommitted changes:
+Run `git status` and `git diff --stat`. If the tree has uncommitted changes:
 
 - **Spec lifecycle check**: if the branch implemented a spec that sits in `docs/specs/todo/`,
   `git mv` it to `docs/specs/done/` and include the move in the final commit (see the repo's
@@ -61,9 +62,8 @@ gh pr view --json number,title,baseRefName,isDraft,url 2>/dev/null
 then create the PR with `gh pr create` targeting the parent as base. Use conventional commit
 format for the title (e.g., `feat: Trip overview navigation`).
 
-**If a PR exists:** Verify its base branch matches the expected parent. If it doesn't, warn
-the user -- this likely means the PR was auto-created with a wrong base or the parent was
-renamed. Offer to update it with `gh pr edit --base <correct-parent>`.
+**If a PR exists:** Verify its base branch matches the expected parent. If it does not, warn
+the user -- this likely means the workflow auto-created the PR with a wrong base or someone renamed the parent. Offer to update it with `gh pr edit --base <correct-parent>`.
 
 ### Step 4: Mark PR ready and squash merge
 
@@ -79,7 +79,7 @@ gh pr merge <number> --squash
 
 The hook will ask the user to approve. Wait for approval before proceeding.
 
-After merge, delete the remote branch if GitHub didn't auto-delete it:
+After merge, delete the remote branch if GitHub did not auto-delete it:
 ```bash
 git push origin --delete <branch-name>
 ```
@@ -111,8 +111,8 @@ Determine whether there are remaining siblings (see "Sibling Detection" below).
    git checkout <parent-branch>
    git pull
    ```
-3. If the parent is itself a child (e.g., an epic under a saga), mention that the user can
-   run `/merge-next` again to merge the parent upward.
+3. If the parent is itself a child (e.g., an epic under a saga), mention this.
+   The user can run `/merge-next` again to merge the parent upward.
 
 ## Parent Detection
 
@@ -185,13 +185,13 @@ gh api graphql -f query='
   branch on the remote
 
 ### Step D: Cross-reference with specs (optional)
-If a `specs.md` or similar planning doc exists in the repo root or a `docs/` folder, check
-whether it defines an explicit ordering (e.g., F2.1 before F2.2). Use this to confirm or
+If a `specs.md` or similar planning doc exists in the repo root or a `docs/` folder, check it.
+See whether it defines an explicit ordering (e.g., F2.1 before F2.2). Use this to confirm or
 override the issue-number ordering.
 
 ### Step E: Present choices
 If there are multiple remaining siblings, show the user a numbered list and let them pick.
-If there's only one, proceed automatically. If there are none, this is the last child.
+If there is only one, proceed automatically. If there are none, this is the last child.
 
 ## Edge Cases
 
@@ -199,17 +199,17 @@ If there's only one, proceed automatically. If there are none, this is the last 
 report them. Do not auto-resolve -- the user needs to handle these manually or with a
 dedicated conflict resolution pass.
 
-**Branch doesn't exist on remote:** If the next sibling's branch doesn't exist on the remote
-yet, report this and suggest the user create the issue/branch first (the issue-branch-handler
-workflow will create it automatically when the issue is labeled).
+**Branch does not exist on remote:** If the next sibling's branch does not exist on the remote
+yet, report this. Suggest the user create the issue/branch first. The issue-branch-handler
+workflow creates it automatically when someone labels the issue.
 
 **Multiple PRs for the same branch:** Use the most recent open one. Warn if there are multiple.
 
-**Current branch is main/saga with no parent:** This skill doesn't apply -- inform the user
-that they're already at the top level.
+**Current branch is main/saga with no parent:** This skill does not apply -- inform the user
+that they are already at the top level.
 
 **Dirty working tree before rebase:** Stash changes before rebasing, then pop after. Warn the
-user that stashed changes were reapplied.
+user that you reapplied the stashed changes.
 
 ## What NOT to do
 
@@ -217,4 +217,4 @@ user that stashed changes were reapplied.
 - Do not force-push to the parent branch
 - Do not delete local branches without asking -- only delete remote branches post-merge
 - Do not skip the rebase step -- the whole point is picking up previously merged work
-- Do not create issues or branches for work that doesn't exist yet
+- Do not create issues or branches for work that does not exist yet

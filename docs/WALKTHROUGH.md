@@ -227,9 +227,15 @@ approaches that failed, and the concrete next steps. Run this before
 Expected outcome: Claude Code loads the most recent handoff file, verifies
 the current git state, and re-reads the key files the handoff names.
 
-Watch the context bar in your session and hand off at about 80 percent
-used. Do not ride the bar into the summarizer, since a forced summary
+Watch the context bar in your session. Work freely below about 50 percent
+of the window, watch it from 50 to 80 percent, and hand off at about 80
+percent. Do not ride the bar into the summarizer, since a forced summary
 drops the nuance a deliberate handoff keeps.
+
+Three built-in commands help before you reach the limit. Run
+`/compact <instructions>` to tell the summarizer what to keep. Run `/rewind`
+and choose summarize to compress from a chosen message onward. Run `/btw`
+to ask a side question that stays out of the conversation history.
 
 Run `/clear` between unrelated tasks, not mid-task. A cleared context
 starts a new conversation with no memory of what came before. Clear only
