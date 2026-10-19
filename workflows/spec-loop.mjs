@@ -899,7 +899,7 @@ for (waveIdx = 0; waveIdx < planResult.waves.length; waveIdx++) {
 Target feature branch: ${targetBranch}
 Sub-task branches to merge (in this order, by ascending key): ${subBranches.join(', ')}
 Do exactly this:
-1. Fetch all branches. Create or reset ${targetBranch} from the FIRST sub-task branch (${subBranches[0]}). IDEMPOTENCY (resume-safe): if ${targetBranch} already contains all sub-task commits (\`git log --oneline\`), do NOT re-merge — report merged:true and stop.
+1. Fetch all branches. IDEMPOTENCY (resume-safe): if ${targetBranch} already exists and contains all sub-task commits (\`git log --oneline\`), do NOT re-merge — report merged:true and stop. If ${targetBranch} does not exist, create it from the FIRST sub-task branch (\`git checkout -b ${targetBranch} origin/${subBranches[0]}\`). If it exists, check it out and continue from its tip. Never reset or force-push ${targetBranch}.
 2. Merge each remaining sub-task branch into ${targetBranch} serially, in the listed order.
 3. The sub-tasks were planned to edit DISJOINT files, so conflicts should be rare. For any file conflict NOT covered by that disjoint check (auto-generated lockfiles, shared config not in touchPoints): PREFER the sub-task with the LATER wave index / later key, OR abort and report conflict:true with the conflicting paths — NEVER silently corrupt the feature branch.
 4. Build (\`${BUILD}\`) the merged ${targetBranch}; fix only mechanical merge fallout, commit semantically, and push ${targetBranch}.
