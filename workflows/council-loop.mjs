@@ -43,7 +43,16 @@
  *     advocates,         // default 1
  *     critics,           // default 1
  *     questioner,        // default false — set true to add a real Socratic questioner lens
- *     rounds,            // default 2 — debate depth per agent within one council
+ *     rounds,            // default 2 — debate depth per agent within one council. In exchange mode each round above 1 adds one critic reply to the disputed findings, at most 2 extra
+ *     debate,            // default 'parallel' (legacy: every lens runs blind in parallel and the arbiter reads the texts).
+ *                        // 'exchange': critics return structured findings, the advocate concedes or disputes each one, the
+ *                        // questioner reads the code for the disputed ones only (the script skips it when nothing is disputed),
+ *                        // and the arbiter rules on what stays contested. The questioner flag does not apply in exchange mode.
+ *                        // A ledger carries each blocker across loops. From the second loop the critics review only the diff
+ *                        // since the last reviewed commit plus the open ledger items. A blocker that survives 3 fix attempts
+ *                        // stops the run with reason fix-not-landing. The result carries the ledger.
+ *                        // Models: critics on model.critic, the rebuttal on sonnet unless model.advocate is set, the
+ *                        // questioner on model.questioner, the arbiter on opus. Exchange mode needs critics >= 1.
  *     maxLoops,          // default 10 — bounded cap on council convenings (fix→re-review iterations)
  *     requireUnconditional, // default true — converge ONLY on unconditional FOR
  *     applyNonBlockers,  // default true — fold non-blockers (cosmetic + follow-ups) into fix rounds
@@ -83,8 +92,18 @@ const ALLOW_NO_TESTS = A.allowNoTests === true
 
 // council knobs — defaults: 1v1, no questioner, 2 debate rounds, bounded at 10 councils, unconditional FOR + zero findings
 const C = Object.assign(
-  { advocates: 1, critics: 1, questioner: false, rounds: 2, maxLoops: 10, requireUnconditional: true, applyNonBlockers: true, nonBlockerSweeps: 2 },
+  { advocates: 1, critics: 1, questioner: false, rounds: 2, maxLoops: 10, requireUnconditional: true, applyNonBlockers: true, nonBlockerSweeps: 2, debate: 'parallel' },
   A.council || {})
+// The debate mode. 'parallel' is the legacy path and the default, because a prompt change
+// invalidates the resume journal of a run that is in flight. Any other value fails fast.
+const DEBATE = (C.debate === undefined || C.debate === null) ? 'parallel' : C.debate
+if (DEBATE !== 'parallel' && DEBATE !== 'exchange') throw new Error(`council.debate must be 'parallel' or 'exchange', got ${JSON.stringify(C.debate)}`)
+const EXCHANGE = DEBATE === 'exchange'
+// The exchange starts from critic findings and tracks the commit they read, so it needs a critic.
+if (EXCHANGE && !(Number(C.critics) >= 1)) throw new Error('council.debate exchange needs council.critics of 1 or more')
+// Exchange mode only: each round above 1 adds one critic reply to the disputed findings. The cap
+// of 2 bounds the spend of a debate that does not settle.
+const EXTRA_ROUNDS = Math.min(2, Math.max(0, Math.floor(Number(C.rounds) || 0) - 1))
 // A role takes one model name or an ordered fallback chain. tryAgent walks the chain and
 // drops an entry that the runtime rejects as unavailable, so a top tier that comes and goes
 // costs one failed call per run instead of the whole run. Fable is the case this exists for:
@@ -105,6 +124,9 @@ for (const role of ['arbiter', 'fixPlan', 'fixReview']) {
   const kept = M[role].filter(m => m === 'opus')
   M[role] = kept.length ? kept : ['opus']
 }
+// Exchange mode: the advocate rebuttal is a per-finding concede or dispute, so it runs on sonnet.
+// An explicit council.model.advocate still wins.
+const M_REBUT = (A.council && A.council.model && A.council.model.advocate) ? M.advocate : ['sonnet']
 // per-role reasoning effort. Bounds spend on the opus roles.
 // 2026-09-09: every fable pin moved to opus. Fable 5.1 hit the account monthly
 // spend limit, and an ordered fallback list does NOT rescue that. The subagent
@@ -128,9 +150,14 @@ const LIMIT_RE = /(429|rate[ _-]?limit|usage limit|session limit|quota|too many 
 // appears in plenty of ordinary agent failures.
 const MODEL_GONE_RE = /(unknown|invalid|unsupported|unavailable|not[ _-]?found|not available|no longer available|does not exist|no access|not[ _-]?permitted|deprecated)[^.\n]{0,40}model|model[^.\n]{0,40}(unknown|invalid|unsupported|unavailable|not[ _-]?found|not available|no longer available|does not exist|no access|not[ _-]?permitted|deprecated)/i
 const deadModels = new Set()                             // models this run has proven unavailable
+// Agent calls per council iteration, for the cost log line. tryAgent counts one call per
+// invocation, whatever its retries. costIter follows the loop variable.
+const iterCalls = new Map()
+let costIter = 0
 const sleep = (typeof setTimeout === 'function') ? (ms) => new Promise(r => setTimeout(r, ms)) : () => Promise.resolve()
 async function tryAgent(prompt, opts, retries = 2) {
   const label = (opts && opts.label) || ''
+  iterCalls.set(costIter, (iterCalls.get(costIter) || 0) + 1)
   // Resolve the role chain to the models still believed good. An opts.model may be a single
   // name or an ordered chain. An empty result means every candidate died, so fall back to the
   // session model by omitting model entirely rather than failing the run.
@@ -225,6 +252,16 @@ const FIX_SCHEMA = { type: 'object', additionalProperties: false, required: ['ap
 const FIXREVIEW_SCHEMA = { type: 'object', additionalProperties: false, required: ['ok'], properties: { ok: { type: 'boolean' }, issues: { type: 'array', items: { type: 'string' } }, notes: { type: 'string' } } }
 const VERIFY_SCHEMA ={ type: 'object', additionalProperties: false, required: ['build', 'tests', 'mergeable'], properties: { build: { type: 'string', enum: ['pass', 'fail'] }, tests: { type: 'string', enum: ['pass', 'fail', 'none'] }, output: { type: 'string' }, mergeable: { type: 'boolean' } } }
 const MERGE_SCHEMA = { type: 'object', additionalProperties: false, required: ['merged'], properties: { merged: { type: 'boolean' }, blocked: { type: 'boolean' }, output: { type: 'string' } } }
+// Exchange mode schemas. Every field is required, so a model that skips a field fails the schema
+// instead of sending an undefined that the script then misreads.
+const str = { type: 'string' }
+const FINDINGS_SCHEMA = { type: 'object', additionalProperties: false, required: ['reviewedSha', 'ledgerStatus', 'findings'], properties: {
+  reviewedSha: str,
+  ledgerStatus: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['key', 'status', 'evidence'], properties: { key: str, status: { type: 'string', enum: ['resolved', 'open', 'regressed'] }, evidence: str } } },
+  findings: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['id', 'file', 'line', 'severity', 'claim', 'evidence', 'fix'], properties: { id: str, file: str, line: { type: 'integer' }, severity: { type: 'string', enum: ['critical', 'high', 'medium', 'low'] }, claim: str, evidence: str, fix: str } } } } }
+const REBUTTAL_SCHEMA = { type: 'object', additionalProperties: false, required: ['responses'], properties: { responses: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['id', 'stance', 'counterEvidence'], properties: { id: str, stance: { type: 'string', enum: ['concede', 'dispute'] }, counterEvidence: str } } } } }
+const PROBE_SCHEMA = { type: 'object', additionalProperties: false, required: ['rulings'], properties: { rulings: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['id', 'substantiated', 'quote'], properties: { id: str, substantiated: { type: 'boolean' }, quote: str } } } } }
+const REPLY_SCHEMA = { type: 'object', additionalProperties: false, required: ['responses'], properties: { responses: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['id', 'action', 'evidence'], properties: { id: str, action: { type: 'string', enum: ['withdraw', 'reinforce'] }, evidence: str } } } } }
 
 const isCosmetic = (sev) => /^(low|cosmetic|nit|info|trivial)/i.test(sev || '')
 const fmt = (f) => `${f.severity || ''}: ${f.description}${f.file ? ` (${f.file}${f.line ? ':' + f.line : ''})` : ''}${f.fix ? ` — fix: ${f.fix}` : ''}`
@@ -257,13 +294,302 @@ const roleNames = [...advNames, ...critNames, ...(C.questioner ? ['QUESTIONER'] 
 const hasText = (s) => typeof s === 'string' && s.trim().length > 0
 let verdict = null, pending = null, iter = 0, stalled = false, converged = false
 let sweeps = 0                         // non-blocker sweeps already spent (bounded by C.nonBlockerSweeps)
-let stopReason = null                  // 'budget' | 'limit' | 'review-incomplete' | 'fix-plan-null' | 'fix-failed' | 'fix-review-null' | 'fix-review-empty' → resumable stop (never merges)
+let stopReason = null                  // 'budget' | 'limit' | 'review-incomplete' | 'fix-plan-null' | 'fix-failed' | 'fix-review-null' | 'fix-review-empty' → resumable stop (never merges). 'fix-not-landing' (exchange mode) → a stop that is not resumable
+let stopDetail = null                  // exchange mode: the exact cause of a stop, appended to the reason
 let lastBlocking = []                  // blocking findings from the most recent judged round (surfaced top-level)
 let lastFixTests = null                // { iter, tests, testTail } from the most recent fix round, shown to the arbiter
 const history = []
 
+// ---------------- Exchange mode (council.debate === 'exchange') ----------------
+// The legacy path never calls anything in this block, so its prompts stay byte-identical.
+// Ledger: one entry per blocker that an arbiter ruled, keyed by file, line and the first 60
+// characters of the claim. Each entry also has a short id (L1, L2, ...) that critics and the
+// arbiter cite, because a reworded claim or a shifted line would change the key.
+const MAX_FIX_ATTEMPTS = 3
+const ledger = new Map()
+let ledgerSeq = 0
+let lastReviewedSha = null             // the commit the critics last reviewed. The next review reads only the diff from it
+let pendingKeys = []                   // ledger keys of the blockers that the next fix round works on
+let notLanding = []                    // ledger entries that survived MAX_FIX_ATTEMPTS fix rounds
+const ledgerKey = (file, line, claim) => `${file || ''}:${line || ''}:${String(claim || '').trim().slice(0, 60)}`.toLowerCase()
+const ledgerList = () => Array.from(ledger.values())
+const ledgerById = (id) => ledgerList().find(e => e.id === id) || null
+const isOpen = (e) => e.status === 'open' || e.status === 'regressed'
+const STATUS_RANK = { resolved: 0, open: 1, regressed: 2 }
+const ID_RE = /^\s*\[([^\]]+)\]\s*/
+const safeId = (s) => String(s || '').replace(/[^A-Za-z0-9_.-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 24)
+const where = (x) => `${x.file || '(no file)'}${x.line ? ':' + x.line : ''}`
+const fmtFinding = (f) => `[${f.id}] ${f.severity} ${where(f)}: ${f.claim}\n    critic evidence: ${f.evidence}\n    proposed fix: ${f.fix}`
+const fmtLedger = (e) => `[${e.id}] status=${e.status} fixAttempts=${e.attempts} ${e.severity} ${where(e)}: ${e.claim}${e.evidence ? `\n    latest evidence: ${e.evidence}` : ''}`
+const fmtDebate = (f) => [fmtFinding(f), ...f.debate.map(d => `    ${d}`)].join('\n')
+
+function newLedgerEntry(src, iter) {
+  const key = ledgerKey(src.file, src.line, src.claim)
+  const found = ledger.get(key)
+  if (found) return found
+  ledgerSeq++
+  const entry = { id: `L${ledgerSeq}`, key, file: src.file || '', line: src.line || 0, severity: src.severity || 'high', claim: src.claim, evidence: src.evidence || '', status: 'open', attempts: 0, firstIter: iter, lastIter: iter }
+  ledger.set(key, entry)
+  return entry
+}
+
+// A critic may echo the ledger id (L1) or the full key. When two critics report on one entry,
+// the worse status wins: regressed over open over resolved.
+function applyLedgerStatus(results) {
+  const reports = new Map()
+  for (const r of results) {
+    for (const s of r.ledgerStatus || []) {
+      if (!s || typeof s !== 'object') continue
+      const ref = String(s.key || '').trim()
+      const e = ledgerById(ref.replace(/^\[|\]$/g, '')) || ledger.get(ref.toLowerCase())
+      if (!e || !isOpen(e) || !(s.status in STATUS_RANK)) continue
+      const prev = reports.get(e.key)
+      if (!prev || STATUS_RANK[s.status] > STATUS_RANK[prev.status]) reports.set(e.key, { status: s.status, evidence: String(s.evidence || '') })
+    }
+  }
+  for (const [key, rep] of reports) ledger.set(key, { ...ledger.get(key), status: rep.status, evidence: rep.evidence })
+}
+
+// Maps each arbiter blocker back to a ledger entry by the id that leads its text, then by its
+// own file, line and description. The arbiter has the final word: an open entry that it did not
+// block on this round becomes dismissed. Returns the entries blocked this round.
+function rulingToLedger(v, findingsById, iter) {
+  const items = [
+    ...(v.conditions || []).map(c => ({ text: String(c), file: '', line: 0, severity: 'high' })),
+    ...(v.findings || []).filter(f => !isCosmetic(f.severity)).map(f => ({ text: String(f.description || ''), file: f.file || '', line: f.line || 0, severity: f.severity })),
+  ]
+  const blocked = new Set()
+  for (const it of items) {
+    const m = ID_RE.exec(it.text)
+    const ref = m ? m[1].trim() : ''
+    const claim = it.text.replace(ID_RE, '').trim()
+    const f = ref ? findingsById.get(ref) : null
+    const entry = (ref && ledgerById(ref)) || (f ? newLedgerEntry(f, iter) : newLedgerEntry({ ...it, claim }, iter))
+    blocked.add(entry.key)
+    const cur = ledger.get(entry.key)
+    ledger.set(entry.key, { ...cur, status: cur.status === 'regressed' ? 'regressed' : 'open', lastIter: iter })
+  }
+  for (const e of ledgerList()) if (!blocked.has(e.key) && isOpen(e)) ledger.set(e.key, { ...e, status: 'dismissed' })
+  return Array.from(blocked).map(k => ledger.get(k))
+}
+
+const bumpAttempts = (keys) => { for (const k of keys) { const e = ledger.get(k); if (e) ledger.set(k, { ...e, attempts: e.attempts + 1 }) } }
+
+const shaCmd = () => T.branch ? `git rev-parse origin/${T.branch}` : 'git rev-parse HEAD'
+const deltaReview = (sha) => T.branch
+  ? `${ENV}This is a re-review after a fix round. Review ONLY the change since the last reviewed commit ${sha}: \`git fetch origin ${T.branch} --quiet; git diff ${sha}..origin/${T.branch} -- . ':(exclude)package-lock.json' ':(exclude)uv.lock'\`. Read full files with \`git show origin/${T.branch}:<path>\`. Do NOT \`git checkout\`, do NOT modify the working tree, and IGNORE the working tree's current state.${SCOPENOTE}`
+  : `${ENV}This is a re-review after a fix round. Review ONLY the change since the last reviewed commit ${sha}: \`git diff ${sha} -- . ':(exclude)package-lock.json'\` and \`git status --porcelain\` (read new untracked files directly).${SCOPENOTE}`
+const councilHead = (n) => `You are ${n} in an adversarial council on ${TITLE}${PRREF} (${NAME}).`
+
+function criticPrompt(n, sha) {
+  const rule = `READ each cited file to confirm issues (no fabrication). Give each finding a short id that is unique in your list (F1, F2, ...), the file, the line (0 when no single line applies), a severity (critical, high, medium or low), the claim in one sentence, the evidence (a code quote or test output) and a one-line fix. Set reviewedSha to the full output of \`${shaCmd()}\`, run when you start.`
+  if (!sha) {
+    return `${councilHead(n)} The council runs as an exchange: an advocate answers each of your findings, and a questioner checks each disputed one in the code. ${review()}
+${SPEC ? `Verify against ${SPEC} (acceptance criteria). ` : ''}Find REAL defects: ${SPEC ? 'spec violations, ' : ''}security gaps, bugs, missing error handling, mutation, broken build/tests, unmet acceptance criteria. ${rule} An empty findings list is a valid honest result. Leave ledgerStatus empty.`
+  }
+  const open = ledgerList().filter(isOpen)
+  return `${councilHead(n)} The council runs as an exchange: an advocate answers each of your findings, and a questioner checks each disputed one in the code. ${deltaReview(sha)}
+${rule}
+Add a NEW finding ONLY when it is critical or high, or when the last fix caused it. Start the claim of such a regression with "REGRESSION:". The script drops every other new finding. Do not repeat an open ledger item as a finding. An empty findings list is a valid honest result.
+Re-check each open ledger item below against the current code. Report each one in ledgerStatus: key is its ledger id (for example L1), status is resolved, open or regressed, and evidence is a code quote or test output.
+OPEN LEDGER ITEMS:
+${open.length ? open.map(fmtLedger).join('\n') : '(none)'}`
+}
+
+// One rebuttal agent per advocate. A finding stays disputed when any advocate disputes it. An
+// advocate that gives no answer for an id does not defend it, so the finding counts as conceded.
+async function rebut(items, iter, r) {
+  const raw = await parallel(advNames.map(n => () => tryAgent(
+`${councilHead(n)} ${review()}
+The critics raised the findings below.${r > 1 ? ' The critics reinforced them after your last rebuttal, and their replies are under each finding.' : ''} For each id, READ the cited code and answer. stance is concede when the defect is real, dispute when the code or the tests show that it is wrong. counterEvidence is the file:line, code quote or test output that decides it (for a concede, say what you checked). Do not dispute a finding that you cannot refute with evidence. Answer every id.
+FINDINGS:
+${items.map(fmtDebate).join('\n')}`,
+    { label: r > 1 ? `${n.toLowerCase()}-rebuttal-r${r}#${iter}` : `${n.toLowerCase()}-rebuttal#${iter}`, phase: 'Council', model: M_REBUT, effort: E.advocate, schema: REBUTTAL_SCHEMA })))
+  if (limitHit) return { stop: 'limit' }
+  const dead = advNames.filter((_, i) => !raw[i] || !Array.isArray(raw[i].responses))
+  if (dead.length) return { stop: 'review-incomplete', detail: `${dead.join(', ')} returned no rebuttal` }
+  const conceded = [], disputed = []
+  for (const f of items) {
+    const notes = []
+    let dispute = false
+    advNames.forEach((n, i) => {
+      const resp = raw[i].responses.find(x => x && String(x.id).trim() === f.id)
+      if (resp && resp.stance === 'dispute') { dispute = true; notes.push(`${n} disputes${r > 1 ? ` (round ${r})` : ''}: ${resp.counterEvidence}`) }
+      else notes.push(resp ? `${n} concedes${r > 1 ? ` (round ${r})` : ''}: ${resp.counterEvidence}` : `${n} gave no answer, counted as a concede`)
+    })
+    const next = { ...f, debate: [...f.debate, ...notes] }
+    if (dispute) disputed.push(next); else conceded.push(next)
+  }
+  return { conceded, disputed }
+}
+
+// One reply agent per critic that owns a disputed finding. A missing answer keeps the finding.
+async function criticReply(items, iter, r) {
+  const owners = critNames.filter(n => items.some(f => f.critic === n))
+  const raw = await parallel(owners.map(n => () => tryAgent(
+`${councilHead(n)} ${review()}
+The advocate disputes your findings below. READ the counter-evidence and the code again. For each id, action is withdraw when the advocate is right, reinforce when the defect is still real. evidence is the file:line, code quote or test output that decides it. Answer every id.
+DISPUTED FINDINGS:
+${items.filter(f => f.critic === n).map(fmtDebate).join('\n')}`,
+    { label: `${n.toLowerCase()}-reply-r${r}#${iter}`, phase: 'Council', model: M.critic, effort: E.critic, schema: REPLY_SCHEMA })))
+  if (limitHit) return { stop: 'limit' }
+  const dead = owners.filter((_, i) => !raw[i] || !Array.isArray(raw[i].responses))
+  if (dead.length) return { stop: 'review-incomplete', detail: `${dead.join(', ')} returned no reply to the rebuttal` }
+  const withdrawn = [], disputed = []
+  for (const f of items) {
+    const resp = raw[owners.indexOf(f.critic)].responses.find(x => x && String(x.id).trim() === f.id)
+    if (resp && resp.action === 'withdraw') { withdrawn.push(f.id); continue }
+    disputed.push({ ...f, debate: [...f.debate, resp ? `${f.critic} reinforces (round ${r}): ${resp.evidence}` : `${f.critic} gave no reply, so the finding stands`] })
+  }
+  return { withdrawn, disputed }
+}
+
+// One exchange council: critics, rebuttal, optional critic replies, questioner on disputes only,
+// then the arbiter. Returns { stop, detail } or { verdict, findingsById }.
+async function exchangeReview(iter) {
+  const sha = lastReviewedSha
+  const raw = await parallel(critNames.map(n => () => tryAgent(criticPrompt(n, sha),
+    { label: `${n.toLowerCase()}#${iter}`, phase: 'Council', model: M.critic, effort: E.critic, schema: FINDINGS_SCHEMA })))
+  if (limitHit) return { stop: 'limit' }
+  // The #20 rule holds here too: a critic that did not run means unreviewed code, never "no findings".
+  const dead = critNames.filter((_, j) => !raw[j] || !Array.isArray(raw[j].findings))
+  if (dead.length) return { stop: 'review-incomplete', detail: `${dead.join(', ')} returned no findings` }
+  // Every critic must name the commit it read. Two different commits mean two different reviews,
+  // and the next delta would start from a commit that one of them never saw.
+  const shas = raw.map(r => String(r.reviewedSha || '').trim().toLowerCase())
+  if (shas.some(s => !/^[0-9a-f]{7,40}$/.test(s))) return { stop: 'review-incomplete', detail: `a critic reported no valid reviewedSha (${shas.join(', ')})` }
+  const longest = shas.reduce((a, b) => (b.length > a.length ? b : a))
+  if (!shas.every(s => longest.startsWith(s))) return { stop: 'review-incomplete', detail: `the critics reviewed different commits (${shas.join(', ')})` }
+
+  const findings = [], dropped = []
+  raw.forEach((r, j) => {
+    const used = new Set()
+    r.findings.filter(f => f && typeof f === 'object').forEach((f, k) => {
+      const base = `${critNames[j]}-${safeId(f && f.id) || `F${k + 1}`}`
+      const id = used.has(base) ? `${base}-${k + 1}` : base
+      used.add(id)
+      const item = { id, critic: critNames[j], file: String(f.file || ''), line: Number.isInteger(f.line) ? f.line : 0, severity: f.severity, claim: String(f.claim || ''), evidence: String(f.evidence || ''), fix: String(f.fix || ''), debate: [] }
+      // A delta review admits a new finding only at critical or high, or as a regression.
+      if (sha && item.severity !== 'critical' && item.severity !== 'high' && !/^\s*REGRESSION\b/i.test(item.claim)) dropped.push(id)
+      else findings.push(item)
+    })
+  })
+  if (dropped.length) log(`exchange round ${iter}: dropped ${dropped.length} new finding(s) below high in the delta review: ${dropped.join(', ')}`)
+  applyLedgerStatus(raw)
+
+  let conceded = [], disputed = [], withdrawn = []
+  if (findings.length) {
+    const rb = await rebut(findings, iter, 1)
+    if (rb.stop) return rb
+    conceded = rb.conceded; disputed = rb.disputed
+  }
+  for (let r = 1; r <= EXTRA_ROUNDS && disputed.length; r++) {
+    if (r > 1) {
+      const rb = await rebut(disputed, iter, r)
+      if (rb.stop) return rb
+      conceded = [...conceded, ...rb.conceded]; disputed = rb.disputed
+      if (!disputed.length) break
+    }
+    const rp = await criticReply(disputed, iter, r)
+    if (rp.stop) return rp
+    withdrawn = [...withdrawn, ...rp.withdrawn]; disputed = rp.disputed
+  }
+
+  if (disputed.length) {
+    const q = await tryAgent(
+`You are the QUESTIONER in an adversarial council on ${TITLE}${PRREF} (${NAME}). ${review()}
+You do NOT argue for or against merging. The advocate disputes each finding below. READ the cited code yourself and rule on each one. substantiated is true when the code shows the defect that the critic claims, false when it does not. quote is the code line or test output that decides your ruling. Give one ruling per id. Do not raise new findings.
+DISPUTED FINDINGS:
+${disputed.map(fmtDebate).join('\n')}`,
+      { label: `questioner#${iter}`, phase: 'Council', model: M.questioner, schema: PROBE_SCHEMA })
+    if (limitHit) return { stop: 'limit' }
+    if (!q || !Array.isArray(q.rulings)) return { stop: 'review-incomplete', detail: 'the questioner returned no rulings' }
+    disputed = disputed.map(f => {
+      const ru = q.rulings.find(x => x && String(x.id).trim() === f.id)
+      return { ...f, debate: [...f.debate, ru ? `QUESTIONER: ${ru.substantiated ? 'SUBSTANTIATED' : 'UNSUBSTANTIATED'}. Quote: ${ru.quote}` : 'QUESTIONER: no ruling'] }
+    })
+  }
+  log(`exchange round ${iter}: ${findings.length} finding(s), ${conceded.length} conceded, ${disputed.length} contested, ${withdrawn.length} withdrawn, questioner ${disputed.length ? 'ran' : 'skipped'}`)
+
+  const verdictOut = await tryAgent(
+`You are the ARBITER of an adversarial council on ${TITLE}${PRREF} (${NAME}). The council ran as an exchange: the critics raised findings, the advocate conceded or disputed each one${EXTRA_ROUNDS ? ', the critics replied to the disputes' : ''}, and the questioner read the code for each disputed finding. ${review()}
+Rule with the verdict schema. Block ONLY on a defect in correctness, security, or a stated requirement${SPEC ? ` (the acceptance criteria in ${SPEC} count)` : ''}. Put everything else in followUps and do NOT block on it. "unconditional" = true ONLY if FOR with ZERO blocking conditions/findings: build+tests pass${SPEC ? `, acceptance criteria in ${SPEC} met` : ''}, no security gaps${A.liveValidate ? ', backend behavior validated live' : ''}. Verify a finding in the code before you block on it. Drop a finding that the questioner ruled UNSUBSTANTIATED unless you confirm it yourself in the code. Drop findings that are pre-existing or unrelated. Each blocking finding needs file+line+fix.
+Start the description of every blocking finding and every condition with its id in square brackets: a finding id such as [${critNames[0] || 'CRITIC-1'}-F1], a ledger id such as [L1], or [NEW] for a defect that nobody raised. The script tracks each blocker by that id across fix rounds. ${NOISSUE}
+${lastFixTests ? `Test evidence from fix round ${lastFixTests.iter} (\`${TEST}\`, reported tests=${lastFixTests.tests}). Last lines of the output:\n${lastFixTests.testTail || '(no output reported)'}\n` : ''}CONCEDED FINDINGS (the advocate agreed):
+${conceded.length ? conceded.map(fmtDebate).join('\n') : '(none)'}
+
+CONTESTED FINDINGS (the rebuttal, the critic replies and the questioner ruling follow each one):
+${disputed.length ? disputed.map(fmtDebate).join('\n') : '(none)'}
+
+WITHDRAWN BY THE CRITIC: ${withdrawn.length ? withdrawn.join(', ') : '(none)'}
+
+LEDGER (blockers from earlier rounds, with the status that the critics reported this round):
+${ledger.size ? ledgerList().map(fmtLedger).join('\n') : '(empty)'}`,
+    { label: `arbiter#${iter}`, phase: 'Council', model: M.arbiter, schema: VERDICT_SCHEMA })
+  if (verdictOut) lastReviewedSha = longest
+  return { verdict: verdictOut, findingsById: new Map(findings.map(f => [f.id, f])) }
+}
+
+// One log line per council iteration with its agent count, so the cost of each mode is visible.
+const costLogged = new Set()
+function logCostUpTo(n) {
+  for (let k = 1; k <= n; k++) {
+    if (costLogged.has(k) || !iterCalls.has(k)) continue
+    costLogged.add(k)
+    log(`council iteration ${k}: ${iterCalls.get(k)} agent call(s) (${DEBATE} mode)`)
+  }
+}
+
+// The legacy council (debate: 'parallel'). Every lens runs blind in parallel and the arbiter reads
+// the labelled texts. This body moved here unchanged from the loop. The legacy prompt snapshot in
+// workflows.smoke.mjs proves that its prompts stay byte-identical.
+async function legacyReview(iter) {
+  const lenses = [
+    ...advNames.map(n => () => tryAgent(
+`You are ${n} in an adversarial council on ${TITLE}${PRREF} (${NAME}). ${review()}
+${SPEC ? `Verify against ${SPEC} (acceptance criteria). ` : ''}Argue FOR merging with the strongest evidence-based case; ground every claim in file:line; honestly flag what you cannot defend. <=${C.rounds} rounds. Output text.`,
+      { label: `${n.toLowerCase()}#${iter}`, phase: 'Council', model: M.advocate, effort: E.advocate })),
+    ...critNames.map(n => () => tryAgent(
+`You are ${n} in an adversarial council on ${TITLE}${PRREF} (${NAME}). ${review()}
+READ each cited file to confirm issues (no fabrication). Find REAL blocking defects: ${SPEC ? 'spec violations, ' : ''}security gaps, bugs, missing error handling, mutation, broken build/tests, unmet acceptance criteria. Every finding needs file:line + one-line fix + severity. "No blocking issues" is a valid honest result. <=${C.rounds} rounds. Output text.`,
+      { label: `${n.toLowerCase()}#${iter}`, phase: 'Council', model: M.critic, effort: E.critic })),
+    ...(C.questioner ? [() => tryAgent(
+`You are the QUESTIONER in an adversarial council on ${TITLE}${PRREF} (${NAME}). ${review()}
+You do NOT argue for or against merging. Probe every claim — from any agent — that lacks a file:line or test/output citation. For each: state the specific question, then READ the code yourself and mark it SUBSTANTIATED or UNSUBSTANTIATED. Claims you mark UNSUBSTANTIATED must be excluded from fixes by the arbiter. <=${C.rounds} rounds. Output text.`,
+      { label: `questioner#${iter}`, phase: 'Council', model: M.questioner })] : []),
+  ]
+  const raw = await parallel(lenses)                    // nulls for failed lenses (parallel swallows throws)
+  if (limitHit) return { stop: 'limit' }
+  // NEVER judge unreviewed code as converged: require every critic to have actually run this round.
+  // A limit/blip that silently nulls the critics would otherwise read as "no findings" → spurious merge.
+  // An empty or whitespace critic is the same failure, so the check reads the text, not only null.
+  if (!critNames.every((_, j) => hasText(raw[advNames.length + j]))) return { stop: 'review-incomplete' }
+  // Label every block with its role. A failed lens keeps its slot with a placeholder. The old
+  // input dropped nulls and numbered the rest 1..n, so the arbiter could not tell an advocate
+  // from a critic, and one failed lens renumbered every block after it.
+  const sides = roleNames.map((role, i) => `--- ${role} ---\n${hasText(raw[i]) ? raw[i] : '(no output: this lens failed or returned nothing this round)'}`)
+
+  // CONVERGENCE TRAP (do not regress): with liveValidate:true the unconditional bar below includes
+  // "backend behavior validated live" — UNSATISFIABLE when the change under review precedes its own
+  // deployment (e.g. a scaffold feature in a spec-loop run). Combined with requireUnconditional:true
+  // the council then churns to maxLoops without ever converging or merging (observed 2026-06-10,
+  // AutoLLM F1: clean FOR twice, never unconditional). Callers MUST scope liveValidate to features
+  // whose backend exists at review time (spec-loop: liveValidateFeatures), or relax
+  // council.requireUnconditional. Do NOT edit the prompt text below to "fix" this — prompt changes
+  // invalidate resume journals for in-flight runs.
+  const v = await tryAgent(
+`You are the ARBITER of an adversarial council on ${TITLE}${PRREF} (${NAME}). Independently verify contested claims by reading the cited code. ${review()}
+"unconditional" = true ONLY if FOR with ZERO blocking conditions/findings: build+tests pass${SPEC ? `, acceptance criteria in ${SPEC} met` : ''}, no security gaps${A.liveValidate ? ', backend behavior validated live' : ''}. Drop findings you cannot verify in code, that are pre-existing/unrelated${C.questioner ? ', or that the QUESTIONER marked UNSUBSTANTIATED' : ''}. Demote LOW/cosmetic nits to in-PR follow-ups (put them in followUps; do NOT block on them). Each blocking finding needs file+line+fix. ${NOISSUE}
+${lastFixTests ? `Test evidence from fix round ${lastFixTests.iter} (\`${TEST}\`, reported tests=${lastFixTests.tests}). Last lines of the output:\n${lastFixTests.testTail || '(no output reported)'}\n` : ''}Council positions:
+${sides.join('\n\n')}`,
+    { label: `arbiter#${iter}`, phase: 'Council', model: M.arbiter, schema: VERDICT_SCHEMA })
+  return { verdict: v }
+}
+
 try {
 for (iter = 1; iter <= C.maxLoops; iter++) {
+  costIter = iter
+  logCostUpTo(iter - 1)
   if (lowBudget()) { stopReason = 'budget'; break }   // stop before spending a whole round we can't finish
   // fix FIRST (from the previous round's findings) so each review reflects the latest code — all in-PR
   if (pending && pending.length) {
@@ -306,6 +632,9 @@ ${COMMIT(iter)}`,
       break
     }
     lastFixTests = { iter, tests: fix.tests, testTail: String(fix.testTail || '').slice(-2000) }
+    // Exchange mode: a fix round that landed is one attempt at each blocker it worked on. A fix
+    // review reject keeps pendingKeys, so the re-fix counts as another attempt.
+    if (EXCHANGE) bumpAttempts(pendingKeys)
     // fix review: a cheap pass that checks each pending item actually landed as planned
     // BEFORE the full council re-reviews. On a reject, the issues become the next round's
     // pending and we re-fix (bounded by maxLoops and the budget guard) instead of burning a
@@ -338,45 +667,10 @@ ${pending.map((b, i) => `${i + 1}. ${b}`).join('\n')}`,
     pending = null
   }
 
-  const lenses = [
-    ...advNames.map(n => () => tryAgent(
-`You are ${n} in an adversarial council on ${TITLE}${PRREF} (${NAME}). ${review()}
-${SPEC ? `Verify against ${SPEC} (acceptance criteria). ` : ''}Argue FOR merging with the strongest evidence-based case; ground every claim in file:line; honestly flag what you cannot defend. <=${C.rounds} rounds. Output text.`,
-      { label: `${n.toLowerCase()}#${iter}`, phase: 'Council', model: M.advocate, effort: E.advocate })),
-    ...critNames.map(n => () => tryAgent(
-`You are ${n} in an adversarial council on ${TITLE}${PRREF} (${NAME}). ${review()}
-READ each cited file to confirm issues (no fabrication). Find REAL blocking defects: ${SPEC ? 'spec violations, ' : ''}security gaps, bugs, missing error handling, mutation, broken build/tests, unmet acceptance criteria. Every finding needs file:line + one-line fix + severity. "No blocking issues" is a valid honest result. <=${C.rounds} rounds. Output text.`,
-      { label: `${n.toLowerCase()}#${iter}`, phase: 'Council', model: M.critic, effort: E.critic })),
-    ...(C.questioner ? [() => tryAgent(
-`You are the QUESTIONER in an adversarial council on ${TITLE}${PRREF} (${NAME}). ${review()}
-You do NOT argue for or against merging. Probe every claim — from any agent — that lacks a file:line or test/output citation. For each: state the specific question, then READ the code yourself and mark it SUBSTANTIATED or UNSUBSTANTIATED. Claims you mark UNSUBSTANTIATED must be excluded from fixes by the arbiter. <=${C.rounds} rounds. Output text.`,
-      { label: `questioner#${iter}`, phase: 'Council', model: M.questioner })] : []),
-  ]
-  const raw = await parallel(lenses)                    // nulls for failed lenses (parallel swallows throws)
-  if (limitHit) { stopReason = 'limit'; break }
-  // NEVER judge unreviewed code as converged: require every critic to have actually run this round.
-  // A limit/blip that silently nulls the critics would otherwise read as "no findings" → spurious merge.
-  // An empty or whitespace critic is the same failure, so the check reads the text, not only null.
-  if (!critNames.every((_, j) => hasText(raw[advNames.length + j]))) { stopReason = 'review-incomplete'; break }
-  // Label every block with its role. A failed lens keeps its slot with a placeholder. The old
-  // input dropped nulls and numbered the rest 1..n, so the arbiter could not tell an advocate
-  // from a critic, and one failed lens renumbered every block after it.
-  const sides = roleNames.map((role, i) => `--- ${role} ---\n${hasText(raw[i]) ? raw[i] : '(no output: this lens failed or returned nothing this round)'}`)
-
-  // CONVERGENCE TRAP (do not regress): with liveValidate:true the unconditional bar below includes
-  // "backend behavior validated live" — UNSATISFIABLE when the change under review precedes its own
-  // deployment (e.g. a scaffold feature in a spec-loop run). Combined with requireUnconditional:true
-  // the council then churns to maxLoops without ever converging or merging (observed 2026-06-10,
-  // AutoLLM F1: clean FOR twice, never unconditional). Callers MUST scope liveValidate to features
-  // whose backend exists at review time (spec-loop: liveValidateFeatures), or relax
-  // council.requireUnconditional. Do NOT edit the prompt text below to "fix" this — prompt changes
-  // invalidate resume journals for in-flight runs.
-  verdict = await tryAgent(
-`You are the ARBITER of an adversarial council on ${TITLE}${PRREF} (${NAME}). Independently verify contested claims by reading the cited code. ${review()}
-"unconditional" = true ONLY if FOR with ZERO blocking conditions/findings: build+tests pass${SPEC ? `, acceptance criteria in ${SPEC} met` : ''}, no security gaps${A.liveValidate ? ', backend behavior validated live' : ''}. Drop findings you cannot verify in code, that are pre-existing/unrelated${C.questioner ? ', or that the QUESTIONER marked UNSUBSTANTIATED' : ''}. Demote LOW/cosmetic nits to in-PR follow-ups (put them in followUps; do NOT block on them). Each blocking finding needs file+line+fix. ${NOISSUE}
-${lastFixTests ? `Test evidence from fix round ${lastFixTests.iter} (\`${TEST}\`, reported tests=${lastFixTests.tests}). Last lines of the output:\n${lastFixTests.testTail || '(no output reported)'}\n` : ''}Council positions:
-${sides.join('\n\n')}`,
-    { label: `arbiter#${iter}`, phase: 'Council', model: M.arbiter, schema: VERDICT_SCHEMA })
+  // Exchange mode returns { stop, detail } or { verdict }. The legacy path returns the same shape.
+  const rv = EXCHANGE ? await exchangeReview(iter) : await legacyReview(iter)
+  if (rv.stop) { stopReason = rv.stop; stopDetail = rv.detail || null; break }
+  verdict = rv.verdict
 
   // agent() resolves to null (not a throw) on a terminal API error — e.g. a hard session limit
   // that exhausted the harness's own retries. A null arbiter means this round was never judged:
@@ -397,6 +691,18 @@ ${sides.join('\n\n')}`,
     ...((verdict.findings || []).filter(f => isCosmetic(f.severity)).map(fmt)),
   ]
   lastBlocking = blocking
+  // Exchange mode: record the ruling in the ledger. A blocker that already took MAX_FIX_ATTEMPTS
+  // fix rounds and still blocks will not land by repeating the loop, so the run stops.
+  if (EXCHANGE) {
+    const blockedNow = rulingToLedger(verdict, rv.findingsById, iter)
+    notLanding = blockedNow.filter(e => e.attempts >= MAX_FIX_ATTEMPTS)
+    if (notLanding.length) {
+      stopReason = 'fix-not-landing'
+      stopDetail = notLanding.map(e => `[${e.id}] ${where(e)}: ${e.claim} (${e.attempts} fix attempts)`).join(' | ')
+      break
+    }
+    pendingKeys = blockedNow.map(e => e.key)
+  }
   const verdictOk = verdict.verdict === 'FOR' && (!C.requireUnconditional || verdict.unconditional)
   // converged = verdict passes AND ZERO blocking findings remain. Council review F2 (2026-07-30):
   // the !blocking.length term is load-bearing — without it, an arbiter that says "unconditional FOR"
@@ -438,6 +744,10 @@ ${sides.join('\n\n')}`,
   pending = toFix
 }
 } catch (e) { if (e && e.limit) { stopReason = stopReason || 'limit' } else throw e }
+logCostUpTo(iter)
+costIter = 0                           // verify and merge calls are not part of a council iteration
+// Exchange-mode state for every result below. The legacy path reports an empty ledger.
+const councilExtra = () => ({ debate: DEBATE, lastReviewedSha, agentCalls: Object.fromEntries(Array.from(iterCalls).filter(([k]) => k > 0)) })
 
 // Resumable stop: bail BEFORE Verify/Merge. Burns no more of the blocked window, and — crucially —
 // a degraded/limit-killed round can NEVER reach the merge step. Resume later with resumeFromRunId;
@@ -449,15 +759,24 @@ if (stopReason && !converged) {
             : stopReason === 'fix-plan-null' ? 'the fix plan agent returned no plan. No fix runs without a plan'
             : stopReason === 'fix-review-null' ? 'the fix review agent returned no result. Unchecked fixes do not reach the council'
             : stopReason === 'fix-review-empty' ? 'the fix review rejected the fix but listed no issues, so the next fix round has nothing to act on'
+            : stopReason === 'fix-not-landing' ? `a blocker survived ${MAX_FIX_ATTEMPTS} fix attempts, so another round would repeat a fix that does not land`
             : 'hit a usage/rate limit'
-  log(`council-loop stopping (resumable): ${why} at round ${iter}`)
+  // A blocker that does not land is not a transient failure. A resume would replay the same
+  // stop, so this one path is not resumable and needs a person.
+  const resumable = stopReason !== 'fix-not-landing'
+  const detail = stopDetail ? ` (${stopDetail})` : ''
+  log(`council-loop stopping (${resumable ? 'resumable' : 'not resumable'}): ${why}${detail} at round ${iter}`)
   return {
     title: TITLE,
     target: { branch: T.branch, parentRef: PARENT, pr: T.pr },
-    council: { config: C, iterations: history.length, stoppedAtRound: iter, history, finalVerdict: verdict },
-    verify: null, verified: false, merge: null, councilConverged: false, converged: false, resumable: true,
-    reason: `stopped early — ${why}. Resume after limits/budget reset: Workflow({ scriptPath, args, resumeFromRunId }).`,
+    council: { config: C, iterations: history.length, stoppedAtRound: iter, history, finalVerdict: verdict, ...councilExtra() },
+    verify: null, verified: false, merge: null, councilConverged: false, converged: false, resumable,
+    reason: resumable
+      ? `stopped early — ${why}${detail}. Resume after limits/budget reset: Workflow({ scriptPath, args, resumeFromRunId }).`
+      : `stopped — ${why}${detail}. Fix the blocker by hand or change the approach, then start a new run.`,
     unresolvedBlockers: lastBlocking,
+    notLanding,
+    ledger: ledgerList(),
     inPrFollowUps: [],
   }
 }
@@ -520,10 +839,11 @@ Report the merge result (merged, blocked, and output including the gh pr ready s
     log('council-loop hit a usage/rate limit during verify/merge — resumable')
     return {
       title: TITLE, target: { branch: T.branch, parentRef: PARENT, pr: T.pr },
-      council: { config: C, iterations: history.length, history, finalVerdict: verdict },
+      council: { config: C, iterations: history.length, history, finalVerdict: verdict, ...councilExtra() },
       verify, verified: false, merge: null, councilConverged: converged, converged: false, resumable: true,
       reason: 'hit a usage/rate limit during verify/merge. Resume with resumeFromRunId once limits reset.',
       unresolvedBlockers: lastBlocking,
+      ledger: ledgerList(),
       inPrFollowUps: [],
     }
   }
@@ -536,10 +856,11 @@ if (!verify) {
   log('council-loop stopping (resumable): the verify agent returned no result')
   return {
     title: TITLE, target: { branch: T.branch, parentRef: PARENT, pr: T.pr },
-    council: { config: C, iterations: history.length, history, finalVerdict: verdict },
+    council: { config: C, iterations: history.length, history, finalVerdict: verdict, ...councilExtra() },
     verify: null, verified: false, merge: null, councilConverged: converged, converged: false, resumable: true,
     reason: 'stopped early. The verify agent returned no result, so the merge gate refused to merge. Resume with resumeFromRunId to re-run verify.',
     unresolvedBlockers: lastBlocking,
+    ledger: ledgerList(),
     inPrFollowUps: [],
   }
 }
@@ -569,7 +890,7 @@ return {
   target: { branch: T.branch, parentRef: PARENT, pr: T.pr },
   // iterations = judged rounds (history entries). The raw loop variable over-counted by one on
   // maxLoops exhaustion (council review F4, 2026-07-30).
-  council: { config: C, iterations: history.length, history, finalVerdict: verdict },
+  council: { config: C, iterations: history.length, history, finalVerdict: verdict, ...councilExtra() },
   verify,
   verified,             // true only when the verify gate passed (build pass, tests pass or allowed none, mergeable true)
   merge,                // squash-merge result when merge:true + converged + verified; null otherwise
@@ -578,5 +899,6 @@ return {
   resumable: mergeDied, // true only when the merge agent died after a passed gate
   reason: mergeDied ? `${reason} The merge agent returned no result. Resume with resumeFromRunId to re-run the merge.` : reason,
   unresolvedBlockers: lastBlocking,  // blocking findings from the last judged round — empty on convergence
+  ledger: ledgerList(), // exchange mode: every blocker with its status and fix attempts. Empty in the legacy mode
   inPrFollowUps,        // apply in-PR / fold into the PR — never file as a GitHub issue
 }
