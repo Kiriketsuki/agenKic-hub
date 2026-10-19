@@ -217,3 +217,6 @@ Resume in a **fresh turn** so the token budget has reset.
 - `~/.claude/skills/agent-route/SKILL.md` + `references/agent-catalog.md` — the routing table source.
 - `spec-loop.smoke.mjs` — standalone pure-function + syntax smoke test (`routeFromTable` + the wave
   planner); the build/test target. Run: `node 000-System/Agents/Claude/workflows/spec-loop.smoke.mjs`.
+- `workflows.smoke.mjs` runs the full bodies of council-loop, spec-loop, feature-loop and both
+  ultracode scripts against scripted agents. It proves that a failed stage never reaches a merge, a
+  build or a council, and it syntax-checks every workflow. Run: `node workflows/workflows.smoke.mjs`.
