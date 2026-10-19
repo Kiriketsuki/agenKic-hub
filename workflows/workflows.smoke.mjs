@@ -293,6 +293,10 @@ async function specTests() {
       `${name}: rejected with a clear error before any build or council`)
   }
   {
+    const { rt } = await runCase('spec-loop.mjs', { ...SPEC_ARGS, allowNoTests: true }, base([feat('F1')]), councilStub())
+    assert(rt.workflowCalls.length === 2 && rt.workflowCalls.every((c) => c.args.allowNoTests === true), 'spec-loop forwards allowNoTests to the feature and epic councils')
+  }
+  {
     const { rt, result } = await runCase('spec-loop.mjs', SPEC_ARGS, base([feat('F1')]), async () => ({ converged: true, merge: { merged: false, output: 'blocked' }, resumable: false }))
     assert(result?.resumable === true && rt.workflowCalls.length === 1, 'a feature council that did not merge halts before the epic council')
   }
@@ -403,6 +407,12 @@ async function featureTests() {
       'recheck:F1': { allFixed: true, testsPassed: true },
     }), null)
     assert(rt.prompt('validate:F1').includes('BRANCH PIN') && rt.prompt('fix:F1').includes('BRANCH PIN'), 'the validate and budget fix agents get the branch pin')
+  }
+  {
+    const noTests = councilHappy({ verify: { build: 'pass', tests: 'none', mergeable: true } })
+    const blocked = await runCase('feature-loop.mjs', FEATURE_ARGS, featureBase(noTests), realCouncil)
+    const allowed = await runCase('feature-loop.mjs', { ...FEATURE_ARGS, allowNoTests: true }, featureBase(noTests), realCouncil)
+    assert(blocked.result?.merged === false && allowed.result?.merged === true, 'feature-loop forwards allowNoTests to the nested council-loop')
   }
   {
     const { rt, result } = await runCase('feature-loop.mjs', { ...FEATURE_ARGS, liveValidate: 'prove it' }, featureBase({ 'validate:F1': { checks: [{ check: 'login works', result: 'fail' }] } }), realCouncil)

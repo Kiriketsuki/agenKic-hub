@@ -61,6 +61,7 @@
  *     haltOnUnmerged,               // default true: stop resumable when a feature council ends
  *                                   // unconverged or unmerged, instead of building later waves on an
  *                                   // epic branch that is missing the dependency. false = old behavior.
+ *     allowNoTests,                 // default false: true lets each council merge when verify finds no test script
  *     minBudget,                    // budget-floor in tokens (default 80000)
  *     model,                        // optional per-role model overrides
  *   }
@@ -960,6 +961,7 @@ Return SUBMERGE_SCHEMA.`,
       liveValidate: lvFor(feat),
       envNote: A.envNote,
       merge: true,                                   // squash-merge the feature into the epic on unconditional FOR
+      allowNoTests: A.allowNoTests === true,         // council-loop blocks a tests:"none" merge unless the caller opts in
       extraRules: A.extraRules,
       council: A.council,
     })
@@ -1001,6 +1003,7 @@ epicCouncil = await workflow({ scriptPath: `${WF_DIR}/council-loop.mjs` }, {
   // FOR). Pass epicMerge:false to run the epic council to unconditional FOR but HOLD the epic→main
   // merge for a human to land manually (feature→epic assembly merges are unaffected).
   merge: A.epicMerge !== false,
+  allowNoTests: A.allowNoTests === true,
   extraRules: A.extraRules,
   council: Object.assign({}, A.council, { model: Object.assign({ arbiter: 'opus' }, (A.council && A.council.model) || {}) }),
 })

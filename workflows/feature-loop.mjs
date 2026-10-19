@@ -37,6 +37,7 @@
  *   council,                                  // optional: knobs forwarded to council-loop (advocates, critics, questioner, rounds, maxLoops, ...)
  *   review,                                   // optional: 'council' (default, full adversarial loop) | 'budget' (ONE review pass → ≤1 fix round → re-check; never merges) | 'none' (skip review; never merges)
  *   merge,                                    // optional: set false to stop at converged (no squash-merge) and let the driver merge
+ *   allowNoTests,                             // optional: true lets council-loop merge when verify finds no test script (default false)
  *   extraRules,                               // optional: project-specific rules appended
  * }
  */
@@ -366,6 +367,8 @@ councilResult = await workflow({ scriptPath: `${WF_DIR}/council-loop.mjs` }, {
   envNote: F.envNote,
   agentType: AGENT,
   merge: F.merge !== false,
+  // council-loop blocks a merge when verify reports tests "none" unless the caller opts in.
+  allowNoTests: F.allowNoTests === true,
   extraRules: F.extraRules,
   council: F.council,
 })
