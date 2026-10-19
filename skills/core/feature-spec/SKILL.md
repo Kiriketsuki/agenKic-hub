@@ -159,12 +159,12 @@ Fix any issues inline. No need to re-review — just fix and move on. Then:
 
 - Write the complete, filled spec to `./docs/specs/todo/feature_spec.md`.
 - Rename it to `./docs/specs/todo/[kebab-case-feature-name]-spec.md`.
-- Sign the bottom (above any existing `---`) with **your Clault Kiper signature for the model you are currently running as** — derive it, do NOT hardcode:
+- Sign the bottom (above any existing `---`) with **your Clault Kiper signature for the model you are currently running as** — derive it. Do not hardcode:
   ```
   ---
   *Authored by: Clault Kiper{S|O|H} {major.minor}*
   ```
-  Suffix + version per `000-System/Agents/AGENTS.md`: Sonnet → `Clault KiperS 4.6`, Opus → `Clault KiperO 4.8`, Haiku → `Clault KiperH 4.5`. Use your own current model identity (e.g. running as Opus 4.8 → `Clault KiperO 4.8`). The spec file gets this signature; the Step 5 daily note does not (it is a shared, auto-generated note).
+  Take the suffix and version from `000-System/Agents/AGENTS.md`, using your own current model identity. The spec file gets this signature; the Step 5 daily note does not (it is a shared, auto-generated note).
 - Tell the user the final filename and path.
 
 ---
