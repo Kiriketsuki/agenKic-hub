@@ -328,8 +328,8 @@ if (REVIEW === 'none') {
   if (lowBudget()) return RESUMABLE('turn token budget nearly exhausted before budget review')
   const review = await tryAgent(
 `Single-pass code review of feature ${F.key}: ${F.title} (${NAME}) on branch ${F.branch}.
-Review ONLY this feature's diff vs ${PARENT} (\`git diff ${PARENT}...HEAD\`) — spec tasks ${F.scopeTasks}. Treat other features as already-merged dependencies; do not flag pre-existing code outside this diff.
-Report BLOCKERS only: correctness, security, or data-loss defects that must be fixed before merge — each with file:line ("where") and why it blocks. Style, naming, nits, refactor ideas and feature suggestions go to nonBlockers (informational only; they will NOT be applied). Run \`${BUILD}\` and \`${TEST}\` and treat failures as blockers. This is the ONLY review round — be thorough but proportionate.`,
+Review ONLY this feature's diff vs ${PARENT} (\`git diff ${PARENT}...${F.branch || 'HEAD'}\`) — spec tasks ${F.scopeTasks}. Treat other features as already-merged dependencies; do not flag pre-existing code outside this diff.
+Report BLOCKERS only: correctness, security, or data-loss defects that must be fixed before merge — each with file:line ("where") and why it blocks. Style, naming, nits, refactor ideas and feature suggestions go to nonBlockers (informational only; they will NOT be applied). Run \`${BUILD}\` and \`${TEST}\` and treat failures as blockers. This is the ONLY review round — be thorough but proportionate. Do NOT edit, commit or push anything.${branchPin()}`,
     { label: `review:${F.key}`, phase: 'Council', model: 'sonnet', schema: BUDGET_REVIEW_SCHEMA })
   // null = reviewer died terminally (e.g. session limit) — never treat as "no blockers".
   if (!review) return RESUMABLE('budget review agent died (limit/terminal error) — resume to re-run review')
@@ -344,7 +344,7 @@ ${RULES}`,
       { label: `fix:${F.key}`, phase: 'Council', model: MODEL, agentType: AGENT, schema: IMPL_SCHEMA })
     if (!fix) return RESUMABLE('budget fix agent returned no result')
     recheck = await tryAgent(
-`Verify each blocker below is actually fixed on branch ${F.branch}: read the code at the cited locations and run \`${BUILD}\` and \`${TEST}\`. Do NOT re-review the whole feature — check only these findings.
+`Verify each blocker below is actually fixed on branch ${F.branch}: read the code at the cited locations and run \`${BUILD}\` and \`${TEST}\`. Do NOT re-review the whole feature — check only these findings. Do NOT edit, commit or push anything.${branchPin()}
 ${JSON.stringify(blockers, null, 2)}`,
       { label: `recheck:${F.key}`, phase: 'Council', model: 'sonnet', schema: BUDGET_RECHECK_SCHEMA })
   }
