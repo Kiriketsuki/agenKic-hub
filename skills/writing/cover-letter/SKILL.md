@@ -22,25 +22,25 @@ Turn a job posting into a cover letter in the user's voice, saved as markdown pl
 ## Inputs
 
 - The job posting (pasted text or URL). If a URL, fetch it first.
-- If the company or role title is ambiguous, ask; otherwise proceed.
+- If the company or role title is ambiguous, ask. Otherwise proceed.
 
 ## Source material (read before writing, in this order)
 
-1. **`VOICE.md`** (this skill directory) — the distilled voice card: signature moves, banned patterns, fixed elements, self-check. This is the primary style authority.
-2. **Voice template**: `$VOICE_TEMPLATE` — a past letter that shows the canonical structure and register.
-3. **Verified facts**: `$FACTS_FILE` — the only approved source for claims and numbers about your current role.
-4. **Past letters**: other files in `$LETTERS_DIR` — reuse framing that worked, do not repeat a letter verbatim.
+1. **`VOICE.md`** (this skill directory): the distilled voice card: signature moves, banned patterns, fixed elements, self-check. This is the primary style authority.
+2. **Voice template**: `$VOICE_TEMPLATE`: a past letter that shows the canonical structure and register.
+3. **Verified facts**: `$FACTS_FILE`: the only approved source for claims and numbers about your current role.
+4. **Past letters**: other files in `$LETTERS_DIR`. Reuse framing that worked, do not repeat a letter verbatim.
 
 ## Hard constraints
 
-- Everything in `VOICE.md` — banned patterns, fixed opener/pivot/closer, self-check.
+- Everything in `VOICE.md`: banned patterns, fixed opener/pivot/closer, self-check.
 - Product, employer, and institution names must match `$FACTS_FILE` exactly. Keep a
   short list of easy-to-confuse names there.
 - Use the email and sign-off name from `VOICE.md`.
 - Every number must come from `$FACTS_FILE`. Do not invent metrics.
-- Default to generic descriptions over tech name-dropping (say "backend API architecture", not "gRPC behind Envoy") — name a specific technology only when the target role makes it relevant (e.g. the posting lists it).
+- Default to generic descriptions over tech name-dropping (say "backend API architecture", not "gRPC behind Envoy"). Name a specific technology only when the target role makes it relevant (e.g. the posting lists it).
 - Be honest about gaps: name them and frame the transfer, never inflate.
-- Find one genuine hook per company (domain overlap with airport ops, their stack, a product you actually use, their culture) and build the "why you" section around it. A personal, concrete hook beats a flattering generic one.
+- Find one genuine hook per company (domain overlap with airport ops, their stack, a product you actually use, their culture). Build the "why you" section around it. A personal, concrete hook beats a flattering generic one.
 
 ## Workflow
 
@@ -51,10 +51,10 @@ Turn a job posting into a cover letter in the user's voice, saved as markdown pl
    ```bash
    python3 <skill-dir>/render.py "$LETTERS_DIR/<name>.md"
    ```
-   The script extracts the letter body (greeting through the paragraph before "Best Regards,"), fills `template.tex`, escapes LaTeX specials, converts quotes, compiles with **tectonic**, and writes the PDF next to the markdown.
+   The script extracts the letter body (greeting through the paragraph before "Best Regards,") and fills `template.tex`. It escapes LaTeX specials and converts quotes. It compiles with **tectonic** and writes the PDF next to the markdown.
 5. Visually verify: `pdftoppm -png -r 80 <pdf> /tmp/page && Read /tmp/page-1.png`. Check it is one page and nothing overflows.
-6. Show the user the full letter text in chat (never just the file path) and flag: the hook chosen, any honesty-sensitive framing, and anything needing their verification (dates, titles).
-7. On revision requests, edit the markdown and re-run `render.py` — the PDF regenerates in place.
+6. Show the user the full letter text in chat (never just the file path). Flag the hook chosen, any honesty-sensitive framing, and anything that needs their verification (dates, titles).
+7. On revision requests, edit the markdown and re-run `render.py`. The PDF regenerates in place.
 
 ## Output
 
