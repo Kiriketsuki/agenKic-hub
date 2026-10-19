@@ -98,8 +98,10 @@ for (const role of Object.keys(M)) {
 // fan-out. Per workflow-model-tiering they never run below opus. An override map that
 // demotes them (the usual mistake: fixPlan classed as fan-out) is clamped back up.
 // The clamp reads the whole chain, so a chain that names no top tier falls back to opus.
+// Fable is not kept. The account cannot serve it (spend limit, 2026-09-09), and a dead model
+// returns an empty result that reads as a success, so a fallback chain does not rescue it.
 for (const role of ['arbiter', 'fixPlan', 'fixReview']) {
-  const kept = M[role].filter(m => m === 'opus' || m === 'fable')
+  const kept = M[role].filter(m => m === 'opus')
   M[role] = kept.length ? kept : ['opus']
 }
 // per-role reasoning effort. Bounds spend on the opus roles.
@@ -245,8 +247,13 @@ if (!T.branch && T.pr) {
   }
 }
 
-const advNames = Array.from({ length: C.advocates }, (_, i) => `ADVOCATE${C.advocates > 1 ? i + 1 : ''}`)
-const critNames = Array.from({ length: C.critics }, (_, i) => `CRITIC${C.critics > 1 ? i + 1 : ''}`)
+// Every lens carries a numbered role name. The arbiter input labels each block with it, so the
+// arbiter knows which side wrote what and a failed lens cannot shift the numbers of the others.
+const advNames = Array.from({ length: C.advocates }, (_, i) => `ADVOCATE-${i + 1}`)
+const critNames = Array.from({ length: C.critics }, (_, i) => `CRITIC-${i + 1}`)
+const roleNames = [...advNames, ...critNames, ...(C.questioner ? ['QUESTIONER'] : [])]
+// A lens that returns only whitespace did no review. It counts the same as a null lens.
+const hasText = (s) => typeof s === 'string' && s.trim().length > 0
 let verdict = null, pending = null, iter = 0, stalled = false, converged = false
 let sweeps = 0                         // non-blocker sweeps already spent (bounded by C.nonBlockerSweeps)
 let stopReason = null                  // 'budget' | 'limit' | 'review-incomplete' | 'fix-plan-null' | 'fix-failed' | 'fix-review-null' | 'fix-review-empty' → resumable stop (never merges)
@@ -348,8 +355,12 @@ You do NOT argue for or against merging. Probe every claim — from any agent �
   if (limitHit) { stopReason = 'limit'; break }
   // NEVER judge unreviewed code as converged: require every critic to have actually run this round.
   // A limit/blip that silently nulls the critics would otherwise read as "no findings" → spurious merge.
-  if (!critNames.every((_, j) => raw[advNames.length + j] != null)) { stopReason = 'review-incomplete'; break }
-  const sides = raw.filter(Boolean)
+  // An empty or whitespace critic is the same failure, so the check reads the text, not only null.
+  if (!critNames.every((_, j) => hasText(raw[advNames.length + j]))) { stopReason = 'review-incomplete'; break }
+  // Label every block with its role. A failed lens keeps its slot with a placeholder. The old
+  // input dropped nulls and numbered the rest 1..n, so the arbiter could not tell an advocate
+  // from a critic, and one failed lens renumbered every block after it.
+  const sides = roleNames.map((role, i) => `--- ${role} ---\n${hasText(raw[i]) ? raw[i] : '(no output: this lens failed or returned nothing this round)'}`)
 
   // CONVERGENCE TRAP (do not regress): with liveValidate:true the unconditional bar below includes
   // "backend behavior validated live" — UNSATISFIABLE when the change under review precedes its own
@@ -363,7 +374,7 @@ You do NOT argue for or against merging. Probe every claim — from any agent �
 `You are the ARBITER of an adversarial council on ${TITLE}${PRREF} (${NAME}). Independently verify contested claims by reading the cited code. ${review()}
 "unconditional" = true ONLY if FOR with ZERO blocking conditions/findings: build+tests pass${SPEC ? `, acceptance criteria in ${SPEC} met` : ''}, no security gaps${A.liveValidate ? ', backend behavior validated live' : ''}. Drop findings you cannot verify in code, that are pre-existing/unrelated${C.questioner ? ', or that the QUESTIONER marked UNSUBSTANTIATED' : ''}. Demote LOW/cosmetic nits to in-PR follow-ups (put them in followUps; do NOT block on them). Each blocking finding needs file+line+fix. ${NOISSUE}
 ${lastFixTests ? `Test evidence from fix round ${lastFixTests.iter} (\`${TEST}\`, reported tests=${lastFixTests.tests}). Last lines of the output:\n${lastFixTests.testTail || '(no output reported)'}\n` : ''}Council positions:
-${sides.map((s, i) => `--- ${i + 1} ---\n${s}`).join('\n\n')}`,
+${sides.join('\n\n')}`,
     { label: `arbiter#${iter}`, phase: 'Council', model: M.arbiter, schema: VERDICT_SCHEMA })
 
   // agent() resolves to null (not a throw) on a terminal API error — e.g. a hard session limit
@@ -406,7 +417,9 @@ ${sides.map((s, i) => `--- ${i + 1} ---\n${s}`).join('\n\n')}`,
   // The cap is what stops a "fresh optional nit every round" arbiter from holding the FOR
   // hostage to maxLoops. Blockers are unaffected: they still gate convergence with no cap.
   if (verdictOk && !blocking.length) {
-    if (C.applyNonBlockers && nonBlocking.length && sweeps < C.nonBlockerSweeps) {
+    // Sweep only when another iteration remains. A sweep on the last iteration set pending and
+    // then left the loop, so an unconditional FOR with zero blockers reported "did not converge".
+    if (C.applyNonBlockers && nonBlocking.length && sweeps < C.nonBlockerSweeps && iter < C.maxLoops) {
       sweeps++
       log(`unconditional FOR with ${nonBlocking.length} non-blocker(s) — sweep ${sweeps}/${C.nonBlockerSweeps} applying them in-PR before converging`)
       pending = nonBlocking
