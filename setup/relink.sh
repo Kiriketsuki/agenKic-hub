@@ -11,14 +11,22 @@
 #
 # ~/.claude/skills is itself a single symlink to the vault Skills
 # directory, so repairing the vault symlinks repairs both sides at once.
+#
+# Pass --sweep to run a second repair instead. The sweep looks for links
+# under the harness config directories ($HOME/.claude, $HOME/.claude-aurrigo,
+# $HOME/.codex and $HOME/.config/opencode). It repoints a link when its
+# target holds the old repo name agenKic-sKills, or when the link is dangling
+# and points into agenKic-hub. The new target must exist.
 set -u
 
 DRY_RUN=0
+SWEEP=0
 for arg in "$@"; do
     case "$arg" in
         --dry-run) DRY_RUN=1 ;;
+        --sweep) SWEEP=1 ;;
         -h|--help)
-            echo "usage: relink.sh [--dry-run]"
+            echo "usage: relink.sh [--sweep] [--dry-run]"
             exit 0
             ;;
         *)
@@ -32,6 +40,76 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO_NAME="$(basename "$REPO_DIR")"
 log() { printf '%s\n' "$*"; }
+
+# Find where a repo-owned entry lives now. Skills sit under skills/<group>/<name>
+# and workflows sit directly under workflows/. Prints the path, or nothing.
+locate_in_repo() {
+    local base="$1" cand
+    for cand in "$REPO_DIR"/skills/*/"$base" "$REPO_DIR/workflows/$base"; do
+        if [ -e "$cand" ]; then printf '%s' "$cand"; return 0; fi
+    done
+    return 1
+}
+
+# Repoint stale links under the harness config directories.
+sweep_links() {
+    local root link cur new base fixed=0 skipped=0 check
+    for root in "$HOME/.claude" "$HOME/.claude-aurrigo" "$HOME/.codex" "$HOME/.config/opencode"; do
+        [ -e "$root" ] || continue
+        # -H follows a symlinked root, such as ~/.claude. Depth 3 keeps the walk small.
+        while IFS= read -r link; do
+            [ -n "$link" ] || continue
+            cur="$(readlink "$link")"
+            case "$cur" in
+                *agenKic-sKills*) ;;
+                *agenKic-hub*) [ -e "$link" ] && continue ;;   # ours and healthy
+                *)
+                    if [ ! -e "$link" ]; then
+                        log "skip: dangling link not owned by this repo: $link -> $cur"
+                        skipped=$((skipped + 1))
+                    fi
+                    continue
+                    ;;
+            esac
+            new="${cur//agenKic-sKills/agenKic-hub}"
+            case "$new" in /*) check="$new" ;; *) check="$(dirname "$link")/$new" ;; esac
+            if [ ! -e "$check" ]; then
+                base="$(basename "$cur")"
+                new="$(locate_in_repo "$base")" || new=""
+            fi
+            if [ -z "$new" ] || [ ! -e "$new" ]; then
+                log "skip: no target found in $REPO_DIR for $link -> $cur"
+                skipped=$((skipped + 1))
+                continue
+            fi
+            if [ "$new" = "$cur" ]; then continue; fi
+            log "sweep: $link"
+            log "  from: $cur"
+            log "  to:   $new"
+            if [ "$DRY_RUN" = 1 ]; then
+                log "  [dry] would run: ln -sfn $new $link"
+                fixed=$((fixed + 1))
+            elif ln -sfn "$new" "$link"; then
+                fixed=$((fixed + 1))
+            else
+                log "  warning: could not repoint $link"
+                skipped=$((skipped + 1))
+            fi
+        done <<EOF
+$(find -H "$root" -maxdepth 3 -type l 2>/dev/null)
+EOF
+    done
+    if [ "$DRY_RUN" = 1 ]; then
+        log "sweep finished (dry run): $fixed would be repointed, $skipped skipped"
+    else
+        log "sweep finished: $fixed repointed, $skipped skipped"
+    fi
+}
+
+if [ "$SWEEP" = 1 ]; then
+    sweep_links
+    exit 0
+fi
 
 # The vault root is not hardcoded. The VAULT_SKILLS env var overrides.
 # Without an override, the script uses the repo parent when the repo sits

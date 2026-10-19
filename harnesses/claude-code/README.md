@@ -17,15 +17,27 @@ Ported hooks:
 | Hook | Event | What it does |
 |:---|:---|:---|
 | `gh-check-before-create.sh` | PreToolUse (Bash) | Enforces branch, commit, PR, and issue naming. Blocks draft PR merges |
-| `pre-push-auth.sh` | PreToolUse (Bash) | Switches the active `gh` account to match the remote owner before push |
-| `lint-precommit.sh` | PreToolUse (Bash) | Runs the project linter before `git commit`. Auto-fixes, then blocks on remaining errors |
-| `large-file-check.sh` | PreToolUse (Bash) | Blocks commits when the tree carries files over 100MB |
-| `explore-suggest.sh` | PreToolUse (Grep\|Glob) | Nudges toward richer exploration tools when available |
-| `agent-route-suggest.sh` | PreToolUse (Agent) | Nudges toward explicit subagent type and model selection |
-| `preflight-check.sh` | SessionStart | Environment health report: package-manager locks, node path, git locks |
-| `python-syntax-check.sh` | PostToolUse (Edit\|Write) | Compiles edited `.py` files. Blocks on syntax errors |
-| `submodule-check.sh` | PostToolUse (Edit\|Write) | Updates git submodules when submodule files change |
-| `context7-suggest.sh` | PostToolUse (Read) | Hints at Context7 docs lookup when a dependency manifest is read |
+| `pre-push-auth.sh` | PreToolUse (Bash, `if: Bash(git push *)`) | Switches the active `gh` account to match the remote owner before push. Reads the repo from the hook input `cwd`. Fails closed when `jq` is missing |
+| `lint-precommit.sh` | PreToolUse (Bash, `if: Bash(git commit *)`) | Runs the project linter before `git commit`. Checks only. It never edits or stages files. It prints the fix command on stderr and blocks on errors |
+| `large-file-check.sh` | PreToolUse (Bash, `if: Bash(git commit *)`) | Blocks commits when the tree carries files over 100MB. Uses one `stat` pass |
+| `agent-route-suggest.sh` | PreToolUse (Agent) | Adds a soft `additionalContext` note about subagent type and model. Cooldown file lives in `$XDG_RUNTIME_DIR` |
+| `preflight-check.sh` | SessionStart | Environment health report: package-manager locks, node path, git locks. Prints warnings only |
+| `python-syntax-check.sh` | PostToolUse (Edit\|Write) | Parses edited `.py` files with `ast`. Writes no `__pycache__`. Reports syntax errors on stderr |
+| `context7-suggest.sh` | PostToolUse (Read) | Adds an `additionalContext` note about Context7 docs lookup when Claude reads a dependency manifest |
+| `stop-verify-gate.sh` | Stop | Runs the executable `.claude/verify.sh` of the project, if one exists. On failure it blocks the stop and returns the tail of the output. On the second try (`stop_hook_active`) it allows the stop and adds a `systemMessage`. With no `verify.sh` it does nothing |
+
+Output rules for PreToolUse and PostToolUse hooks: stdout on exit 0 reaches only the debug log.
+Claude never sees it. A hook that blocks writes its reason to stderr and exits 2. A hook that
+adds a soft note prints `hookSpecificOutput.additionalContext` JSON on stdout and exits 0.
+
+Failure rules: a safety hook (`pre-push-auth.sh`, `lint-precommit.sh`, `large-file-check.sh`)
+exits 2 with a stderr message when `jq` is missing. A suggestion or check hook exits 0 silently.
+
+The `if` field in the settings example holds one permission rule. Claude Code checks it
+against each subcommand of a compound command, so the hook skips every other Bash call.
+
+Removed hooks: `submodule-check.sh` ran `git submodule update --remote` and moved pinned
+submodules. `explore-suggest.sh` promoted a code-graph tool that the user can disable.
 
 See `docs/patterns/hooks.md` for the design walkthrough and installation steps.
 

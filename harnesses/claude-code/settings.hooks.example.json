@@ -7,32 +7,30 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Grep|Glob",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ~/.claude/hooks/explore-suggest.sh"
-          }
-        ]
-      },
-      {
         "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/gh-check-before-create.sh"
+            "command": "bash \"$HOME/.claude/hooks/gh-check-before-create.sh\"",
+            "timeout": 10
           },
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/pre-push-auth.sh"
+            "if": "Bash(git push *)",
+            "command": "bash \"$HOME/.claude/hooks/pre-push-auth.sh\"",
+            "timeout": 15
           },
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/lint-precommit.sh"
+            "if": "Bash(git commit *)",
+            "command": "bash \"$HOME/.claude/hooks/lint-precommit.sh\"",
+            "timeout": 120
           },
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/large-file-check.sh"
+            "if": "Bash(git commit *)",
+            "command": "bash \"$HOME/.claude/hooks/large-file-check.sh\"",
+            "timeout": 30
           }
         ]
       },
@@ -41,7 +39,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/agent-route-suggest.sh"
+            "command": "bash \"$HOME/.claude/hooks/agent-route-suggest.sh\"",
+            "timeout": 5
           }
         ]
       }
@@ -52,7 +51,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/context7-suggest.sh"
+            "command": "bash \"$HOME/.claude/hooks/context7-suggest.sh\"",
+            "timeout": 5
           }
         ]
       },
@@ -61,11 +61,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/submodule-check.sh"
-          },
-          {
-            "type": "command",
-            "command": "bash ~/.claude/hooks/python-syntax-check.sh"
+            "command": "bash \"$HOME/.claude/hooks/python-syntax-check.sh\"",
+            "timeout": 10
           }
         ]
       }
@@ -76,7 +73,19 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$HOME/.claude/hooks/preflight-check.sh\""
+            "command": "bash \"$HOME/.claude/hooks/preflight-check.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/stop-verify-gate.sh\"",
+            "timeout": 300
           }
         ]
       }
