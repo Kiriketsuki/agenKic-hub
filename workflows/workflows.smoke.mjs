@@ -23,6 +23,7 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join, basename } from 'node:path'
+import { createHash } from 'node:crypto'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const AsyncFunction = (async () => {}).constructor
@@ -48,9 +49,11 @@ class StrictDate extends Date {
   static now() { throw new Error('Date.now() is unavailable in the workflow runtime') }
 }
 
+function compileSource(source) {
+  return new AsyncFunction(...PARAMS, source.replace(/^export\s+/gm, ''))
+}
 function compile(file) {
-  const src = readFileSync(join(HERE, file), 'utf8').replace(/^export\s+/gm, '')
-  return new AsyncFunction(...PARAMS, src)
+  return compileSource(readFileSync(join(HERE, file), 'utf8'))
 }
 
 const clone = (v) => (v === undefined ? undefined : structuredClone(v))
@@ -100,7 +103,9 @@ function makeRuntime(responses = {}, workflowImpl = null) {
 }
 
 async function exec(file, args, rt) {
-  const fn = compile(file)
+  return execFn(compile(file), args, rt)
+}
+async function execFn(fn, args, rt) {
   return fn(rt.agent, rt.parallel, rt.pipeline, rt.phase, rt.log, rt.workflow, args, undefined, StrictDate, StrictMath)
 }
 
@@ -151,8 +156,53 @@ const councilTwoRounds = (over = {}) => ({
   ...over,
 })
 
+// ─── legacy prompt snapshot ───────────────────────────────────────────────────────────────────
+// A prompt change invalidates the resume journal of an in-flight run. These scenarios cover every
+// legacy (debate: 'parallel') prompt shape. The digest below came from the council-loop.mjs of the
+// #20 branch (commit 4c8883a), before the exchange mode existed. Re-baseline it ONLY on a deliberate
+// legacy prompt change, with:
+//   node workflows/workflows.smoke.mjs --legacy-snapshot workflows/council-loop.mjs
+const LEGACY_DIGEST = 'f58453ac8b31b8effb79f34678c871cddb2b718710ebd5afd71f4c66b3103d4b'
+const LEGACY_SCENARIOS = [
+  ['happy branch mode', COUNCIL_ARGS, () => councilHappy()],
+  ['two rounds with a fix', COUNCIL_ARGS, () => councilTwoRounds()],
+  ['questioner, 2 advocates, 2 critics, spec, live validate, scope, env, extra rules', {
+    ...COUNCIL_ARGS, scope: 'only src/', envNote: 'run in /repo', extraRules: 'use tokens', liveValidate: 'prove it',
+    project: { ...COUNCIL_ARGS.project, specFile: 'spec.md' }, council: { advocates: 2, critics: 2, questioner: true, rounds: 3 },
+  }, () => councilHappy({ 'advocate-2#1': 'ADV2', 'critic-2#1': 'CRIT2', 'questioner#1': 'Q' })],
+  ['working-tree mode', { ...COUNCIL_ARGS, target: { parentRef: 'origin/dev' }, merge: false }, () => councilTwoRounds()],
+  ['pr-only target', { ...COUNCIL_ARGS, target: { pr: 42 } }, () => councilHappy({ 'resolve-branch': { headRefName: 'feature/42-x', baseRefName: 'main' } })],
+  ['fix review reject then pass', COUNCIL_ARGS, () => councilTwoRounds({
+    'fix-review#2': { ok: false, issues: ['guard is incomplete at a.js:4'] },
+    'fix-plan#3': 'plan 3', 'fix#3': FIX_OK, 'fix-review#3': { ok: true },
+    'advocate-1#3': 'FOR', 'critic-1#3': 'none', 'arbiter#3': FOR,
+  })],
+  ['non-blocker sweep', COUNCIL_ARGS, () => councilHappy({
+    'arbiter#1': { ...FOR, followUps: ['rename x'] }, 'fix-plan#2': 'plan', 'fix#2': FIX_OK, 'fix-review#2': { ok: true },
+    'advocate-1#2': 'FOR', 'critic-1#2': 'none', 'arbiter#2': FOR,
+  })],
+]
+async function legacySnapshot(source) {
+  const out = []
+  for (const [name, args, responses] of LEGACY_SCENARIOS) {
+    const rt = makeRuntime(responses())
+    try { await execFn(compileSource(source), structuredClone(args), rt) } catch (e) { out.push({ scenario: name, error: String((e && e.message) || e) }) }
+    for (const c of rt.calls) {
+      out.push({ scenario: name, label: c.label, model: c.opts.model ?? null, effort: c.opts.effort ?? null, agentType: c.opts.agentType ?? null,
+        schema: c.opts.schema ? JSON.stringify(c.opts.schema) : null, prompt: c.prompt })
+    }
+  }
+  return out
+}
+const digestOf = (records) => createHash('sha256').update(JSON.stringify(records)).digest('hex')
+
 async function councilTests() {
   console.log('\ncouncil-loop orchestration:')
+  {
+    const snap = await legacySnapshot(readFileSync(join(HERE, 'council-loop.mjs'), 'utf8'))
+    const digest = digestOf(snap)
+    assert(digest === LEGACY_DIGEST, `legacy prompts, models and schemas are byte-identical to the #20 branch (${snap.length} calls, digest ${digest.slice(0, 12)})`)
+  }
   {
     const { rt, result, error } = await runCase('council-loop.mjs', COUNCIL_ARGS, councilHappy())
     assert(!error && result?.converged === true && result?.verified === true && rt.called('merge') && result?.merge?.merged === true,
@@ -232,6 +282,166 @@ async function councilTests() {
     const m = rt.prompt('merge')
     assert(!/Make sure the latest work is committed/.test(m) && /Do NOT commit, push, or edit any file/.test(m), 'the merge agent is told not to commit')
     assert(m.includes('git merge --ff-only origin/main') && m.includes('git fetch origin main:main'), 'the parent sync uses ff-only merge or fetch refspec')
+  }
+}
+
+// ─── council-loop exchange mode fixtures ─────────────────────────────────────────────────────
+const SHA = 'abc1234def'
+const EX_ARGS = (council = {}) => ({ ...COUNCIL_ARGS, council: { debate: 'exchange', rounds: 1, ...council } })
+const F_HIGH = { id: 'F1', file: 'a.js', line: 3, severity: 'high', claim: 'null deref when x is missing', evidence: 'a.js:3 x.y', fix: 'guard x' }
+const F_MED = { id: 'F2', file: 'b.js', line: 9, severity: 'medium', claim: 'error is swallowed', evidence: 'b.js:9 catch {}', fix: 'log it' }
+const findingsOut = (findings = [], ledgerStatus = [], sha = SHA) => ({ reviewedSha: sha, ledgerStatus, findings })
+const rebuttal = (stances) => ({ responses: Object.entries(stances).map(([id, stance]) => ({ id, stance, counterEvidence: `${stance} ${id} because of c.js:1` })) })
+const BLOCK_F1 = { verdict: 'AGAINST', unconditional: false, rationale: 'bug', findings: [{ description: '[CRITIC-1-F1] null deref', severity: 'high', file: 'a.js', line: 3, fix: 'guard x' }] }
+const BLOCK_L1 = { verdict: 'AGAINST', unconditional: false, rationale: 'still a bug', findings: [{ description: '[L1] null deref is still there', severity: 'high', file: 'a.js', line: 4, fix: 'guard x' }] }
+const fixRound = (n) => ({ [`fix-plan#${n}`]: `plan ${n}`, [`fix#${n}`]: FIX_OK, [`fix-review#${n}`]: { ok: true } })
+// Splits an exchange arbiter prompt into its conceded and contested sections.
+const arbiterSections = (p) => ({
+  conceded: (p.split('CONCEDED FINDINGS')[1] || '').split('CONTESTED FINDINGS')[0],
+  contested: (p.split('CONTESTED FINDINGS')[1] || '').split('WITHDRAWN BY THE CRITIC')[0],
+})
+
+async function exchangeTests() {
+  console.log('\ncouncil-loop exchange mode:')
+  {
+    const { rt, result } = await runCase('council-loop.mjs', EX_ARGS(), councilHappy({ 'critic-1#1': findingsOut(), 'arbiter#1': FOR }))
+    assert(result?.converged === true && rt.called('merge') && !rt.called('advocate-1-rebuttal#1') && !rt.called('questioner#1'),
+      'no findings: no rebuttal, no questioner, the arbiter FOR still converges and merges')
+    assert(rt.logs.some((l) => l === 'council iteration 1: 2 agent call(s) (exchange mode)'), 'a log line reports the agent count of the iteration')
+    assert(result?.council?.lastReviewedSha === SHA && Array.isArray(result?.ledger) && result.ledger.length === 0, 'the result carries lastReviewedSha and an empty ledger')
+  }
+  {
+    const { rt, result } = await runCase('council-loop.mjs', EX_ARGS(), councilHappy({
+      'critic-1#1': findingsOut([F_HIGH, F_MED]), 'advocate-1-rebuttal#1': rebuttal({ 'CRITIC-1-F1': 'concede', 'CRITIC-1-F2': 'concede' }), 'arbiter#1': FOR }))
+    const adv = rt.prompt('advocate-1-rebuttal#1')
+    assert(adv.includes('[CRITIC-1-F1] high a.js:3: null deref when x is missing') && adv.includes('[CRITIC-1-F2] medium b.js:9'),
+      'the advocate gets every critic finding with its critic-prefixed id')
+    assert(!rt.called('questioner#1') && !rt.labels().some((l) => l.startsWith('questioner')), 'nothing disputed: the questioner is skipped')
+    const s = arbiterSections(rt.prompt('arbiter#1'))
+    assert(s.conceded.includes('CRITIC-1-F1') && s.conceded.includes('CRITIC-1-F2') && s.contested.includes('(none)'), 'the arbiter gets both findings as conceded')
+    assert(result?.converged === true, 'control: conceded findings that the arbiter does not block on still converge')
+  }
+  {
+    const { rt } = await runCase('council-loop.mjs', EX_ARGS(), councilHappy({
+      'critic-1#1': findingsOut([F_HIGH, F_MED]), 'advocate-1-rebuttal#1': rebuttal({ 'CRITIC-1-F1': 'concede', 'CRITIC-1-F2': 'dispute' }),
+      'questioner#1': { rulings: [{ id: 'CRITIC-1-F2', substantiated: false, quote: 'b.js:9 logs the error' }] }, 'arbiter#1': FOR }))
+    const q = rt.prompt('questioner#1')
+    assert(rt.called('questioner#1') && q.includes('[CRITIC-1-F2]') && !q.includes('CRITIC-1-F1'), 'the questioner runs on the disputed finding only')
+    const s = arbiterSections(rt.prompt('arbiter#1'))
+    assert(s.conceded.includes('CRITIC-1-F1') && !s.conceded.includes('CRITIC-1-F2')
+      && s.contested.includes('CRITIC-1-F2') && s.contested.includes('ADVOCATE-1 disputes') && s.contested.includes('QUESTIONER: UNSUBSTANTIATED. Quote: b.js:9 logs the error'),
+      'the arbiter gets the conceded set and the contested set with the rebuttal and the ruling')
+    assert(rt.prompt('arbiter#1').includes('Block ONLY on a defect in correctness, security, or a stated requirement'), 'the arbiter is told to block only on correctness, security or a requirement')
+  }
+  {
+    // The same blocker survives three landed fix rounds.
+    const r = {
+      'critic-1#1': findingsOut([F_HIGH]), 'advocate-1-rebuttal#1': rebuttal({ 'CRITIC-1-F1': 'concede' }), 'arbiter#1': BLOCK_F1,
+      ...[2, 3, 4, 5].reduce((acc, n) => ({ ...acc, ...fixRound(n), [`critic-1#${n}`]: findingsOut([], [{ key: 'L1', status: 'open', evidence: 'a.js:4 still x.y' }]), [`arbiter#${n}`]: BLOCK_L1 }), {}),
+      verify: VERIFY_OK, merge: { merged: true },
+    }
+    const { rt, result } = await runCase('council-loop.mjs', EX_ARGS(), r)
+    const l1 = (result?.ledger || []).find((e) => e.id === 'L1')
+    assert(result?.resumable === false && result?.converged === false && /survived 3 fix attempts/.test(result?.reason || '')
+      && result?.notLanding?.[0]?.id === 'L1' && l1?.attempts === 3 && l1?.status === 'open',
+      'a blocker that survives 3 fix attempts stops fix-not-landing, not resumable, and reports the ledger entry')
+    assert(rt.called('arbiter#4') && !rt.called('fix-plan#5') && !rt.called('verify') && !rt.called('merge'), 'fix-not-landing stops before a fourth fix, verify and merge')
+    const c2 = rt.prompt('critic-1#2')
+    assert(rt.prompt('critic-1#1').includes('git diff origin/main...origin/feature/1-change') && !rt.prompt('critic-1#1').includes('OPEN LEDGER ITEMS'),
+      'iteration 1 reviews the whole branch against the parent')
+    assert(c2.includes(`git diff ${SHA}..origin/feature/1-change`) && c2.includes('OPEN LEDGER ITEMS') && c2.includes('[L1] status=open fixAttempts=1'),
+      'iteration 2 reviews only the delta from the last reviewed SHA plus the open ledger items')
+    assert(rt.prompt('arbiter#2').includes('TAIL-MARKER 2 failing') && rt.prompt('arbiter#2').includes('[L1]'), 'the exchange arbiter gets the fix test tail and the ledger')
+    assert(rt.prompt('fix-plan#2').includes('[CRITIC-1-F1]'), 'the fix round gets the blocker with its id')
+  }
+  {
+    // Round 2: the critic reports the blocker resolved and adds one medium finding that is not a regression.
+    const base = {
+      'critic-1#1': findingsOut([F_HIGH]), 'advocate-1-rebuttal#1': rebuttal({ 'CRITIC-1-F1': 'concede' }), 'arbiter#1': BLOCK_F1, ...fixRound(2),
+      'arbiter#2': FOR, verify: VERIFY_OK, merge: { merged: true },
+    }
+    const dropped = await runCase('council-loop.mjs', EX_ARGS(), { ...base, 'critic-1#2': findingsOut([F_MED], [{ key: 'L1', status: 'resolved', evidence: 'a.js:3 guards x' }]) })
+    assert(dropped.result?.converged === true && !dropped.rt.called('advocate-1-rebuttal#2') && dropped.result?.ledger?.[0]?.status === 'resolved' && dropped.result?.ledger?.[0]?.attempts === 1,
+      'a delta review drops a new medium finding, and the ledger marks the fixed blocker resolved')
+    const regression = await runCase('council-loop.mjs', EX_ARGS(), { ...base,
+      'critic-1#2': findingsOut([{ ...F_MED, claim: 'REGRESSION: the guard swallows the error' }], [{ key: 'L1', status: 'resolved', evidence: 'ok' }]),
+      'advocate-1-rebuttal#2': rebuttal({ 'CRITIC-1-F2': 'concede' }) })
+    assert(regression.rt.prompt('advocate-1-rebuttal#2').includes('REGRESSION: the guard swallows the error'), 'a delta review keeps a medium finding marked as a regression')
+  }
+  for (const [name, over, council] of [
+    ['null critic', { 'critic-1#1': null }, {}],
+    ['null advocate', { 'critic-1#1': findingsOut([F_HIGH]), 'advocate-1-rebuttal#1': null }, {}],
+    ['null questioner', { 'critic-1#1': findingsOut([F_HIGH]), 'advocate-1-rebuttal#1': rebuttal({ 'CRITIC-1-F1': 'dispute' }), 'questioner#1': null }, {}],
+    ['null critic reply', { 'critic-1#1': findingsOut([F_HIGH]), 'advocate-1-rebuttal#1': rebuttal({ 'CRITIC-1-F1': 'dispute' }), 'critic-1-reply-r1#1': null }, { rounds: 2 }],
+    ['critic SHA disagreement', { 'critic-1#1': findingsOut([], [], 'abc1234'), 'critic-2#1': findingsOut([], [], 'fff9999') }, { critics: 2 }],
+    ['critic with no valid SHA', { 'critic-1#1': findingsOut([], [], 'HEAD') }, {}],
+  ]) {
+    const { rt, result } = await runCase('council-loop.mjs', EX_ARGS(council), councilHappy({ 'arbiter#1': FOR, ...over }))
+    assert(!rt.called('arbiter#1') && !rt.called('verify') && !rt.called('merge') && result?.resumable === true && result?.converged === false,
+      `${name}: stops review-incomplete with no arbiter, verify or merge`)
+    if (name === 'critic SHA disagreement') {
+      assert(/different commits \(abc1234, fff9999\)/.test(result?.reason || '') && !rt.called('advocate-1-rebuttal#1'), 'SHA disagreement: the reason names both commits and no rebuttal runs')
+    }
+  }
+  {
+    const { result } = await runCase('council-loop.mjs', EX_ARGS({ critics: 2 }), councilHappy({ 'critic-1#1': findingsOut([], [], 'abc1234'), 'critic-2#1': findingsOut([], [], 'abc1234def567'), 'arbiter#1': FOR }))
+    assert(result?.converged === true && result?.council?.lastReviewedSha === 'abc1234def567', 'a short SHA and its full form count as one commit')
+  }
+  {
+    const two = { 'critic-1#1': findingsOut([F_HIGH, F_MED]), 'critic-2#1': findingsOut([{ ...F_HIGH, claim: 'other claim' }]),
+      'advocate-1-rebuttal#1': rebuttal({ 'CRITIC-1-F1': 'concede', 'CRITIC-1-F2': 'concede', 'CRITIC-2-F1': 'concede' }), 'arbiter#1': FOR }
+    const { rt } = await runCase('council-loop.mjs', EX_ARGS({ critics: 2 }), councilHappy(two))
+    const p = rt.prompt('advocate-1-rebuttal#1')
+    assert(p.includes('[CRITIC-1-F1]') && p.includes('[CRITIC-2-F1]'), 'finding ids stay unique across critics through the critic prefix')
+  }
+  {
+    // rounds 2: one critic reply. A withdraw removes the dispute, so the questioner is skipped.
+    const { rt } = await runCase('council-loop.mjs', EX_ARGS({ rounds: 2 }), councilHappy({
+      'critic-1#1': findingsOut([F_HIGH]), 'advocate-1-rebuttal#1': rebuttal({ 'CRITIC-1-F1': 'dispute' }),
+      'critic-1-reply-r1#1': { responses: [{ id: 'CRITIC-1-F1', action: 'withdraw', evidence: 'the advocate is right' }] }, 'arbiter#1': FOR }))
+    assert(rt.prompt('critic-1-reply-r1#1').includes('ADVOCATE-1 disputes: dispute CRITIC-1-F1') && !rt.called('questioner#1')
+      && /WITHDRAWN BY THE CRITIC: CRITIC-1-F1/.test(rt.prompt('arbiter#1')), 'rounds 2: the critic sees the rebuttal and a withdraw skips the questioner')
+  }
+  {
+    // rounds 5 caps at 2 extra rounds. Every step keeps the dispute alive.
+    const keep = { responses: [{ id: 'CRITIC-1-F1', action: 'reinforce', evidence: 'still a.js:3' }] }
+    const { rt } = await runCase('council-loop.mjs', EX_ARGS({ rounds: 5 }), councilHappy({
+      'critic-1#1': findingsOut([F_HIGH]), 'advocate-1-rebuttal#1': rebuttal({ 'CRITIC-1-F1': 'dispute' }), 'critic-1-reply-r1#1': keep,
+      'advocate-1-rebuttal-r2#1': rebuttal({ 'CRITIC-1-F1': 'dispute' }), 'critic-1-reply-r2#1': keep,
+      'questioner#1': { rulings: [{ id: 'CRITIC-1-F1', substantiated: true, quote: 'a.js:3 x.y' }] }, 'arbiter#1': FOR }))
+    const ex = rt.labels().filter((l) => /rebuttal|reply|questioner/.test(l))
+    assert(JSON.stringify(ex) === JSON.stringify(['advocate-1-rebuttal#1', 'critic-1-reply-r1#1', 'advocate-1-rebuttal-r2#1', 'critic-1-reply-r2#1', 'questioner#1']),
+      `rounds 5 caps at 2 extra rounds (${ex.join(', ')})`)
+    assert(rt.prompt('advocate-1-rebuttal-r2#1').includes('CRITIC-1 reinforces (round 1): still a.js:3'), 'the second rebuttal sees the critic reinforcement')
+    const one = await runCase('council-loop.mjs', EX_ARGS({ rounds: 1 }), councilHappy({
+      'critic-1#1': findingsOut([F_HIGH]), 'advocate-1-rebuttal#1': rebuttal({ 'CRITIC-1-F1': 'dispute' }),
+      'questioner#1': { rulings: [{ id: 'CRITIC-1-F1', substantiated: true, quote: 'q' }] }, 'arbiter#1': FOR }))
+    assert(!one.rt.labels().some((l) => l.includes('-reply-')), 'rounds 1 adds no critic reply')
+  }
+  {
+    const r = councilHappy({ 'critic-1#1': findingsOut([F_HIGH]), 'advocate-1-rebuttal#1': rebuttal({ 'CRITIC-1-F1': 'dispute' }),
+      'questioner#1': { rulings: [{ id: 'CRITIC-1-F1', substantiated: true, quote: 'q' }] }, 'arbiter#1': FOR })
+    const { rt } = await runCase('council-loop.mjs', EX_ARGS(), r)
+    assert(rt.opts('critic-1#1').model === 'opus' && rt.opts('advocate-1-rebuttal#1').model === 'sonnet' && rt.opts('questioner#1').model === 'sonnet' && rt.opts('arbiter#1').model === 'opus',
+      'exchange tiers: critic opus, rebuttal sonnet, questioner sonnet, arbiter opus')
+    const over = await runCase('council-loop.mjs', EX_ARGS({ model: { advocate: 'opus' } }), r)
+    assert(over.rt.opts('advocate-1-rebuttal#1').model === 'opus', 'council.model.advocate overrides the rebuttal model')
+  }
+  {
+    const { rt, error } = await runCase('council-loop.mjs', EX_ARGS({ debate: 'debate' }), councilHappy())
+    assert(error && /council\.debate must be/.test(error.message) && rt.calls.length === 0, 'an unknown debate value fails before any agent runs')
+    const none = await runCase('council-loop.mjs', EX_ARGS({ critics: 0 }), councilHappy())
+    assert(none.error && /needs council\.critics/.test(none.error.message) && none.rt.calls.length === 0, 'exchange mode with zero critics fails before any agent runs')
+    const a = await runCase('council-loop.mjs', { ...COUNCIL_ARGS, council: { debate: 'parallel' } }, councilHappy())
+    const b = await runCase('council-loop.mjs', COUNCIL_ARGS, councilHappy())
+    assert(JSON.stringify(a.rt.calls.map((c) => c.prompt)) === JSON.stringify(b.rt.calls.map((c) => c.prompt)), "debate: 'parallel' sends the same prompts as the default")
+  }
+  {
+    const { rt } = await runCase('feature-loop.mjs', { ...FEATURE_ARGS, council: { debate: 'exchange', rounds: 1 } },
+      featureBase(councilHappy({ 'critic-1#1': findingsOut(), 'arbiter#1': FOR })), realCouncil)
+    assert(rt.workflowCalls[0]?.args?.council?.debate === 'exchange' && rt.called('merge') && rt.opts('critic-1#1').schema, 'feature-loop forwards debate to the nested council-loop')
+    const spec = await runCase('spec-loop.mjs', { ...SPEC_ARGS, council: { debate: 'exchange' } }, { decompose: { features: [feat('F1')] }, 'build:F1': BUILD_OK }, councilStub())
+    assert(spec.rt.workflowCalls.length === 2 && spec.rt.workflowCalls.every((c) => c.args.council.debate === 'exchange'), 'spec-loop forwards debate to the feature and epic councils')
   }
 }
 
@@ -441,12 +651,18 @@ function gitSafetyTests() {
 }
 
 async function main() {
+  if (process.argv[2] === '--legacy-snapshot') {
+    const snap = await legacySnapshot(readFileSync(process.argv[3], 'utf8'))
+    console.log(JSON.stringify({ digest: digestOf(snap), calls: snap }, null, 1))
+    return
+  }
   syntaxTests()
   await councilTests()
   await specTests()
   await ultracodeTests('ultracode-fix.mjs', 'task')
   await ultracodeTests('ultracode-implement.mjs', 'feature')
   await featureTests()
+  await exchangeTests()
   gitSafetyTests()
   console.log(`\n${checks} checks, ${failures} failed`)
   process.exit(failures === 0 ? 0 : 1)

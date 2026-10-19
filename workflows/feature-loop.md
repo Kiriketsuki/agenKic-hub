@@ -55,7 +55,10 @@ Workflow({
   "envNote": "how to start the local DB/service (e.g. a CLI command)",
 
   // council knobs (optional; defaults shown)
-  "council": { "advocates": 1, "critics": 1, "questioner": false, "rounds": 2, "maxLoops": 4 },
+  // debate: "parallel" (default, every lens runs blind) or "exchange" (the advocate answers each critic
+  // finding, the questioner rules on disputed ones only, a ledger tracks blockers across loops).
+  // See the council-loop.mjs header for the exchange details.
+  "council": { "advocates": 1, "critics": 1, "questioner": false, "rounds": 2, "maxLoops": 4, "debate": "parallel" },
 
   // optional extra project rules appended to the working agreement
   "extraRules": "e.g. follow the design-token system in src/styles"
