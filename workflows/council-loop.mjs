@@ -35,7 +35,8 @@
  *   liveValidate,                             // optional: instructions to prove behavior on a REAL backend
  *   envNote,                                  // optional: env/setup note
  *   agentType,                                // fix-agent routing (default "Senior Developer")
- *   merge,                                    // optional: true to squash-merge into parentRef on an unconditional FOR (default false)
+ *   merge,                                    // optional: true to squash-merge into parentRef on an unconditional FOR that also passes the verify gate (default false)
+ *   allowNoTests,                             // optional: true lets a verify that reports tests "none" pass the merge gate (default false)
  *   extraRules,                               // optional: project-specific rules appended
  *   council: {                                // ---- flexible tuning (all optional) ----
  *     advocates,         // default 1
@@ -75,6 +76,9 @@ const PRREF = T.pr ? ` (PR ${T.pr})` : (T.branch ? ` (branch ${T.branch})` : '')
 const TITLE = A.title || 'the changes on this branch'
 const AGENT = A.agentType || 'Senior Developer'
 const MERGE = A.merge === true
+// A project with no test script reports tests "none". That only passes the merge gate when the
+// caller opts in. Otherwise a missing test suite reads the same as a green one.
+const ALLOW_NO_TESTS = A.allowNoTests === true
 
 // council knobs — defaults: 1v1, no questioner, 2 debate rounds, bounded at 10 councils, unconditional FOR + zero findings
 const C = Object.assign(
@@ -213,7 +217,7 @@ const review = () => T.branch
 const VERDICT_SCHEMA = { type: 'object', additionalProperties: false, required: ['verdict', 'unconditional', 'rationale'], properties: { verdict: { type: 'string', enum: ['FOR', 'AGAINST', 'CONDITIONAL'] }, unconditional: { type: 'boolean' }, conditions: { type: 'array', items: { type: 'string' } }, findings: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['description', 'severity'], properties: { description: { type: 'string' }, file: { type: 'string' }, line: { type: 'integer' }, severity: { type: 'string', enum: ['critical', 'high', 'medium', 'low', 'cosmetic'] }, fix: { type: 'string' } } } }, followUps: { type: 'array', items: { type: 'string' } }, rationale: { type: 'string' } } }
 const FIX_SCHEMA = { type: 'object', additionalProperties: false, required: ['applied', 'buildPassed'], properties: { applied: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['item'], properties: { item: { type: 'string' }, file: { type: 'string' }, change: { type: 'string' } } } }, buildPassed: { type: 'boolean' }, pushed: { type: 'boolean' }, notes: { type: 'string' } } }
 const FIXREVIEW_SCHEMA = { type: 'object', additionalProperties: false, required: ['ok'], properties: { ok: { type: 'boolean' }, issues: { type: 'array', items: { type: 'string' } }, notes: { type: 'string' } } }
-const VERIFY_SCHEMA ={ type: 'object', additionalProperties: false, required: ['build', 'mergeable'], properties: { build: { type: 'string', enum: ['pass', 'fail'] }, tests: { type: 'string', enum: ['pass', 'fail', 'none'] }, output: { type: 'string' }, mergeable: { type: 'boolean' } } }
+const VERIFY_SCHEMA ={ type: 'object', additionalProperties: false, required: ['build', 'tests', 'mergeable'], properties: { build: { type: 'string', enum: ['pass', 'fail'] }, tests: { type: 'string', enum: ['pass', 'fail', 'none'] }, output: { type: 'string' }, mergeable: { type: 'boolean' } } }
 const MERGE_SCHEMA = { type: 'object', additionalProperties: false, required: ['merged'], properties: { merged: { type: 'boolean' }, blocked: { type: 'boolean' }, output: { type: 'string' } } }
 
 const isCosmetic = (sev) => /^(low|cosmetic|nit|info|trivial)/i.test(sev || '')
@@ -402,7 +406,7 @@ if (stopReason && !converged) {
     title: TITLE,
     target: { branch: T.branch, parentRef: PARENT, pr: T.pr },
     council: { config: C, iterations: history.length, stoppedAtRound: iter, history, finalVerdict: verdict },
-    verify: null, merge: null, converged: false, resumable: true,
+    verify: null, verified: false, merge: null, councilConverged: false, converged: false, resumable: true,
     reason: `stopped early — ${why}. Resume after limits/budget reset: Workflow({ scriptPath, args, resumeFromRunId }).`,
     unresolvedBlockers: lastBlocking,
     inPrFollowUps: [],
@@ -412,12 +416,27 @@ if (stopReason && !converged) {
 // ---------------- Phase 2: Verify ----------------
 phase('Verify')
 let verify = null, merge = null
+// The merge gate. Every term needs a positive result. A null verify, a failed build, failing
+// tests, tests "none" without allowNoTests, or a mergeable flag that is not exactly true all
+// block the merge. The old gate read only `mergeable !== false`, so a verify that reported a
+// failed build or failing tests still merged.
+const verifyGate = (v) => {
+  if (!v) return { ok: false, why: 'the verify agent returned no result' }
+  if (v.build !== 'pass') return { ok: false, why: `the build did not pass (build=${v.build})` }
+  if (v.tests === 'none' && !ALLOW_NO_TESTS) return { ok: false, why: 'the verify agent found no tests and allowNoTests is not set' }
+  if (v.tests !== 'pass' && v.tests !== 'none') return { ok: false, why: `the tests did not pass (tests=${v.tests})` }
+  if (v.mergeable !== true) return { ok: false, why: `the verify agent did not report mergeable:true (mergeable=${v.mergeable})` }
+  return { ok: true, why: null }
+}
+let gate = { ok: false, why: 'verify did not run' }
 try {
   verify = await tryAgent(
 `Final verification of ${TITLE}${PRREF} — do NOT change code, only verify and report.${branchPin()}
 1. \`${BUILD}\` (must pass). 2. \`${TEST}\` (report pass/fail+counts; "none" if no test script).${A.liveValidate ? ' 3. Re-run the backend reset/health to confirm it still applies cleanly.' : ''}
 Report concise excerpts + whether mergeable.`,
     { label: 'verify', phase: 'Verify', model: M.verify, schema: VERIFY_SCHEMA })
+  gate = verifyGate(verify)
+  if (!gate.ok) log(`verify gate failed: ${gate.why}`)
 
   // ---------------- Phase 3: Merge (optional — squash-merge on an unconditional FOR) ----------------
   // Ultracode review (2026-08-02): in pure working-tree mode T.branch and T.pr
@@ -426,7 +445,7 @@ Report concise excerpts + whether mergeable.`,
   // merge phase requires a resolved target.
   if (MERGE && converged && !T.branch && !T.pr) {
     log('merge requested but no branch or PR was resolved (working-tree mode). Skipping squash-merge to avoid a bare gh pr merge.')
-  } else if (MERGE && converged && verify && verify.mergeable !== false) {
+  } else if (MERGE && converged && gate.ok) {
     phase('Merge')
     merge = await tryAgent(
 `${TITLE}${PRREF} reached an UNCONDITIONAL FOR and verification passed. Squash-merge it now. Stop and report if any step fails — never force.
@@ -445,7 +464,7 @@ TARGET LOCK (critical): the ONLY thing you may merge is the PR whose head branch
 Report the merge result (merged, blocked, and output including the gh pr ready stdout/stderr and any gh pr view diagnostic).`,
       { label: 'merge', phase: 'Merge', model: M.merge, agentType: AGENT, schema: MERGE_SCHEMA })
   } else if (MERGE && converged) {
-    log('converged but verify reported not mergeable — skipping squash-merge')
+    log(`converged but the verify gate failed (${gate.why}). Skipping squash-merge.`)
   }
 } catch (e) {
   if (e && e.limit) {
@@ -453,7 +472,7 @@ Report the merge result (merged, blocked, and output including the gh pr ready s
     return {
       title: TITLE, target: { branch: T.branch, parentRef: PARENT, pr: T.pr },
       council: { config: C, iterations: history.length, history, finalVerdict: verdict },
-      verify, merge: null, converged, resumable: true,
+      verify, verified: false, merge: null, councilConverged: converged, converged: false, resumable: true,
       reason: 'hit a usage/rate limit during verify/merge. Resume with resumeFromRunId once limits reset.',
       unresolvedBlockers: lastBlocking,
       inPrFollowUps: [],
@@ -462,17 +481,39 @@ Report the merge result (merged, blocked, and output including the gh pr ready s
   throw e
 }
 
+// A null verify is a dead agent, not a verdict. Stop resumable so a resume re-runs verify.
+// Nothing merged on this path because the gate above needs a verify result.
+if (!verify) {
+  log('council-loop stopping (resumable): the verify agent returned no result')
+  return {
+    title: TITLE, target: { branch: T.branch, parentRef: PARENT, pr: T.pr },
+    council: { config: C, iterations: history.length, history, finalVerdict: verdict },
+    verify: null, verified: false, merge: null, councilConverged: converged, converged: false, resumable: true,
+    reason: 'stopped early. The verify agent returned no result, so the merge gate refused to merge. Resume with resumeFromRunId to re-run verify.',
+    unresolvedBlockers: lastBlocking,
+    inPrFollowUps: [],
+  }
+}
+
 // outstanding in-PR follow-ups (explicit follow-ups + cosmetic findings). With applyNonBlockers these are empty on convergence;
 // otherwise the driver folds them into the PR — NEVER an issue.
 const inPrFollowUps = [
   ...((verdict && verdict.followUps) || []),
   ...(((verdict && verdict.findings) || []).filter(f => isCosmetic(f.severity)).map(fmt)),
 ]
-const reason = converged
-  ? (inPrFollowUps.length ? 'unconditional FOR — zero blocking findings (remaining non-blockers returned as in-PR follow-ups)' : 'unconditional FOR — zero findings remaining')
-  : stalled
+// Convergence and verification stay separate fields. `converged` is the AND of both, because
+// every caller reads it as "ready to merge". A council FOR on code that fails its build is not.
+const verified = gate.ok
+const reason = !converged
+  ? (stalled
     ? 'non-unconditional verdict with no actionable findings left — could not progress without re-litigating identical code'
-    : `did not converge within ${C.maxLoops} council(s)`
+    : `did not converge within ${C.maxLoops} council(s)`)
+  : !verified
+    ? `the council converged, but the verify gate failed: ${gate.why}. Nothing was merged.`
+    : (inPrFollowUps.length ? 'unconditional FOR — zero blocking findings (remaining non-blockers returned as in-PR follow-ups)' : 'unconditional FOR — zero findings remaining')
+// A merge agent that died leaves a verified branch unmerged. The merge prompt is idempotent,
+// so a resume can re-run it.
+const mergeDied = MERGE && converged && verified && !!(T.branch || T.pr) && !merge
 
 return {
   title: TITLE,
@@ -481,10 +522,12 @@ return {
   // maxLoops exhaustion (council review F4, 2026-07-30).
   council: { config: C, iterations: history.length, history, finalVerdict: verdict },
   verify,
-  merge,                // squash-merge result when merge:true + converged + mergeable; null otherwise
-  converged,
-  resumable: false,     // reached a terminal verdict (converged or honestly stalled) — nothing to resume
-  reason,
+  verified,             // true only when the verify gate passed (build pass, tests pass or allowed none, mergeable true)
+  merge,                // squash-merge result when merge:true + converged + verified; null otherwise
+  councilConverged: converged,  // the council verdict alone
+  converged: converged && verified,
+  resumable: mergeDied, // true only when the merge agent died after a passed gate
+  reason: mergeDied ? `${reason} The merge agent returned no result. Resume with resumeFromRunId to re-run the merge.` : reason,
   unresolvedBlockers: lastBlocking,  // blocking findings from the last judged round — empty on convergence
   inPrFollowUps,        // apply in-PR / fold into the PR — never file as a GitHub issue
 }
