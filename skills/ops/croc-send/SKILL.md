@@ -1,5 +1,6 @@
 ---
 name: croc-send
+disable-model-invocation: true
 description: Send files and directories between machines using croc over tailscale. Use this skill whenever the user mentions croc, transferring files between computers, sending files over tailscale, copying files to another machine, or says "/croc-send". Trigger even if they just say "send this to my home PC" or "croc it".
 ---
 

@@ -1,6 +1,8 @@
 ---
 name: release-notes-enricher
-description: "Enrich git-cliff release notes with detailed prose summaries by fetching and summarizing linked PRs, issues, and commits from GitHub. Use this skill whenever the user asks to 'enrich release notes', 'add detail to release notes', 'expand release notes', 'detailed release notes', 'summarize PRs in release', or wants a richer version of existing git-cliff output. Also trigger when the user says 'cliff notes detail', 'explain the release', or 'what actually happened in this release'. ALSO handles an in-app release-notes.json: trigger on 'update the in-app release notes', 'backfill release notes', 'monthly release notes', or any request to refresh what a dashboard's Release Notes modal shows — this mode UPDATES the JSON file end-to-end (generate entries, insert, test, ship)."
+disable-model-invocation: true
+description: "Enrich git-cliff release notes with prose summaries of the linked PRs, issues, and commits from GitHub. Also updates an in-app release-notes.json end to end."
+when_to_use: "Use when the user asks to 'enrich release notes', 'add detail to release notes', 'expand release notes', 'detailed release notes', 'summarize PRs in release', 'cliff notes detail', 'explain the release', or 'what actually happened in this release'. For the in-app JSON mode, use on 'update the in-app release notes', 'backfill release notes', 'monthly release notes', or any request to refresh what a dashboard Release Notes modal shows. This mode generates entries, inserts them, tests, and ships."
 ---
 
 # Release Notes Enricher

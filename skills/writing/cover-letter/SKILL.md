@@ -1,5 +1,6 @@
 ---
 name: cover-letter
+disable-model-invocation: true
 description: Write a cover letter in the user's voice from a job posting and render it as a clean LaTeX PDF. Use when the user pastes a job description and asks for a cover letter, or says "cover letter for [company/role]", "/cover-letter", "apply to this", "write me a letter for this posting".
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: context-handoff
-description: "Use when the user asks to prepare a handoff, switch context, create a plan for session continuity, or when context is getting long. Manually invoked."
+description: "Use when the user asks to prepare a handoff, switch context, create a plan for session continuity, or when context is getting long."
 ---
 
 # Context Handoff

@@ -1,6 +1,6 @@
 ---
 name: context-resume
-description: "Use when resuming work from a previous session handoff. Triggers: \"Resume from handoff\", \"Pick up where we left off\", \"Load the handoff\". Pass \"active\" to verify git state and read key files. Manually invoked."
+description: "Use when resuming work from a previous session handoff. Triggers: \"Resume from handoff\", \"Pick up where we left off\", \"Load the handoff\". Pass \"active\" to verify git state and read key files."
 ---
 
 # Context Resume

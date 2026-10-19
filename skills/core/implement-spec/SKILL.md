@@ -1,5 +1,6 @@
 ---
 name: implement-spec
+disable-model-invocation: true
 description: "Implement a feature from a *-spec.md file by routing tasks to optimal subagents, executing in dependency-aware parallel waves, and committing after each logical chunk. Use whenever the user says \"implement this spec\", \"implement [name]-spec.md\", \"build from spec\", \"execute the spec\", \"start implementing\", \"implement with subagents\", or references a spec file and wants it built. Also trigger when the user pastes or points to a spec and says \"go\", \"build it\", \"make it happen\", or \"let's do this\". This is the primary skill for turning any feature spec into working code through coordinated multi-agent execution."
 ---
 

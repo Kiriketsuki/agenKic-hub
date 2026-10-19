@@ -1,5 +1,6 @@
 ---
 name: repo-hooks
+disable-model-invocation: true
 description: >
   Detect languages in the current repo and configure project-scoped PostToolUse hooks
   for type-checking, linting, and test validation after edits. Runs per-repo, not global.

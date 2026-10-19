@@ -1,8 +1,9 @@
 ---
 name: merge-next
-user-invocable: true
+disable-model-invocation: true
 argument-hint: "[optional: next branch name]"
-description: "End-of-work merge and advance skill. Commits, pushes, verifies the PR targets the correct parent branch, squash merges, then checks out the next sibling branch and rebases onto the parent. Use this skill whenever the user says \"merge and next\", \"merge-next\", \"done with this feature\", \"merge this and move on\", \"advance to next feature/task/phase\", \"ship this and pick up the next one\", \"wrap up this branch\", or after a council review cycle when the user is satisfied with the work. Also use when the user wants to merge an epic into main or a saga, or any child-to-parent merge followed by advancing to the next sibling. Covers the full hierarchy: task -> feature -> epic -> saga -> main."
+description: "Squash merge the current branch into its parent, then check out the next sibling branch and rebase it onto the parent."
+when_to_use: "Use when the user says \"merge and next\", \"merge-next\", \"done with this feature\", \"merge this and move on\", \"advance to next feature/task/phase\", \"ship this and pick up the next one\", \"wrap up this branch\", or after a council review cycle when the user is satisfied. Also use for any child-to-parent merge followed by advancing to the next sibling, such as an epic into main or a saga. Covers the full hierarchy: task -> feature -> epic -> saga -> main."
 ---
 
 # merge-next
