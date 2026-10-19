@@ -57,7 +57,8 @@ Workflow({
   "routeOverrides": { "F1": { "agentType": "Backend Architect", "model": "opus" } },
 
   // forwarded to every council-loop invocation
-  "council": { "advocates": 1, "critics": 1, "questioner": false, "rounds": 2, "maxLoops": 10 },
+  // debate: "parallel" (default) or "exchange". See the council-loop.mjs header for the exchange details.
+  "council": { "advocates": 1, "critics": 1, "questioner": false, "rounds": 2, "maxLoops": 10, "debate": "parallel" },
 
   // optional, forwarded into build + council prompts
   "liveValidate": "Start the real backend; prove <invariant>; fix defects and re-run.",
