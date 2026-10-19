@@ -118,7 +118,8 @@ fi
 
 # Validate commit message follows conventional commits (warning only)
 if echo "$CMD" | grep -qE 'git\s+commit\s'; then
-  MSG=$(echo "$CMD" | grep -oP -- '-m\s+["'"'"']\K[^"'"'"']+' | head -1)
+  # Combined short flags such as -am also carry the message, so accept any letters before m.
+  MSG=$(echo "$CMD" | grep -oP -- '(?:^|\s)-[a-zA-Z]*m\s+["'"'"']\K[^"'"'"']+' | head -1)
   if [ -n "$MSG" ]; then
     # Check first line only (before any newline in heredoc-style messages)
     FIRST_LINE=$(echo "$MSG" | head -1)
