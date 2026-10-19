@@ -2,10 +2,16 @@
  * ultracode-implement.mjs — reusable "ultracode implement it" pipeline.
  *
  * Sibling of ultracode-fix.mjs, aimed at building a feature instead of fixing a
- * defect. Same model tiering (fixed by design, per user directive 2026-08-03):
+ * defect. Same model tiering:
  *   Explore   → sonnet (only when the plan needs more context)
  *   Plan      → opus, effort medium (design + task decomposition)
- *   Implement → opus, effort low (fan-out per plan task)
+ *   Implement → per task. The planner tags each task routine or hard. A routine task runs on
+ *               sonnet. A hard task (design, cross-system, or safety-relevant work) runs on
+ *               opus. A task with no tag runs on sonnet. args.implementModel overrides every
+ *               implementer and fixer. This replaces the fixed opus implementer of the
+ *               2026-08-03 directive (user decision 2026-10-19, issue #20).
+ *   Fix       → one fixer per review round, same rule: opus when any finding is hard,
+ *               else sonnet, unless args.implementModel is set.
  *   Review    → opus, effort medium (also arbiters the fix loop)
  *
  * Invoke BY ABSOLUTE scriptPath (the name registry does not resolve
@@ -21,6 +27,7 @@
  *   tdd,           // optional: true → each task writes its tests FIRST (default true when testCmd is set)
  *   maxLoops,      // optional: max review→fix rounds (default 3)
  *   explore,       // optional: 'auto' (default, planner decides) | 'always' | 'never'
+ *   implementModel, // optional: model for every implementer and fixer, overrides the per-task tag
  *   commit,        // optional: true → implementers commit with conventional messages (default false)
  * }
  *
@@ -31,11 +38,11 @@
 
 export const meta = {
   name: 'ultracode-implement',
-  description: 'Build a feature: sonnet explores, opus plans the design (medium), opus implements (low), opus reviews and loops fixes until approved',
+  description: 'Build a feature: sonnet explores, opus plans the design (medium), each task runs on sonnet or opus by planner-tagged complexity, opus reviews and loops fixes until approved',
   phases: [
     { title: 'Explore', detail: 'sonnet scouts existing patterns and integration points when the plan needs context', model: 'sonnet' },
     { title: 'Plan', detail: 'opus at medium effort designs the feature and decomposes it into tasks', model: 'opus' },
-    { title: 'Implement', detail: 'opus at low effort builds each plan task in dependency waves', model: 'opus' },
+    { title: 'Implement', detail: 'builds each plan task in dependency order, one at a time: sonnet for routine tasks, opus for hard ones', model: 'sonnet' },
     { title: 'Review', detail: 'opus at medium effort reviews against the spec, requests fixes, loops until approved', model: 'opus' },
   ],
 }
@@ -74,6 +81,7 @@ const PLAN_SCHEMA = {
           id: { type: 'string' },
           instruction: { type: 'string', description: 'self-contained instruction for one implementer agent, with file paths and expected behavior' },
           dependsOn: { type: 'array', items: { type: 'string' } },
+          complexity: { type: 'string', enum: ['routine', 'hard'], description: 'hard for design, cross-system, or safety-relevant work, else routine. Picks the implementer model.' },
         },
       },
     },
@@ -94,6 +102,7 @@ const REVIEW_SCHEMA = {
           file: { type: 'string' },
           summary: { type: 'string' },
           fixInstruction: { type: 'string', description: 'self-contained fix instruction for an implementer' },
+          complexity: { type: 'string', enum: ['routine', 'hard'], description: 'hard for design, cross-system, or safety-relevant fixes, else routine. Picks the fixer model.' },
         },
       },
     },
@@ -101,6 +110,15 @@ const REVIEW_SCHEMA = {
 }
 
 const RESULT_SCHEMA = { type: 'object', required: ['done', 'report'], properties: { done: { type: 'boolean' }, report: { type: 'string' } } }
+
+// Implementer model per task (user decision 2026-10-19, issue #20). Most plan tasks are routine
+// edits that sonnet handles. Only hard tasks earn opus. An explicit args.implementModel wins.
+// A missing or unknown tag falls to sonnet, so a planner that skips the field does not
+// silently put every task back on the top tier.
+const IMPLEMENT_MODEL = (typeof A.implementModel === 'string' && A.implementModel.trim()) ? A.implementModel.trim() : null
+const modelFor = (complexity) => IMPLEMENT_MODEL || (complexity === 'hard' ? 'opus' : 'sonnet')
+// One fixer handles every finding of a round, so one hard finding is enough to need opus.
+const fixModelFor = (findings) => modelFor((findings || []).some(f => f && f.complexity === 'hard') ? 'hard' : 'routine')
 
 // --- Phase 1+2: optional explore, then plan (opus, medium) ---
 let exploreNotes = ''
@@ -111,7 +129,7 @@ Feature: ${FEATURE}${SPEC}${CTX}
 Questions:
 ${questions.map((q, i) => `${i + 1}. ${q}`).join('\n')}`
 
-const planPrompt = () => `${CWD}You are the planner and designer. Design this feature, then decompose it into the smallest set of independent, self-contained implementation tasks. The design must state the architecture, the files to create or change, and how the feature integrates with existing code. Each task instruction must name its files and the expected behavior after the change. Reuse existing patterns and utilities over net-new code. If you lack the context to write a trustworthy plan, set needsExplore=true and list exploreQuestions instead of guessing.
+const planPrompt = () => `${CWD}You are the planner and designer. Design this feature, then decompose it into the smallest set of independent, self-contained implementation tasks. The design must state the architecture, the files to create or change, and how the feature integrates with existing code. Each task instruction must name its files and the expected behavior after the change. Reuse existing patterns and utilities over net-new code. Tag each task with complexity: "hard" for design work, cross-system changes, or safety-relevant code (auth, data loss, concurrency, money), else "routine". A routine task runs on a faster model, so do not tag a task hard without cause. If you lack the context to write a trustworthy plan, set needsExplore=true and list exploreQuestions instead of guessing.
 
 Feature: ${FEATURE}${SPEC}${CTX}${TEST}
 ${exploreNotes ? `\nExploration findings:\n${exploreNotes}` : ''}`
@@ -168,7 +186,7 @@ while (remaining.length) {
   // step, and the default commit:false mode leaves nothing committed to merge. Sequential runs
   // in dependency order are the simpler safe option. The first failure stops the wave.
   for (const t of wave) {
-    const raw = await agent(implPrompt(t), { label: `impl:${t.id}`, phase: 'Implement', schema: RESULT_SCHEMA, model: 'opus', effort: 'low' })
+    const raw = await agent(implPrompt(t), { label: `impl:${t.id}`, phase: 'Implement', schema: RESULT_SCHEMA, model: modelFor(t.complexity), effort: 'low' })
     const r = raw ? { id: t.id, ...raw } : null
     if (!(r && r.done === true)) {
       return implFailed([{ id: t.id, reason: r ? 'implementer reported done:false' : 'implementer returned no result', report: r ? r.report : null }])
@@ -179,14 +197,14 @@ while (remaining.length) {
   remaining = remaining.filter(t => !done.has(t.id))
 }
 
-// --- Phase 4: review loop (opus, medium) with opus fix rounds ---
+// --- Phase 4: review loop (opus, medium) with one fixer per round (model by finding complexity) ---
 phase('Review')
 const reviews = []
 let verdict = 'unreviewed'
 let failed = []
 for (let round = 1; round <= MAX_LOOPS; round++) {
   const review = await agent(
-    `${CWD}You are the reviewer and orchestrator of a build pipeline. Review the CURRENT working-tree change against the feature request${A.specFile ? ' and the spec' : ''}. Verify correctness against actual source (read the files, do not trust the reports alone). Check scope: every acceptance criterion met, nothing extra built. ${A.testCmd ? `Run \`${A.testCmd}\` and treat a failure as a blocking finding. ` : ''}Approve only if the feature is genuinely done. For each blocking finding, write a self-contained fixInstruction.
+    `${CWD}You are the reviewer and orchestrator of a build pipeline. Review the CURRENT working-tree change against the feature request${A.specFile ? ' and the spec' : ''}. Verify correctness against actual source (read the files, do not trust the reports alone). Check scope: every acceptance criterion met, nothing extra built. ${A.testCmd ? `Run \`${A.testCmd}\` and treat a failure as a blocking finding. ` : ''}Approve only if the feature is genuinely done. For each blocking finding, write a self-contained fixInstruction and tag its complexity: "hard" for design, cross-system, or safety-relevant fixes, else "routine".
 
 Feature: ${FEATURE}${SPEC}${CTX}
 Design:
@@ -206,7 +224,7 @@ ${implemented.map(r => `- [${r.id}] ${r.report}`).join('\n')}`,
   // on the same files, which is the single-writer problem described in Implement.
   const fixId = `fix-r${round}`
   const fixRaw = await agent(implPrompt({ id: fixId, instruction: `Fix every review finding below. Each one is blocking.\n${review.findings.map((f, i) => `${i + 1}. ${f.summary} (${f.file})\n${f.fixInstruction}`).join('\n\n')}` }),
-    { label: `fix:r${round}`, phase: 'Implement', schema: RESULT_SCHEMA, model: 'opus', effort: 'low' })
+    { label: `fix:r${round}`, phase: 'Implement', schema: RESULT_SCHEMA, model: fixModelFor(review.findings), effort: 'low' })
   const fix = fixRaw ? { id: fixId, ...fixRaw } : null
   // Same rule as Implement: a null or done:false fixer stops the loop instead of reading as fixed.
   if (!(fix && fix.done === true)) {
