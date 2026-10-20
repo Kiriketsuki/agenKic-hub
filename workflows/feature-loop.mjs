@@ -14,8 +14,8 @@
  * council is delegated to the council-loop workflow, which keeps committing/pushing each fix
  * round and — because we pass `merge: true` — squash-merges into the parent on an unconditional
  * FOR. Scaffolding (creating the issue/branch/PR, version bumps) stays the DRIVER's job; the
- * merge asks the user on every `gh pr merge` (hook ask decision plus the settings ask rule), so a
- * run waits there for approval. Because council-loop runs via the workflow() hook, feature-loop MUST be
+ * verify gate guards the merge. With AGENKIC_MERGE_GATE=ask or a settings ask rule, a run
+ * waits at the merge for approval. Because council-loop runs via the workflow() hook, feature-loop MUST be
  * invoked as a TOP-LEVEL Workflow (the workflow() hook nests one level only).
  *
  * Invoke (from the driver, once per feature, in dependency order). Invoke BY ABSOLUTE scriptPath —

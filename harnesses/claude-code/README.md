@@ -16,7 +16,7 @@ Ported hooks:
 
 | Hook | Event | What it does |
 |:---|:---|:---|
-| `gh-check-before-create.sh` | PreToolUse (Bash) | Enforces branch, commit, PR, and issue naming. Blocks draft PR merges |
+| `gh-check-before-create.sh` | PreToolUse (Bash) | Enforces branch, commit, PR, and issue naming. Blocks draft PR merges. Asks before every merge only with `AGENKIC_MERGE_GATE=ask` |
 | `pre-push-auth.sh` | PreToolUse (Bash, `if: Bash(git push *)`) | Switches the active `gh` account to match the remote owner before push. Reads the repo from the hook input `cwd`. Fails closed when `jq` is missing |
 | `lint-precommit.sh` | PreToolUse (Bash, `if: Bash(git commit *)`) | Runs the project linter before `git commit`. Checks only. It never edits or stages files. It prints the fix command on stderr and blocks on errors |
 | `large-file-check.sh` | PreToolUse (Bash, `if: Bash(git commit *)`) | Blocks commits when the tree carries files over 100MB. Uses one `stat` pass |

@@ -10,8 +10,8 @@ It lives in `~/.claude/workflows/`, so it is reusable across repos.
 
 > The workflow does git. Each phase commits and pushes to the feature branch. council-loop
 > squash-merges when the council converges and the verify gate passes. The gate needs build pass,
-> tests pass, and `mergeable: true`. Every `gh pr merge` asks the user: the hook returns an `ask` decision and the
-> settings carry an `ask` rule, so an unattended run waits at the merge. Pass `merge: false` to stop
+> tests pass, and `mergeable: true`. A user prompt at the merge is opt-in. Set
+> `AGENKIC_MERGE_GATE=ask`, or add an `ask` rule, and an unattended run waits at the merge. Pass `merge: false` to stop
 > at a verified convergence and merge from the driver. Issue creation stays the driver's job.
 
 Invoke the workflow per feature by **absolute scriptPath**. The name registry does NOT resolve

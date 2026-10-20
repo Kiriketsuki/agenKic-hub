@@ -40,7 +40,7 @@ The hooks in this repo fall into three families.
 
 ### Guard rails (PreToolUse, matcher `Bash`)
 
-**`gh-check-before-create.sh`** enforces git and GitHub naming. Branch names must match `<type>/<issue>-<kebab-description>`. PR titles must follow conventional commits or a documented bracketed style. Both violations exit 2. Commit messages and short issue titles get warnings only. The hook also blocks merging a PR that is still in draft, and warns before branch renames and issue relabels that can trigger repo automation. It only enforces naming in repos that carry an `issue-branch-handler` workflow, so ordinary repos pass through untouched.
+**`gh-check-before-create.sh`** enforces git and GitHub naming. Branch names must match `<type>/<issue>-<kebab-description>`. PR titles must follow conventional commits or a documented bracketed style. Both violations exit 2. Commit messages and short issue titles get warnings only. The hook also blocks merging a PR that is still in draft. With `AGENKIC_MERGE_GATE=ask` set, it asks the user before any other merge. It also warns before branch renames and issue relabels that can trigger repo automation. It only enforces naming in repos that carry an `issue-branch-handler` workflow, so ordinary repos pass through untouched.
 
 **`lint-precommit.sh`** intercepts `git commit` and runs the project's linter. It detects the stack from manifest files: `npm run lint` and `tsc --noEmit` for JS/TS, `ruff` or `flake8` for Python, `go vet` and `gofmt` for Go. The hook only checks. It never edits or stages files. Errors block the commit with the lint output and the command that fixes them.
 
