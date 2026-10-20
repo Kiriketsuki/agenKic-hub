@@ -5,17 +5,17 @@
 # Output contract (Claude Code PreToolUse):
 # - A block prints its reason to STDERR and exits 2. Claude Code shows stderr for exit 2.
 #   It does not show stdout, so a reason on stdout reads as "No stderr output".
-# - `gh pr merge` gets a JSON decision on stdout with permissionDecision "ask" and exit 0.
-#   The old hook printed "Approve to proceed" to stdout and exited 0, which Claude Code never
-#   showed, so the merge "gate" approved every merge.
+# - With AGENKIC_MERGE_GATE=ask, `gh pr merge` gets a JSON decision on stdout with
+#   permissionDecision "ask" and exit 0. Without it, the merge runs and only the draft check
+#   blocks. The prompt is opt-in because it also stops the merge agents of unattended runs.
 # - Soft warnings go into one JSON object as additionalContext, which Claude Code passes to
 #   the model. Several warnings combine into that one object.
 # - No check exits early. Each check falls through to the next, so a compound command such
 #   as `git branch -D x && gh pr merge 5` still reaches the merge check.
 #
-# The hook is one layer. settings.hooks.example.json also carries a permissions ask rule for
-# `Bash(gh pr merge *)`. An explicit ask rule prompts in every permission mode, including
-# bypassPermissions, and Claude Code checks each subcommand of a compound command against it.
+# For a prompt that no hook can approve, add a permissions ask rule for `Bash(gh pr merge *)`.
+# An explicit ask rule prompts in every permission mode, including bypassPermissions. A hook
+# allow does not override it, so it also stops every unattended workflow merge.
 
 # The hook parses its input with jq. Without jq it cannot see the command, so it fails closed.
 if ! command -v jq >/dev/null 2>&1; then
@@ -118,7 +118,8 @@ fi
 
 # Validate commit message follows conventional commits (warning only)
 if echo "$CMD" | grep -qE 'git\s+commit\s'; then
-  MSG=$(echo "$CMD" | grep -oP -- '-m\s+["'"'"']\K[^"'"'"']+' | head -1)
+  # Combined short flags such as -am also carry the message, so accept any letters before m.
+  MSG=$(echo "$CMD" | grep -oP -- '(?:^|\s)-[a-zA-Z]*m\s+["'"'"']\K[^"'"'"']+' | head -1)
   if [ -n "$MSG" ]; then
     # Check first line only (before any newline in heredoc-style messages)
     FIRST_LINE=$(echo "$MSG" | head -1)
@@ -140,7 +141,7 @@ if echo "$CMD" | grep -qE 'gh\s+issue\s+(create|new)'; then
   warn "Verify that the issue does not already exist before you create it: gh issue list --search \"<keyword>\""
 fi
 
-# Any PR merge asks the user. The draft check still blocks outright.
+# A draft PR merge is blocked outright. Other merges ask only with AGENKIC_MERGE_GATE=ask.
 if echo "$CMD" | grep -qE 'gh\s+pr\s+merge'; then
   # Read the PR number from the text after `gh pr merge` only. A number earlier in a compound
   # command (a branch name such as feature/12-x) is not the PR.
@@ -165,7 +166,11 @@ if echo "$CMD" | grep -qE 'gh\s+pr\s+merge'; then
   if ! echo "$MERGE_ARGS" | grep -qE -- '--(squash|merge|rebase)'; then
     warn "No merge strategy specified. Prefer --squash."
   fi
-  ASK_REASON="PR merge requested${PR_NUM:+ for PR #$PR_NUM}. Every gh pr merge needs explicit user approval."
+  # The approval prompt is opt-in. With AGENKIC_MERGE_GATE=ask the hook asks the user before
+  # every merge. Without it, a merge runs and the draft check above is the only block.
+  if [ "${AGENKIC_MERGE_GATE:-}" = "ask" ]; then
+    ASK_REASON="PR merge requested${PR_NUM:+ for PR #$PR_NUM}. AGENKIC_MERGE_GATE=ask needs explicit user approval."
+  fi
 fi
 
 # Warn: branch rename can close open PRs
