@@ -250,7 +250,7 @@ jobs:
                           title: prTitle,
                           head: branchName,
                           base: baseBranch,
-                          body: `Closes #${context.issue.number}\n\n${context.payload.issue.body || 'No description provided.'}\n\n---\n\nThis pull request was automatically created from issue #${context.issue.number}. Base branch: \`${baseBranch}\`.`,
+                          body: `Closes #${context.issue.number}\n\n${context.payload.issue.body || 'No description provided.'}\n\n---\n\nThe issue-branch-handler workflow opened this pull request from issue #${context.issue.number}. Base branch: \`${baseBranch}\`.`,
                           draft: true
                         });
 
