@@ -1,0 +1,2621 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A public hub of agent skills, workflows, harness configs, and patterns.">
+      
+      
+      
+        <link rel="canonical" href="https://kiriketsuki.github.io/agenKic-hub/specs/todo/single-council-engine-spec/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/chrysaki-favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Feature: Single Council Engine - agenKic-hub</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/chrysaki.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="chrysaki" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#feature-single-council-engine" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="agenKic-hub" class="md-header__button md-logo" aria-label="agenKic-hub" data-md-component="logo">
+      
+  <img src="../../../assets/chrysaki-mark.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            agenKic-hub
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Feature: Single Council Engine
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Kiriketsuki/agenKic-hub" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Kiriketsuki/agenKic-hub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../setup/install/" class="md-tabs__link">
+          
+  
+  
+  Setup
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../skills/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Skills
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../workflows/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Workflows
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../tools/stream-launcher/" class="md-tabs__link">
+          
+  
+  
+  Tools
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../patterns/" class="md-tabs__link">
+          
+  
+  
+  Patterns
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../WALKTHROUGH/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Walkthrough
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../tips/claude-md-curation/" class="md-tabs__link">
+          
+  
+  
+  Tips
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="agenKic-hub" class="md-nav__button md-logo" aria-label="agenKic-hub" data-md-component="logo">
+      
+  <img src="../../../assets/chrysaki-mark.svg" alt="logo">
+
+    </a>
+    agenKic-hub
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Kiriketsuki/agenKic-hub" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Kiriketsuki/agenKic-hub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Setup
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../setup/install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Install
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../setup/symlinks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manual symlinks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../setup/harnesses/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Harnesses
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tools
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tools/stream-launcher/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stream launcher (WIP)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Patterns
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Patterns
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../patterns/debugging-protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Debugging protocol
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../patterns/model-tiering/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model tiering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../patterns/council-patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Council patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../patterns/gherkin-and-specs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gherkin and specs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../patterns/hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Code hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../patterns/authoring-workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring workflows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../patterns/clip-path-borders/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clip-path borders
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../WALKTHROUGH/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Walkthrough
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tips
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tips
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tips/claude-md-curation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLAUDE.md curation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tips/hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tips/linters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Linters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tips/multi-account/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-account setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#success-condition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Success Condition
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#current-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current Paths
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decisions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decisions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#d1-feature-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D1. Feature matrix
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="D1. Feature matrix">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#debate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#liveness-and-recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Liveness and recovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fix-merge-and-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fix, merge and output
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d2-non-code-motions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D2. Non-code motions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d3-fix-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D3. Fix modes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d4-runtime-and-supervisor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D4. Runtime and supervisor
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d5-thin-wrapper-shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D5. Thin wrapper shape
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d6-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D6. Migration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Open Questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scope
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Scope">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#must-have" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Must-Have
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#should-have" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Should-Have
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nice-to-have" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nice-to-Have
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#technical-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Technical Plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acceptance-scenarios" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acceptance Scenarios
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#task-breakdown" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task Breakdown
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exit-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="feature-single-council-engine">Feature: Single Council Engine<a class="headerlink" href="#feature-single-council-engine" title="Permanent link">&para;</a></h1>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p><strong>User Story</strong>: As a user of the council, I want one engine with one set of
+rules for review, fixes, pushes and liveness. Then I know which behavior runs,
+and a fix to the council lands in one place.</p>
+<p><strong>Problem</strong>: Four paths run the same review and fix loop. The
+<code>adversarial-council</code>, <code>council-supervisor</code> and <code>council-fix</code> skills drive an
+agent team by hand. The <code>council-loop</code> workflow drives scripted agents. Each
+path has its own fix, push and liveness rules. The supervisor reimplements
+stall detection that the workflow runtime now provides.</p>
+<p><strong>Out of Scope</strong>:</p>
+<ul>
+<li>The internals of <code>feature-loop.mjs</code> and <code>spec-loop.mjs</code>. They keep their
+  <code>workflow()</code> call to <code>council-loop</code>, and the new arguments default to the
+  current behavior.</li>
+<li>The <code>review: 'budget'</code> path in <code>feature-loop.mjs</code> and the critique phase in
+  <code>autofix-swarm.mjs</code>. Both are small single-agent reviews. Open question 9
+  covers them.</li>
+<li>Any change to the anti-gaming gate, the promote rule or the ledger of
+  <code>autofix-swarm.mjs</code>.</li>
+<li>A new council protocol. The engine keeps the exchange debate that
+  <code>council.debate: 'exchange'</code> already defines.</li>
+</ul>
+<h2 id="success-condition">Success Condition<a class="headerlink" href="#success-condition" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>This feature is complete when every council entry point runs its review
+through <code>council-loop.mjs</code>. No skill spawns a debate team by hand, and the
+workflow smoke suite passes with the same legacy prompt digest. The entry
+points are <code>/adversarial-council</code>, <code>/council-fix</code>, <code>/council-supervisor</code>,
+<code>/parallel-fix --from-council</code>, <code>feature-loop</code>, <code>spec-loop</code> and
+<code>autofix-swarm</code>.</p>
+</blockquote>
+<h2 id="current-paths">Current Paths<a class="headerlink" href="#current-paths" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Path</th>
+<th style="text-align: left;">Debate</th>
+<th style="text-align: left;">Fix</th>
+<th style="text-align: left;">Liveness</th>
+<th style="text-align: left;">Output</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>adversarial-council</code></td>
+<td style="text-align: left;">Agent team, live <code>SendMessage</code>, N advocates and N-1 critics, questioner, arbiter</td>
+<td style="text-align: left;">Gate menu, then a manifest and a handoff to a fix loop in a fresh session</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">Recommendation markdown</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>council-supervisor</code></td>
+<td style="text-align: left;">Same team, driven by the supervisor</td>
+<td style="text-align: left;">Chains to <code>parallel-fix</code></td>
+<td style="text-align: left;">Heartbeats, nudges, agent replacement, checkpoint file</td>
+<td style="text-align: left;"><code>.council/council-result.json</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>council-fix</code></td>
+<td style="text-align: left;">Calls <code>adversarial-council --supervised --skeptic</code></td>
+<td style="text-align: left;">Plan file only</td>
+<td style="text-align: left;">Inherited from the supervisor</td>
+<td style="text-align: left;">Plan file in <code>~/.claude/plans/</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>parallel-fix</code></td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">Three competing worktree fixes, smallest passing diff wins</td>
+<td style="text-align: left;">Agent timeout</td>
+<td style="text-align: left;">Updated <code>council-result.json</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>council-loop.mjs</code></td>
+<td style="text-align: left;">Scripted lenses, legacy <code>parallel</code> or <code>exchange</code></td>
+<td style="text-align: left;">Plan, fix, fix review, commit and push per round</td>
+<td style="text-align: left;">Runtime stall restart, null guards, limit stop, resume</td>
+<td style="text-align: left;">Structured return value</td>
+</tr>
+</tbody>
+</table>
+<h2 id="decisions">Decisions<a class="headerlink" href="#decisions" title="Permanent link">&para;</a></h2>
+<h3 id="d1-feature-matrix">D1. Feature matrix<a class="headerlink" href="#d1-feature-matrix" title="Permanent link">&para;</a></h3>
+<p>Each row names one capability, its destination and the reason. The
+destinations are an engine argument, a thin skill wrapper, a separate skill,
+or removal.</p>
+<h4 id="debate">Debate<a class="headerlink" href="#debate" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Capability</th>
+<th style="text-align: left;">Source</th>
+<th style="text-align: left;">Destination</th>
+<th style="text-align: left;">Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Motion intake: inline text, file, natural language, one clarifying question at a time</td>
+<td style="text-align: left;">adversarial-council Step 1</td>
+<td style="text-align: left;">Thin wrapper</td>
+<td style="text-align: left;">Intake needs the user. A workflow takes no mid-run input.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Code scan prep: PR diff, branch diff, named files</td>
+<td style="text-align: left;">adversarial-council Step 1</td>
+<td style="text-align: left;">Engine (<code>target</code>, <code>scope</code>)</td>
+<td style="text-align: left;">The engine already reads the committed diff by ref and pins the branch.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Non-code motions: plans, architecture decisions, strategy</td>
+<td style="text-align: left;">adversarial-council GENERAL path</td>
+<td style="text-align: left;">Engine arg <code>subject.kind: 'text'</code></td>
+<td style="text-align: left;">See D2. One debate protocol and one set of null guards.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Team debate with live messaging (<code>TeamCreate</code>, <code>SendMessage</code>, free-form headers)</td>
+<td style="text-align: left;">adversarial-council, council-supervisor</td>
+<td style="text-align: left;">Removed after one release</td>
+<td style="text-align: left;">Agent teams are experimental and off by default. They have no resume and one team per session. The supervisor exists to babysit them. Exchange mode keeps the adversarial rounds with schema-checked output.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Advocate and critic counts (<code>--n</code>, <code>--skeptic</code>)</td>
+<td style="text-align: left;">adversarial-council</td>
+<td style="text-align: left;">Wrapper maps to <code>council.advocates</code> and <code>council.critics</code></td>
+<td style="text-align: left;">The engine already takes both counts. The wrapper keeps at least one advocate, because the rebuttal needs one.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Debate rounds (<code>--rounds</code>)</td>
+<td style="text-align: left;">adversarial-council</td>
+<td style="text-align: left;">Wrapper maps to <code>council.rounds</code></td>
+<td style="text-align: left;">Exchange mode caps extra critic replies at two. The wrapper logs when it clamps a larger value.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Named roles and the role focus map (<code>--roles</code>, PERF, SEC, UX and others)</td>
+<td style="text-align: left;">adversarial-council Step 3</td>
+<td style="text-align: left;">New engine arg <code>council.focus</code></td>
+<td style="text-align: left;">The engine injects one focus line per role name. The wrapper builds the map from the role names.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Questioner that probes uncited claims</td>
+<td style="text-align: left;">questioner template</td>
+<td style="text-align: left;">Engine (exchange questioner)</td>
+<td style="text-align: left;">Exchange mode runs the questioner on disputed findings only, and it reads the code itself. That is the same check with fewer calls.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Evidence protocol: <code>file:line</code> for code, a named source for text</td>
+<td style="text-align: left;">evidence-protocol.md</td>
+<td style="text-align: left;">Engine prompts</td>
+<td style="text-align: left;">Exchange critics already quote evidence. Text mode adds the named-source rule to the critic prompt.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Scope audit: relevance and pre-existence tests</td>
+<td style="text-align: left;">arbiter template</td>
+<td style="text-align: left;">Engine (arbiter prompt)</td>
+<td style="text-align: left;">The exchange arbiter already drops pre-existing and unrelated findings.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Critical discoveries: security, data loss, compliance</td>
+<td style="text-align: left;">arbiter template</td>
+<td style="text-align: left;">New engine verdict field <code>criticalDiscoveries</code></td>
+<td style="text-align: left;">The finding is informational. It must not block, and it must not vanish.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Prior council lookup</td>
+<td style="text-align: left;">adversarial-council Step 1</td>
+<td style="text-align: left;">Wrapper reads the last result, engine arg <code>priorContext</code></td>
+<td style="text-align: left;">File discovery is wrapper work. The engine injects the text into the critic and arbiter prompts.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Fix registry and regression history (<code>council-fix-registry.md</code>)</td>
+<td style="text-align: left;">autofix-pipeline Phase 6</td>
+<td style="text-align: left;">Removed, replaced by the ledger</td>
+<td style="text-align: left;">The exchange ledger tracks each blocker, its fix attempts and a regression status in the result. A second hand-edited table drifts.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model selection: auto complexity and <code>--model*</code> flags</td>
+<td style="text-align: left;">adversarial-council Step 1.5</td>
+<td style="text-align: left;">Wrapper maps to <code>council.model</code></td>
+<td style="text-align: left;">The engine keeps its opus floor for the arbiter, fix plan and fix review. The legacy sonnet arbiter at low complexity no longer applies.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Loose message handling: ask the user what an agent meant</td>
+<td style="text-align: left;">adversarial-council Step 4</td>
+<td style="text-align: left;">Removed</td>
+<td style="text-align: left;">Schemas force structure. An invalid output retries five times and then fails the call.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Consolidated single-agent fallback when agent capacity runs out</td>
+<td style="text-align: left;">council-supervisor</td>
+<td style="text-align: left;">Removed</td>
+<td style="text-align: left;">One agent that plays every role is the inline debate the skill forbids. The runtime queues agents above the concurrency cap.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="liveness-and-recovery">Liveness and recovery<a class="headerlink" href="#liveness-and-recovery" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Capability</th>
+<th style="text-align: left;">Source</th>
+<th style="text-align: left;">Destination</th>
+<th style="text-align: left;">Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Heartbeats, nudges and stall detection</td>
+<td style="text-align: left;">council-supervisor Step 4</td>
+<td style="text-align: left;">Runtime</td>
+<td style="text-align: left;">The runtime restarts a silent agent up to five times. <code>stallMs</code> sets the window.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Agent replacement with the transcript so far</td>
+<td style="text-align: left;">council-supervisor Step 4</td>
+<td style="text-align: left;">Runtime plus engine prompts</td>
+<td style="text-align: left;">A restart starts without the old transcript. Each engine prompt already carries the full debate state, so a restart loses nothing.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Arbiter stall</td>
+<td style="text-align: left;">council-supervisor</td>
+<td style="text-align: left;">Engine</td>
+<td style="text-align: left;">A null arbiter stops the run as resumable. No verdict is ever guessed.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Questioner stall</td>
+<td style="text-align: left;">council-supervisor</td>
+<td style="text-align: left;">Engine</td>
+<td style="text-align: left;">A null questioner stops the run as resumable. The supervisor went on without probes. The engine is stricter on purpose.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Checkpoint file <code>.council/checkpoint.json</code></td>
+<td style="text-align: left;">council-supervisor</td>
+<td style="text-align: left;">Runtime journal</td>
+<td style="text-align: left;"><code>resumeFromRunId</code> replays the completed agents from the journal.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Context pressure and early convergence</td>
+<td style="text-align: left;">council-supervisor</td>
+<td style="text-align: left;">Removed</td>
+<td style="text-align: left;">Script variables hold the state, not a context window. <code>minBudget</code> stops the run before a round that the budget cannot finish.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Usage and rate limits</td>
+<td style="text-align: left;">council-loop <code>LIMIT_RE</code></td>
+<td style="text-align: left;">Runtime, with the engine stop kept</td>
+<td style="text-align: left;">The runtime pauses an interactive run at a usage limit. The engine stop still covers <code>claude -p</code>, the Agent SDK and background sessions.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="fix-merge-and-output">Fix, merge and output<a class="headerlink" href="#fix-merge-and-output" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Capability</th>
+<th style="text-align: left;">Source</th>
+<th style="text-align: left;">Destination</th>
+<th style="text-align: left;">Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Findings gate menu <code>y/N/modify</code></td>
+<td style="text-align: left;">findings-gate.md</td>
+<td style="text-align: left;">Thin wrapper, between runs</td>
+<td style="text-align: left;">A workflow takes no mid-run input. The docs say to run each stage as its own workflow for sign-off.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Citation verifier: purge PHANTOM, tag UNVERIFIED and RUNTIME</td>
+<td style="text-align: left;">findings-gate.md step 2.5</td>
+<td style="text-align: left;">Engine, plan mode</td>
+<td style="text-align: left;">Plan mode has no fix review after the verdict, so it needs a separate citation check. Auto mode keeps the fix review as its check.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Plan-only fix</td>
+<td style="text-align: left;">council-fix</td>
+<td style="text-align: left;">Engine arg <code>fix: 'plan'</code></td>
+<td style="text-align: left;">See D3.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Autofix: plan, fix, review, commit and push per round</td>
+<td style="text-align: left;">council-loop, fix-loop.md, autofix-pipeline.md</td>
+<td style="text-align: left;">Engine arg <code>fix: 'auto'</code> (default)</td>
+<td style="text-align: left;">See D3. The engine path already has the null guards that the prose loops lack.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Red-first regression test and the three-attempt ceiling</td>
+<td style="text-align: left;">fix-loop.md</td>
+<td style="text-align: left;">Engine</td>
+<td style="text-align: left;">The ledger stops a blocker after three fix attempts. A new opt-in arg <code>redFirst</code> adds the failing-test-first rule to the fix prompt.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>/simplify</code> pass after the fixes</td>
+<td style="text-align: left;">fix-loop.md 7.4</td>
+<td style="text-align: left;">Removed</td>
+<td style="text-align: left;">The fix review checks scope after each round. A second edit pass after review adds unreviewed changes.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Fix manifest and the handoff to a fresh session</td>
+<td style="text-align: left;">findings-gate.md</td>
+<td style="text-align: left;">Removed</td>
+<td style="text-align: left;">The engine state lives in the workflow, not in the main context. The wrapper starts a second run with <code>fix: 'auto'</code> instead.</td>
+</tr>
+<tr>
+<td style="text-align: left;">PR creation and the merge gate</td>
+<td style="text-align: left;">autofix-pipeline Phases 4 and 5</td>
+<td style="text-align: left;">Engine (<code>merge</code>)</td>
+<td style="text-align: left;">The merge phase already creates a missing PR and squash-merges. The <code>gh pr merge</code> hook asks the user every time.</td>
+</tr>
+<tr>
+<td style="text-align: left;">PR description amendments</td>
+<td style="text-align: left;">arbiter template</td>
+<td style="text-align: left;">New engine verdict field <code>prAmendments</code>, wrapper applies</td>
+<td style="text-align: left;">The wrapper offers <code>gh pr edit</code> after the user accepts.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Parallel competing fixes</td>
+<td style="text-align: left;">parallel-fix</td>
+<td style="text-align: left;">Separate skill, rebased on <code>autofix-swarm.mjs</code></td>
+<td style="text-align: left;">See D3.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Arbiter output format (FORMAT A and FORMAT B markdown)</td>
+<td style="text-align: left;">arbiter template</td>
+<td style="text-align: left;">Wrapper renders from the structured verdict</td>
+<td style="text-align: left;">The engine returns data. Rendering is presentation, and it can change without a journal break.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Debate record: positions, concessions, questioner rulings</td>
+<td style="text-align: left;">arbiter template</td>
+<td style="text-align: left;">New engine result field <code>debateLog</code></td>
+<td style="text-align: left;">The wrapper needs it to render positions and concessions. Today the engine discards it after each round.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>council-result.json</code></td>
+<td style="text-align: left;">council-supervisor Step 6</td>
+<td style="text-align: left;">Wrapper writes it from the engine result</td>
+<td style="text-align: left;">The engine has no file access. The schema stays a superset of today's file. See D5.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Plan file in <code>~/.claude/plans/</code></td>
+<td style="text-align: left;">council-fix Step 3</td>
+<td style="text-align: left;">Wrapper</td>
+<td style="text-align: left;">It is a user-home path and a presentation choice.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Recommendation markdown <code>YYYY-MM-DD-HHmmss-council-&lt;slug&gt;.md</code></td>
+<td style="text-align: left;">arbiter</td>
+<td style="text-align: left;">Wrapper</td>
+<td style="text-align: left;">The wrapper stamps the time. A workflow script cannot read the clock.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Presets <code>--thorough</code> and <code>--quick</code></td>
+<td style="text-align: left;">council-fix</td>
+<td style="text-align: left;">Wrapper</td>
+<td style="text-align: left;">Presets only expand to arguments.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="d2-non-code-motions">D2. Non-code motions<a class="headerlink" href="#d2-non-code-motions" title="Permanent link">&para;</a></h3>
+<p><strong>Decision</strong>: the engine grows a text mode. <code>adversarial-council</code> keeps no
+debate path of its own.</p>
+<p><strong>Shape</strong>: <code>subject: { kind: 'text', motion, files }</code>. <code>motion</code> is the
+proposition. <code>files</code> lists repo paths to read, such as a plan or an ADR. Text
+mode has these rules:</p>
+<ul>
+<li>It needs <code>council.debate: 'exchange'</code> and <code>fix: 'plan'</code>. Any other
+  combination fails at argument parse.</li>
+<li>The review preamble tells agents to read the motion and the files. It runs
+  no <code>git diff</code> and pins no branch.</li>
+<li>A critic finding uses the document path as <code>file</code>, or an empty string, and
+  line 0 when no line applies. The schema already allows both.</li>
+<li>Evidence is a named source or a reasoning chain, as in
+  <code>evidence-protocol.md</code>.</li>
+<li>The arbiter rules FOR, AGAINST or CONDITIONAL. Its findings become action
+  items. The run makes one convening and skips the Verify and Merge phases.</li>
+</ul>
+<p><strong>Why not a small text path in the skill</strong>: a text path in the skill needs
+its own debate. That means a team, a supervisor and a second set of rules.
+That is the duplication this feature removes. The text mode adds about 60
+lines to the engine and reuses the exchange functions.</p>
+<p><strong>Cost</strong>: <code>council-loop.mjs</code> is already 904 lines, over the 800-line cap.
+Workflow scripts cannot import each other. Step M9 deletes the legacy
+<code>parallel</code> debate and pays the lines back.</p>
+<h3 id="d3-fix-modes">D3. Fix modes<a class="headerlink" href="#d3-fix-modes" title="Permanent link">&para;</a></h3>
+<p>The engine keeps two fix modes. A third value fails at argument parse.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Mode</th>
+<th style="text-align: left;">Engine behavior</th>
+<th style="text-align: left;">Who uses it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>fix: 'plan'</code></td>
+<td style="text-align: left;">One convening. No fix plan, fix or fix review agent. No commit, no push, no merge. A citation check labels each finding <code>verified</code>, <code>unverified</code>, <code>phantom</code> or <code>runtime</code>. The result carries a <code>plan</code> with blockers, non-blockers and phantoms. Verify still runs, so <code>converged</code> keeps its meaning.</td>
+<td style="text-align: left;"><code>/council-fix</code>, <code>/adversarial-council</code> by default, every text motion, the <code>autofix-swarm</code> backstop</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>fix: 'auto'</code> (default)</td>
+<td style="text-align: left;">Today's loop: fix plan, fix, fix review, semantic commit and push per round, re-review to an unconditional FOR, verify, optional merge</td>
+<td style="text-align: left;"><code>feature-loop</code>, <code>spec-loop</code>, <code>/council-fix --auto</code>, the wrapper after a <code>y</code> on a plan result</td>
+</tr>
+</tbody>
+</table>
+<p><code>fix: 'plan'</code> with <code>merge: true</code> fails at argument parse. The
+<code>autofix-swarm</code> backstop today fakes review-only mode with <code>maxLoops: 1</code> and
+<code>applyNonBlockers: false</code>. It moves to <code>fix: 'plan'</code>.</p>
+<p>Parallel competing fixes are not a council fix mode. The <code>parallel-fix</code> skill
+races minimal, refactor and rewrite strategies in worktrees and keeps the
+smallest passing diff. <code>autofix-swarm.mjs</code> already does this with more
+rigor. It adds an anti-gaming gate, an independent test re-run, a
+falsification set, a ledger and a stagnation pivot. Two copies of that race
+would drift.</p>
+<p>So <code>parallel-fix</code> stays a separate skill and becomes a thin wrapper over
+<code>autofix-swarm.mjs</code>:</p>
+<ul>
+<li>A direct call passes the bug as <code>task</code>.</li>
+<li><code>--from-council &lt;path&gt;</code> reads <code>council-result.json</code>. It groups the
+  verified and unverified findings by file, at most five per group, and runs
+  one swarm per group.</li>
+<li><code>--strategies</code> maps to <code>fanout</code>. The swarm clamps it to two or three.</li>
+<li><code>--timeout</code> maps to <code>stallMs</code>. Open question 4 covers the gap.</li>
+<li>The "fresh rewrite" strategy becomes the swarm's <code>alternative-root-cause</code>.
+  The synthesis agent becomes the swarm's council pivot.</li>
+</ul>
+<h3 id="d4-runtime-and-supervisor">D4. Runtime and supervisor<a class="headerlink" href="#d4-runtime-and-supervisor" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Supervisor feature</th>
+<th style="text-align: left;">Runtime feature that replaces it</th>
+<th style="text-align: left;">Gap</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Heartbeat check and two nudges</td>
+<td style="text-align: left;">Stall restart, up to five restarts, <code>stallMs</code> per agent</td>
+<td style="text-align: left;">None for a silent agent</td>
+</tr>
+<tr>
+<td style="text-align: left;">Replace a stalled agent with the transcript so far</td>
+<td style="text-align: left;">Restart from the same prompt</td>
+<td style="text-align: left;">None, because each engine prompt holds the debate state</td>
+</tr>
+<tr>
+<td style="text-align: left;">Checkpoint file</td>
+<td style="text-align: left;">Run journal and <code>resumeFromRunId</code> in the same session</td>
+<td style="text-align: left;">A fresh session cannot resume. It returns <code>nothing to resume</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Resume after the session ends</td>
+<td style="text-align: left;"><code>claude --resume</code> replays the run. Background sessions carry it over.</td>
+<td style="text-align: left;">Same gap as above for a fresh session</td>
+</tr>
+<tr>
+<td style="text-align: left;">Agent capacity check</td>
+<td style="text-align: left;">Concurrency cap of 16 with a queue. 1,000 agents per run.</td>
+<td style="text-align: left;">None</td>
+</tr>
+<tr>
+<td style="text-align: left;">Retry on a transient error</td>
+<td style="text-align: left;">Runtime retries, then <code>agent()</code> resolves to <code>null</code></td>
+<td style="text-align: left;">None. The engine guards every null.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Stop at a usage limit</td>
+<td style="text-align: left;">Interactive runs pause until the reset, at most twice</td>
+<td style="text-align: left;"><code>-p</code>, the SDK and background sessions still fail. The engine stop stays.</td>
+</tr>
+</tbody>
+</table>
+<p>Still missing after this feature:</p>
+<ol>
+<li><strong>Hung tool calls.</strong> Time spent in an agent's own tool call does not count
+   toward the stall window. A test command that hangs is never restarted.</li>
+<li><strong>Fresh-session resume.</strong> The ledger lives only in the run. A new run
+   re-reviews the committed branch from zero. A should-have arg
+   <code>council.seedLedger</code> takes the ledger from a prior result.</li>
+<li><strong>Mid-run input.</strong> The gate menu must sit between runs.</li>
+<li><strong>Live view of the debate.</strong> The user sees agents in <code>/workflows</code>, not a
+   message thread. <code>log()</code> lines carry the per-round counts.</li>
+</ol>
+<h3 id="d5-thin-wrapper-shape">D5. Thin wrapper shape<a class="headerlink" href="#d5-thin-wrapper-shape" title="Permanent link">&para;</a></h3>
+<p><strong>Where it runs</strong>: in the main conversation. A skill with <code>context: fork</code>
+cannot launch a workflow, because Claude Code removes the <code>Workflow</code> tool from
+every subagent. The wrapper skills set no <code>context</code> key.</p>
+<p><strong>Invocation control</strong>:</p>
+<ul>
+<li><code>adversarial-council</code> stays model-invocable, so natural-language triggers
+  keep working. Its default is <code>fix: 'plan'</code>, which never edits the tree.</li>
+<li><code>council-fix</code> keeps <code>disable-model-invocation: true</code>. Its <code>--auto</code> flag
+  commits and pushes, so only the user starts it.</li>
+<li>A model-invoked wrapper never passes <code>fix: 'auto'</code> or <code>merge: true</code> unless
+  the user typed that request in the current exchange.</li>
+</ul>
+<p><strong>Steps the wrapper follows</strong>:</p>
+<ol>
+<li>Parse the flags and the motion. Ask one clarifying question at a time when
+   the target is unclear.</li>
+<li>Resolve the target. For a PR, run <code>gh pr view &lt;n&gt; --json
+   headRefName,baseRefName,state</code>. Stop when the state is <code>MERGED</code>. For a text
+   motion, collect the files.</li>
+<li>Detect <code>buildCmd</code> and <code>testCmd</code> with the table that <code>parallel-fix</code> uses
+   today. Ask the user when none matches.</li>
+<li>Read the last <code>.council/council-result.json</code> for this slug into
+   <code>priorContext</code>.</li>
+<li>Build the args. Pass objects, not a JSON string.</li>
+<li>Check that <code>$HOME/.claude/workflows/council-loop.mjs</code> exists. If not,
+   tell the user to install the <code>workflows</code> component, and stop.</li>
+<li>Call <code>Workflow({ scriptPath: "&lt;absolute path&gt;", args })</code>. The path must be
+   absolute, because the name registry does not resolve these scripts today.</li>
+<li>Tell the user the run started and that <code>/workflows</code> shows progress.</li>
+</ol>
+<p><strong>Permissions and approval</strong>:</p>
+<ul>
+<li>The launch prompt follows the permission mode. Auto mode asks on the first
+  launch only. Manual mode asks on every run. Bypass mode does not ask.</li>
+<li>An allow rule <code>Workflow</code> removes the prompt. The README documents it as an
+  option, not a default.</li>
+<li>Workflow agents use the session permission rules. A run pauses on an agent
+  permission prompt, so <code>gh pr merge</code> still waits for the user through the
+  hook ask decision.</li>
+</ul>
+<p><strong>How results return</strong>: the run ends and its return value arrives in the
+session. The wrapper then does this:</p>
+<ol>
+<li>Write <code>.council/council-result.json</code>. Keep every field of today's schema
+   and add <code>runId</code>, <code>subject</code>, <code>fixMode</code>, <code>ledger</code> and <code>debateLog</code>. Map the
+   fields as follows. <code>motion_type</code> comes from <code>subject.kind</code>. <code>verdict</code> and
+   <code>conditions</code> come from the final verdict. <code>summary</code> comes from its
+   rationale. <code>findings[].verification</code> comes from the citation check.
+   <code>confidence</code> and <code>early_convergence</code> become <code>null</code> and <code>false</code>.</li>
+<li>Write the recommendation markdown in FORMAT A for a diff or FORMAT B for
+   text.</li>
+<li>Render the findings table or the action items table.</li>
+<li>Show the gate. On a plan-mode diff result, <code>y</code> starts a second run
+   with <code>fix: 'auto'</code>. <code>N</code> records the result. <code>modify</code> asks for the new motion
+   and starts a new plan-mode run.</li>
+<li>On a resumable stop, show the reason and offer a relaunch with
+   <code>resumeFromRunId</code>.</li>
+</ol>
+<p><strong>Flag mapping</strong>:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Old flag</th>
+<th style="text-align: left;">New behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>--motion</code>, <code>--motion-file</code></td>
+<td style="text-align: left;">Diff target or <code>subject.motion</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>--n</code>, <code>--skeptic</code></td>
+<td style="text-align: left;"><code>council.advocates</code>, <code>council.critics</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>--rounds</code></td>
+<td style="text-align: left;"><code>council.rounds</code>, clamped</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>--roles</code></td>
+<td style="text-align: left;"><code>council.focus</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>--model</code>, <code>--model-*</code></td>
+<td style="text-align: left;"><code>council.model</code>, with the engine floor</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>--supervised</code></td>
+<td style="text-align: left;">Accepted. It prints a notice that the runtime supervises every run.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>--chain-fix</code></td>
+<td style="text-align: left;">After a plan-mode result, run <code>/parallel-fix --from-council</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>--heartbeat-interval</code>, <code>--max-nudges</code>, <code>--max-agents</code></td>
+<td style="text-align: left;">Accepted and ignored, with a notice</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>--output</code></td>
+<td style="text-align: left;">Path of <code>council-result.json</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="d6-migration">D6. Migration<a class="headerlink" href="#d6-migration" title="Permanent link">&para;</a></h3>
+<p>Each step ships alone and has its own rollback. A revert of one step leaves
+the earlier steps working.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Step</th>
+<th style="text-align: left;">Change</th>
+<th style="text-align: left;">Rollback</th>
+<th style="text-align: left;">Existing users</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">M1</td>
+<td style="text-align: left;">Engine: add <code>fix: 'plan'</code>, the citation check, and the <code>plan</code>, <code>debateLog</code>, <code>criticalDiscoveries</code> and <code>prAmendments</code> result fields. Defaults keep every legacy prompt byte-identical. Add smoke cases.</td>
+<td style="text-align: left;">Revert the commit</td>
+<td style="text-align: left;">No change. <code>feature-loop</code> and <code>spec-loop</code> pass no <code>fix</code>, so they get <code>auto</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;">M2</td>
+<td style="text-align: left;">Engine: add <code>subject.kind: 'text'</code>, <code>priorContext</code>, <code>council.focus</code> and opt-in <code>redFirst</code></td>
+<td style="text-align: left;">Revert the commit</td>
+<td style="text-align: left;">No change. Every new arg is opt-in.</td>
+</tr>
+<tr>
+<td style="text-align: left;">M3</td>
+<td style="text-align: left;"><code>autofix-swarm.mjs</code> backstop: <code>fix: 'plan'</code> in place of <code>maxLoops: 1</code></td>
+<td style="text-align: left;">Revert one call</td>
+<td style="text-align: left;">Same review, with an explicit no-push guarantee</td>
+</tr>
+<tr>
+<td style="text-align: left;">M4</td>
+<td style="text-align: left;"><code>adversarial-council</code> becomes the thin wrapper. The team procedure moves to <code>references/legacy-team.md</code> behind <code>--legacy-team</code>.</td>
+<td style="text-align: left;">Pass <code>--legacy-team</code>, or revert</td>
+<td style="text-align: left;">Same triggers and flags. The result arrives when the run ends, not as a live thread.</td>
+</tr>
+<tr>
+<td style="text-align: left;">M5</td>
+<td style="text-align: left;"><code>council-fix</code> becomes an alias: <code>fix: 'plan'</code>, <code>--skeptic</code>, the plan file, and <code>--auto</code> for a second run</td>
+<td style="text-align: left;">Revert the commit</td>
+<td style="text-align: left;">Same command, same plan file path</td>
+</tr>
+<tr>
+<td style="text-align: left;">M6</td>
+<td style="text-align: left;"><code>parallel-fix</code> becomes a wrapper over <code>autofix-swarm.mjs</code>. <code>council-supervisor</code> becomes a shim that forwards to <code>adversarial-council</code> and prints a deprecation notice.</td>
+<td style="text-align: left;">Revert each skill alone</td>
+<td style="text-align: left;">Same commands. <code>--chain-fix</code> still chains.</td>
+</tr>
+<tr>
+<td style="text-align: left;">M7</td>
+<td style="text-align: left;">Docs: <code>council-patterns.md</code>, README, WALKTHROUGH, skills index, workflows index</td>
+<td style="text-align: left;">Revert the docs</td>
+<td style="text-align: left;">Docs match the behavior</td>
+</tr>
+<tr>
+<td style="text-align: left;">M8</td>
+<td style="text-align: left;">One release after M6, delete <code>--legacy-team</code>, <code>fix-loop.md</code>, <code>autofix-pipeline.md</code>, <code>council-fix-registry.md</code> support and the <code>council-supervisor</code> directory</td>
+<td style="text-align: left;">Restore from the M7 tag</td>
+<td style="text-align: left;">The shim and the legacy flag are gone. The notice gave one release of warning.</td>
+</tr>
+<tr>
+<td style="text-align: left;">M9</td>
+<td style="text-align: left;">Engine: make <code>exchange</code> the default debate and delete the legacy <code>parallel</code> path. Run it only when no <code>feature-loop</code> or <code>spec-loop</code> run is in flight, because a prompt change breaks their resume journals.</td>
+<td style="text-align: left;">Revert the commit</td>
+<td style="text-align: left;">Callers get the exchange debate. The file falls back under 800 lines.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="open-questions">Open Questions<a class="headerlink" href="#open-questions" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">Question</th>
+<th style="text-align: left;">Raised By</th>
+<th style="text-align: left;">Recommended Answer</th>
+<th style="text-align: left;">Resolved</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">Does the loss of a live message thread weaken the debate?</td>
+<td style="text-align: left;">Spec author</td>
+<td style="text-align: left;">No. Exchange mode keeps concede, dispute and reply rounds with evidence. Keep <code>--legacy-team</code> for one release and compare verdicts on three PRs before M8.</td>
+<td style="text-align: left;">[ ]</td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">Can the engine run by name as <code>/council-loop</code>? The docs show saved workflows as <code>.js</code>. The hub ships <code>.mjs</code>, and the name registry does not resolve it.</td>
+<td style="text-align: left;">Spec author</td>
+<td style="text-align: left;">Keep the absolute <code>scriptPath</code>. File a separate issue to test a <code>.js</code> copy.</td>
+<td style="text-align: left;">[ ]</td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">Does "do not ask again" apply to a <code>scriptPath</code> launch? The docs offer it only for a run by name.</td>
+<td style="text-align: left;">Spec author</td>
+<td style="text-align: left;">Assume no. Document the <code>Workflow</code> allow rule as the way to stop the prompt.</td>
+<td style="text-align: left;">[ ]</td>
+</tr>
+<tr>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">How does the engine bound a hung tool call, which the stall window skips?</td>
+<td style="text-align: left;">D4</td>
+<td style="text-align: left;">Add a prompt rule: wrap build and test commands in <code>timeout</code>. The wrapper passes the limit from <code>--timeout</code>.</td>
+<td style="text-align: left;">[ ]</td>
+</tr>
+<tr>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">Should text mode allow <code>fix: 'auto'</code> to revise a plan document in the repo?</td>
+<td style="text-align: left;">D2</td>
+<td style="text-align: left;">No, not in this feature. A revised plan needs human sign-off. Revisit after M9.</td>
+<td style="text-align: left;">[ ]</td>
+</tr>
+<tr>
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">A null questioner now stops the run. The supervisor went on without it. Is that too strict?</td>
+<td style="text-align: left;">D1</td>
+<td style="text-align: left;">Keep it strict. The stop is resumable, and an unprobed dispute is an unreviewed finding.</td>
+<td style="text-align: left;">[ ]</td>
+</tr>
+<tr>
+<td style="text-align: left;">7</td>
+<td style="text-align: left;">The legacy auto-complexity table sets a sonnet arbiter. The engine floors the arbiter at opus. Which wins?</td>
+<td style="text-align: left;">D1</td>
+<td style="text-align: left;">The engine floor wins, per the model tiering rule. The wrapper sets only advocate, critic and questioner models.</td>
+<td style="text-align: left;">[ ]</td>
+</tr>
+<tr>
+<td style="text-align: left;">8</td>
+<td style="text-align: left;">Should the <code>skills-council</code> component require the <code>workflows</code> component?</td>
+<td style="text-align: left;">D5</td>
+<td style="text-align: left;">Yes. Add a <code>requires=workflows</code> key in a follow-up. Until then, the wrapper checks the path and prints the install command.</td>
+<td style="text-align: left;">[ ]</td>
+</tr>
+<tr>
+<td style="text-align: left;">9</td>
+<td style="text-align: left;">Should the <code>feature-loop</code> budget review and the <code>autofix-swarm</code> critique phase also use the engine?</td>
+<td style="text-align: left;">Out of Scope</td>
+<td style="text-align: left;">Not in this feature. File a follow-up issue after M9.</td>
+<td style="text-align: left;">[ ]</td>
+</tr>
+<tr>
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">How does a user continue a council in a fresh session?</td>
+<td style="text-align: left;">D4</td>
+<td style="text-align: left;">Start a new run. The committed branch carries the fixes. The should-have <code>council.seedLedger</code> arg carries the open blockers.</td>
+<td style="text-align: left;">[ ]</td>
+</tr>
+</tbody>
+</table>
+<h2 id="scope">Scope<a class="headerlink" href="#scope" title="Permanent link">&para;</a></h2>
+<h3 id="must-have">Must-Have<a class="headerlink" href="#must-have" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Engine <code>fix</code> arg with <code>'plan'</code> and <code>'auto'</code>: plan mode makes no commit, no
+  push and no merge, and an invalid value fails at parse.</li>
+<li>Plan-mode citation check: each finding carries a <code>verification</code> label.</li>
+<li>Engine text mode: a text motion runs to a FOR, AGAINST or CONDITIONAL
+  verdict without a git command.</li>
+<li>Engine <code>priorContext</code>, <code>council.focus</code> and the new result fields
+  (<code>plan</code>, <code>debateLog</code>, <code>criticalDiscoveries</code>, <code>prAmendments</code>).</li>
+<li>Legacy default path unchanged: the legacy prompt digest in
+  <code>workflows.smoke.mjs</code> stays the same, and <code>feature-loop</code> and <code>spec-loop</code>
+  need no edit.</li>
+<li><code>adversarial-council</code> thin wrapper: every listed flag maps as in D5, and no
+  default path calls <code>TeamCreate</code>.</li>
+<li><code>council-fix</code> alias: same command and plan file path, plus <code>--auto</code>.</li>
+<li><code>parallel-fix</code> on <code>autofix-swarm.mjs</code>: direct calls and <code>--from-council</code>
+  both work.</li>
+<li><code>council-supervisor</code> shim: forwards and prints a deprecation notice.</li>
+<li><code>autofix-swarm</code> backstop on <code>fix: 'plan'</code>.</li>
+</ul>
+<h3 id="should-have">Should-Have<a class="headerlink" href="#should-have" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>council.seedLedger</code>: a new run starts with the open blockers of a prior
+  result.</li>
+<li>Opt-in <code>redFirst</code> fix rule.</li>
+<li><code>requires=</code> key for component manifests.</li>
+</ul>
+<h3 id="nice-to-have">Nice-to-Have<a class="headerlink" href="#nice-to-have" title="Permanent link">&para;</a></h3>
+<ul>
+<li>A <code>/council-loop</code> named command, if open question 2 resolves to yes.</li>
+</ul>
+<h2 id="technical-plan">Technical Plan<a class="headerlink" href="#technical-plan" title="Permanent link">&para;</a></h2>
+<p><strong>Affected Components</strong>: <code>workflows/council-loop.mjs</code>,
+<code>workflows/autofix-swarm.mjs</code>, <code>workflows/workflows.smoke.mjs</code>,
+<code>skills/council/adversarial-council/</code> (SKILL.md and references),
+<code>skills/council/council-fix/SKILL.md</code>,
+<code>skills/council/council-supervisor/SKILL.md</code>,
+<code>skills/council/parallel-fix/SKILL.md</code>, <code>docs/patterns/council-patterns.md</code>,
+<code>docs/skills/index.md</code>, <code>docs/workflows/index.md</code>, <code>README.md</code>,
+<code>docs/WALKTHROUGH.md</code>.</p>
+<p><strong>Data Model Changes</strong>:</p>
+<ul>
+<li>Engine args: <code>fix</code>, <code>subject</code>, <code>priorContext</code>, <code>council.focus</code>,
+  <code>redFirst</code>, and the should-have <code>council.seedLedger</code>.</li>
+<li>Verdict schema: a new exchange-only schema adds optional
+  <code>criticalDiscoveries</code> and <code>prAmendments</code> arrays. The legacy digest hashes
+  each call schema, so the legacy <code>VERDICT_SCHEMA</code> stays unchanged.</li>
+<li>Engine result: <code>fixMode</code>, <code>subject</code>, <code>plan</code>, <code>debateLog</code>.</li>
+<li><code>.council/council-result.json</code>: a superset of today's schema, written by
+  the wrapper.</li>
+</ul>
+<p><strong>API Contracts</strong>:</p>
+<ul>
+<li><code>Workflow({ scriptPath: "&lt;abs&gt;/council-loop.mjs", args })</code>. <code>args.fix</code>
+  defaults to <code>'auto'</code>, and <code>args.subject.kind</code> defaults to <code>'diff'</code>.</li>
+<li>Plan mode returns <code>{ fixMode: 'plan', plan: { blockers, nonBlockers,
+  phantoms }, councilConverged, converged, verified, ledger, debateLog }</code>.
+  <code>merge</code> is always <code>null</code>.</li>
+</ul>
+<p><strong>Dependencies</strong>: the Claude Code workflow runtime with <code>workflow()</code>
+nesting, which is one level only. <code>gh</code> for PR targets. The <code>workflows</code>
+installer component. No dependency on agent teams after M8.</p>
+<p><strong>Risks</strong>:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Risk</th>
+<th style="text-align: left;">Likelihood</th>
+<th style="text-align: left;">Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">An engine prompt change breaks the resume journal of a run in flight</td>
+<td style="text-align: left;">Medium</td>
+<td style="text-align: left;">New prompts sit behind new args. The legacy digest test guards the default path. M9 runs only with no run in flight.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>council-loop.mjs</code> grows further past the 800-line cap</td>
+<td style="text-align: left;">High</td>
+<td style="text-align: left;">Accept until M9 deletes the legacy path. Workflow scripts cannot import.</td>
+</tr>
+<tr>
+<td style="text-align: left;">A wrapper launched from inside a workflow agent fails, because subagents have no <code>Workflow</code> tool</td>
+<td style="text-align: left;">Low</td>
+<td style="text-align: left;">The wrapper runs only in the main conversation. The SKILL.md says so.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Users who installed <code>skills-council</code> without <code>workflows</code> get a missing-script error</td>
+<td style="text-align: left;">Medium</td>
+<td style="text-align: left;">The wrapper checks the path first. Open question 8 adds a manifest dependency.</td>
+</tr>
+<tr>
+<td style="text-align: left;">The usage-limit pause does not cover <code>-p</code>, SDK or background runs</td>
+<td style="text-align: left;">Medium</td>
+<td style="text-align: left;">The engine keeps its limit stop and resumable result.</td>
+</tr>
+<tr>
+<td style="text-align: left;">The model writes <code>council-result.json</code> with a wrong field</td>
+<td style="text-align: left;">Low</td>
+<td style="text-align: left;">The wrapper copies values from the returned object. A smoke case checks the mapping on a fixture.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="acceptance-scenarios">Acceptance Scenarios<a class="headerlink" href="#acceptance-scenarios" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="k">Feature:</span><span class="nf"> Single Council Engine</span>
+<span class="nf">  As a user of the council</span>
+<span class="nf">  I want one engine with one set of rules</span>
+<span class="nf">  So that I know which behavior runs and a fix lands in one place</span>
+
+<span class="nf">  </span><span class="k">Background:</span>
+<span class="k">    Given </span><span class="nf">the workflows component is installed under ~/.claude/workflows</span>
+<span class="nf">    </span><span class="k">And </span><span class="nf">the repo has a feature branch with an open PR</span>
+
+<span class="nf">  Rule: Plan mode never changes the branch</span>
+
+<span class="nf">    </span><span class="k">Scenario:</span><span class="nf"> Plan-only council on a PR</span>
+<span class="k">      When </span><span class="nf">the user runs /council-fix PR #</span><span class="s">42</span>
+<span class="nf">      </span><span class="k">Then </span><span class="nf">council-loop runs with fix "</span><span class="s">plan</span><span class="nf">"</span>
+<span class="nf">      </span><span class="k">And </span><span class="nf">no commit, push or merge happens</span>
+<span class="nf">      </span><span class="k">And </span><span class="nf">the plan file lists blockers, non-blockers and phantoms</span>
+<span class="nf">      </span><span class="k">And </span><span class="nf">.council/council-result.json carries a verification label per finding</span>
+
+<span class="nf">    </span><span class="k">Scenario:</span><span class="nf"> Plan mode with merge is rejected</span>
+<span class="k">      Given </span><span class="nf">args with fix "</span><span class="s">plan</span><span class="nf">" and merge true</span>
+<span class="nf">      </span><span class="k">When </span><span class="nf">council-loop parses its args</span>
+<span class="nf">      </span><span class="k">Then </span><span class="nf">the run fails before any agent starts</span>
+
+<span class="nf">  Rule: Autofix runs only on an explicit user request</span>
+
+<span class="nf">    </span><span class="k">Scenario:</span><span class="nf"> Accept a plan result</span>
+<span class="k">      Given </span><span class="nf">a plan-mode result with two verified blockers</span>
+<span class="nf">      </span><span class="k">When </span><span class="nf">the user answers y at the gate</span>
+<span class="nf">      </span><span class="k">Then </span><span class="nf">the wrapper starts a second run with fix "</span><span class="s">auto</span><span class="nf">"</span>
+<span class="nf">      </span><span class="k">And </span><span class="nf">each fix round commits semantically and pushes</span>
+
+<span class="nf">    </span><span class="k">Scenario:</span><span class="nf"> Model-invoked council stays read-only</span>
+<span class="k">      Given </span><span class="nf">the user says "</span><span class="s">council this plan</span><span class="nf">"</span>
+<span class="nf">      </span><span class="k">When </span><span class="nf">Claude invokes adversarial-council on its own</span>
+<span class="nf">      </span><span class="k">Then </span><span class="nf">the run uses fix "</span><span class="s">plan</span><span class="nf">"</span>
+
+<span class="nf">  Rule: Text motions use the same engine</span>
+
+<span class="nf">    </span><span class="k">Scenario:</span><span class="nf"> Architecture decision</span>
+<span class="k">      When </span><span class="nf">the user runs /adversarial-council --motion "</span><span class="s">Adopt event sourcing for orders</span><span class="nf">"</span>
+<span class="nf">      </span><span class="k">Then </span><span class="nf">council-loop runs with subject kind "</span><span class="s">text</span><span class="nf">"</span>
+<span class="nf">      </span><span class="k">And </span><span class="nf">no git command runs</span>
+<span class="nf">      </span><span class="k">And </span><span class="nf">the wrapper writes a FORMAT B recommendation with action items</span>
+
+<span class="nf">    </span><span class="k">Scenario:</span><span class="nf"> Text motion with autofix is rejected</span>
+<span class="k">      Given </span><span class="nf">args with subject kind "</span><span class="s">text</span><span class="nf">" and fix "</span><span class="s">auto</span><span class="nf">"</span>
+<span class="nf">      </span><span class="k">When </span><span class="nf">council-loop parses its args</span>
+<span class="nf">      </span><span class="k">Then </span><span class="nf">the run fails before any agent starts</span>
+
+<span class="nf">  Rule: Existing callers keep working</span>
+
+<span class="nf">    </span><span class="k">Scenario:</span><span class="nf"> feature-loop unchanged</span>
+<span class="k">      When </span><span class="nf">feature-loop calls council-loop without a fix arg</span>
+<span class="nf">      </span><span class="k">Then </span><span class="nf">the fix mode is "</span><span class="s">auto</span><span class="nf">"</span>
+<span class="nf">      </span><span class="k">And </span><span class="nf">the legacy prompt digest matches the stored digest</span>
+
+<span class="nf">    </span><span class="k">Scenario:</span><span class="nf"> Old supervisor command</span>
+<span class="k">      When </span><span class="nf">the user runs /council-supervisor --motion "</span><span class="s">Merge PR #7</span><span class="nf">"</span>
+<span class="nf">      </span><span class="k">Then </span><span class="nf">the wrapper prints a deprecation notice</span>
+<span class="nf">      </span><span class="k">And </span><span class="nf">the council runs through council-loop</span>
+
+<span class="nf">  Rule: Liveness comes from the runtime and the engine</span>
+
+<span class="nf">    </span><span class="k">Scenario:</span><span class="nf"> Arbiter returns nothing</span>
+<span class="k">      Given </span><span class="nf">the arbiter agent resolves to null</span>
+<span class="nf">      </span><span class="k">When </span><span class="nf">the engine reads the verdict</span>
+<span class="nf">      </span><span class="k">Then </span><span class="nf">the run stops with resumable true</span>
+<span class="nf">      </span><span class="k">And </span><span class="nf">nothing is merged</span>
+
+<span class="nf">  Rule: Competing fixes use autofix-swarm</span>
+
+<span class="nf">    </span><span class="k">Scenario:</span><span class="nf"> Chain from a council result</span>
+<span class="k">      Given </span><span class="nf">a council-result.json with three verified findings in two files</span>
+<span class="nf">      </span><span class="k">When </span><span class="nf">the user runs /parallel-fix --from-council .council/council-result.json</span>
+<span class="nf">      </span><span class="k">Then </span><span class="nf">autofix-swarm runs once per file group</span>
+<span class="nf">      </span><span class="k">And </span><span class="nf">no candidate that touches a test file is promoted</span>
+</code></pre></div>
+<h2 id="task-breakdown">Task Breakdown<a class="headerlink" href="#task-breakdown" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">ID</th>
+<th style="text-align: left;">Task</th>
+<th style="text-align: left;">Priority</th>
+<th style="text-align: left;">Dependencies</th>
+<th style="text-align: left;">Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">T1</td>
+<td style="text-align: left;">M1: <code>fix</code> arg, plan mode, citation check, new result fields, smoke cases</td>
+<td style="text-align: left;">High</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">pending</td>
+</tr>
+<tr>
+<td style="text-align: left;">T2</td>
+<td style="text-align: left;">M2: text mode, <code>priorContext</code>, <code>council.focus</code>, <code>redFirst</code>, smoke cases</td>
+<td style="text-align: left;">High</td>
+<td style="text-align: left;">T1</td>
+<td style="text-align: left;">pending</td>
+</tr>
+<tr>
+<td style="text-align: left;">T3</td>
+<td style="text-align: left;">M3: <code>autofix-swarm</code> backstop on <code>fix: 'plan'</code></td>
+<td style="text-align: left;">Med</td>
+<td style="text-align: left;">T1</td>
+<td style="text-align: left;">pending</td>
+</tr>
+<tr>
+<td style="text-align: left;">T4</td>
+<td style="text-align: left;">M4: <code>adversarial-council</code> thin wrapper, <code>legacy-team.md</code>, <code>council-result.json</code> mapping</td>
+<td style="text-align: left;">High</td>
+<td style="text-align: left;">T2</td>
+<td style="text-align: left;">pending</td>
+</tr>
+<tr>
+<td style="text-align: left;">T5</td>
+<td style="text-align: left;">M5: <code>council-fix</code> alias with <code>--auto</code></td>
+<td style="text-align: left;">High</td>
+<td style="text-align: left;">T4</td>
+<td style="text-align: left;">pending</td>
+</tr>
+<tr>
+<td style="text-align: left;">T6</td>
+<td style="text-align: left;">M6: <code>parallel-fix</code> on <code>autofix-swarm</code>, <code>council-supervisor</code> shim</td>
+<td style="text-align: left;">Med</td>
+<td style="text-align: left;">T4</td>
+<td style="text-align: left;">pending</td>
+</tr>
+<tr>
+<td style="text-align: left;">T7</td>
+<td style="text-align: left;">M7: docs update and kilint pass</td>
+<td style="text-align: left;">Med</td>
+<td style="text-align: left;">T5, T6</td>
+<td style="text-align: left;">pending</td>
+</tr>
+<tr>
+<td style="text-align: left;">T8</td>
+<td style="text-align: left;">M8: delete the legacy team path and the shim, one release after T6</td>
+<td style="text-align: left;">Low</td>
+<td style="text-align: left;">T7</td>
+<td style="text-align: left;">pending</td>
+</tr>
+<tr>
+<td style="text-align: left;">T9</td>
+<td style="text-align: left;">M9: exchange as the default debate, delete the legacy <code>parallel</code> path</td>
+<td style="text-align: left;">Low</td>
+<td style="text-align: left;">T8</td>
+<td style="text-align: left;">pending</td>
+</tr>
+<tr>
+<td style="text-align: left;">T10</td>
+<td style="text-align: left;">Should-have: <code>council.seedLedger</code> and the manifest <code>requires=</code> key</td>
+<td style="text-align: left;">Low</td>
+<td style="text-align: left;">T4</td>
+<td style="text-align: left;">pending</td>
+</tr>
+</tbody>
+</table>
+<h2 id="exit-criteria">Exit Criteria<a class="headerlink" href="#exit-criteria" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] <code>node workflows/workflows.smoke.mjs</code> passes, and the legacy prompt digest stays the same until T9</li>
+<li>[ ] New smoke cases cover plan mode, text mode, both parse rejections and the result mapping</li>
+<li>[ ] No council skill calls <code>TeamCreate</code> on its default path</li>
+<li>[ ] <code>feature-loop.mjs</code> and <code>spec-loop.mjs</code> need no edit through T8</li>
+<li>[ ] kilint reports zero errors on the spec, the skills and the docs that change</li>
+</ul>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Issue: Kiriketsuki/agenKic-hub#34</li>
+<li>Workflows: https://code.claude.com/docs/en/workflows.md (stall restart, resume, null results, no mid-run input)</li>
+<li>Agent teams: https://code.claude.com/docs/en/agent-teams.md (experimental, no resume, one team per session)</li>
+<li>Skills: https://code.claude.com/docs/en/skills.md (<code>context: fork</code>, <code>disable-model-invocation</code>)</li>
+<li>Subagents: https://code.claude.com/docs/en/sub-agents.md (Claude Code removes the <code>Workflow</code> tool from subagents)</li>
+<li>Best practices: https://code.claude.com/docs/en/best-practices.md (adversarial review step: flag only correctness and requirement gaps)</li>
+<li>Related spec: <code>workflows/spec-loop-spec.md</code></li>
+</ul>
+<hr />
+<p><em>Authored by: Clault KiperO 5.5</em></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      agenKic-hub · MIT · built by Kiriketsuki
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/Kiriketsuki/agenKic-hub" target="_blank" rel="noopener" title="agenKic-hub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://github.com/Kiriketsuki/chrysaki-claude" target="_blank" rel="noopener" title="chrysaki-claude" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M248 106.6c18.9-9 32-28.3 32-50.6 0-30.9-25.1-56-56-56s-56 25.1-56 56c0 22.3 13.1 41.6 32 50.6v98.8c-2.8 1.3-5.5 2.9-8 4.7l-80.1-45.8c1.6-20.8-8.6-41.6-27.9-52.8C57.2 96 23 105.2 7.5 132S1.2 193 28 208.5c1.3.8 2.6 1.5 4 2.1v90.8c-1.3.6-2.7 1.3-4 2.1C1.2 319-8 353.2 7.5 380s49.7 36 76.5 20.5c19.3-11.1 29.4-32 27.8-52.8l50.5-28.9c-11.5-11.2-19.9-25.6-23.8-41.7l-50.5 29c-2.6-1.8-5.2-3.3-8-4.7v-90.8c2.8-1.3 5.5-2.9 8-4.7l80.1 45.8c-.1 1.4-.2 2.8-.2 4.3 0 22.3 13.1 41.6 32 50.6v98.8c-18.9 9-32 28.3-32 50.6 0 30.9 25.1 56 56 56s56-25.1 56-56c0-22.3-13.1-41.6-32-50.6v-98.8c2.8-1.3 5.5-2.9 8-4.7l80.1 45.8c-1.6 20.8 8.6 41.6 27.8 52.8 26.8 15.5 61 6.3 76.5-20.5s6.3-61-20.5-76.5c-1.3-.8-2.7-1.5-4-2.1v-90.8c1.4-.6 2.7-1.3 4-2.1 26.8-15.5 36-49.7 20.5-76.5s-49.5-36-76.3-20.5c-19.3 11.1-29.4 32-27.8 52.8l-50.6 28.9c11.5 11.2 19.9 25.6 23.8 41.7l50.6-29c2.6 1.8 5.2 3.3 8 4.7v90.8c-2.8 1.3-5.5 2.9-8 4.6l-80.1-45.8c.1-1.4.2-2.8.2-4.3 0-22.3-13.1-41.6-32-50.6v-98.8z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
