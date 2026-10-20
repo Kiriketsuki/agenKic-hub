@@ -617,6 +617,8 @@ async function featureTests() {
       'recheck:F1': { allFixed: true, testsPassed: true },
     }), null)
     assert(rt.prompt('validate:F1').includes('BRANCH PIN') && rt.prompt('fix:F1').includes('BRANCH PIN'), 'the validate and budget fix agents get the branch pin')
+    assert(rt.prompt('review:F1').includes('BRANCH PIN') && rt.prompt('recheck:F1').includes('BRANCH PIN'), 'the budget review and recheck agents get the branch pin')
+    assert(!rt.prompt('review:F1').includes('...HEAD'), 'the budget review diffs the feature branch, not an unpinned HEAD')
   }
   {
     const noTests = councilHappy({ verify: { build: 'pass', tests: 'none', mergeable: true } })
