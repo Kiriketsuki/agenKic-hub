@@ -99,7 +99,7 @@ navigate. Print to PDF gives one page per slide.
 | 08 | Project memory | `CLAUDE.md` loads every session. `AGENTS.md` is the cross-tool file. Import one from the other, never keep two copies. A few dozen lines: commands and hard rules. A long memory file competes with the task for attention. |
 | 09 | Context budget | Quality degrades before the window is full. Work freely below about 50 percent of the window, watch it from 50 to 80 percent, and hand off at 80 percent. `/compact <instructions>` lets you steer what the summarizer keeps. `/rewind` then summarize from a chosen message trims a detour. `/btw` asks a side question that stays out of the history. With [context-handoff](skills/core/context-handoff/) → [context-resume](skills/core/context-resume/), you decide what survives. |
 | 10 | Hooks | A prompt asks the model to behave. A hook is a shell command the harness runs regardless. Exit 0 proceeds, exit 2 blocks and hands stderr back. If you stated a rule twice and the model still forgot it, that rule becomes a hook. |
-| 11 | Skills | 26 directories, each with a `SKILL.md` that says when to trigger. Independent: take brainstorm and leave the councils, or the reverse. Full table below. |
+| 11 | Skills | 27 directories, each with a `SKILL.md` that says when to trigger. Independent: take brainstorm and leave the councils, or the reverse. Full table below. |
 | 12 | Adversarial council | Real spawned agents, not prose sections in one reply. One model writing both sides agrees with itself. Advocates argue cited, critics never soften without a reason, a questioner fires "why?" at uncited claims, an arbiter returns FOR, AGAINST, or CONDITIONAL. Concessions are permanent. |
 | 13 | spec-loop + model tiering | A spec decomposes into a dependency DAG. Unblocked leaves build in parallel worktree waves. Every PR faces a council and merges on unconditional FOR. The script only coordinates, only agents touch the world. Tiering: top model for design and hard root-causing, mid tier for the fan-out. One 33-agent run that inherited the top model everywhere burned 2M tokens. Escalate only after the mid tier failed. |
 | 14 | Prose as a build artifact | Agents write commits, PR bodies, and docs at volume, and left alone they drift into filler. [ste-writing](skills/writing/ste-writing/) sets the house style, [kilint](skills/writing/kilint/) measures it in a PostToolUse hook and in CI. Under 1.5 violations per 100 words is clean. Do not chase zero, and form linting cannot fix a wrong claim. |
@@ -134,7 +134,7 @@ Feel none of these? Install nothing.
 
 | Directory | Contents |
 |:---|:---|
-| [`skills/`](skills/) | 26 Claude Code skills, install into `~/.claude/skills/` |
+| [`skills/`](skills/) | 27 Claude Code skills, install into `~/.claude/skills/` |
 | [`workflows/`](workflows/) | Multi-agent Workflow scripts for the Claude Code Workflow tool |
 | [`tools/stream-launcher/`](tools/stream-launcher/) | WIP standalone launcher with examples and a tuning guide. Manual use only |
 | [`harnesses/`](harnesses/) | Per-harness setup: Claude Code, Codex, OpenCode, Pi, Hermes |
@@ -167,6 +167,7 @@ Feel none of these? Install nothing.
 | [kilint](skills/writing/kilint/) | Prose linter for the STE house style |
 | [merge-next](skills/core/merge-next/) | Merge the current branch and advance to the next sibling |
 | [model-route](skills/core/model-route/) | Recommend the optimal model tier for a task |
+| [orchestration-tracker](skills/ops/orchestration-tracker/) | Build and run one Artifact page per long goal: dependency graph, status, timeline, checklist |
 | [parallel-fix](skills/council/parallel-fix/) | Fan out independent fixes to parallel worktree agents |
 | [release-notes-enricher](skills/ops/release-notes-enricher/) | Enrich git-cliff release notes with PR prose summaries |
 | [repo-hooks](skills/ops/repo-hooks/) | Install and manage the repo's git hook conventions |

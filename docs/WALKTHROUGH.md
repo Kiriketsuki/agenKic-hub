@@ -126,7 +126,7 @@ each selection symlinks that group's skills individually into
 | `skills/core/` | `skills-core.conf` | brainstorm, brainstorm-grill, feature-spec, implement-spec, merge-next, context-handoff, context-resume, agent-route, model-route | The spec-first loop this tier's capstone runs |
 | `skills/council/` | `skills-council.conf` | adversarial-council, council-fix, council-supervisor, parallel-fix | Debate a change before it merges, see Advanced |
 | `skills/writing/` | `skills-writing.conf` | ste-writing, kilint, visual-explainer, cover-letter | The prose house style, and a linter that checks it |
-| `skills/ops/` | `skills-ops.conf` | repo-hooks, security-scan, croc-send, release-notes-enricher, insights-to-vault, continuous-learning-v2 | Guard rails and repo maintenance |
+| `skills/ops/` | `skills-ops.conf` | repo-hooks, security-scan, croc-send, release-notes-enricher, insights-to-vault, continuous-learning-v2, orchestration-tracker | Guard rails and repo maintenance |
 
 Basics needs only `skills-core`. Install the rest as Intermediate and
 Advanced call for them.

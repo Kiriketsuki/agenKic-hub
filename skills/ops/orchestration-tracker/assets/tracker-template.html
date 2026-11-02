@@ -1,0 +1,792 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>{{TITLE}}</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap">
+<style>
+  /* Layout: a dependency graph that reads left to right, from the first pieces of work to the final column of goal cards. A list view and the checklist sit below. */
+  /* Styling: your design system. Token values come from its tokens.css. The Light palette is the base. The Night palette sits under data-theme="dark" only. */
+  :root {
+    color-scheme: light;
+    /* Light palette. */
+    --bg-canvas: oklch(0.9798 0.0086 84.57);
+    --fg-ink: oklch(0.3016 0.0146 89.90);
+    --fg-muted: oklch(0.4688 0.0136 84.59);
+    --fg-disabled: oklch(0.6303 0.0123 89.77);
+    --accent-fill: oklch(0.4690 0.0799 205.33);
+    --on-accent: oklch(0.9947 0.0045 78.30);
+    --surface-sheet: oklch(0.9798 0.0086 84.57);
+    --surface-card: oklch(0.9405 0.0099 87.47);
+    --surface-chip: oklch(0.8701 0.0114 89.73);
+    --status-nominal: oklch(0.4710 0.1294 145.04);
+    --status-major: oklch(0.4704 0.0963 78.29);
+    --status-major-lane: oklch(0.6100 0.1400 60.00);
+    --status-critical: oklch(0.4706 0.1719 28.05);
+    --estop-fill: oklch(0.4706 0.1719 28.05);
+    --state-focus: oklch(0.4690 0.0799 205.33);
+    --state-hover: oklch(0.7993 0.0120 84.58);
+    --state-pressed: oklch(0.7390 0.0122 84.59);
+    --brand-secondary: oklch(0.3987 0.1157 294.91);
+    /* Page roles derived from the palette. The section rule is ink at 35 percent, as in the system. */
+    --rule: color-mix(in srgb, var(--fg-ink) 35%, transparent);
+    --line-dep: var(--fg-muted);
+    /* Type: Inter for the UI, Geist Mono for data. */
+    --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --type-title: 600 24px/28px var(--font-ui);
+    --type-heading: 600 20px/24px var(--font-ui);
+    --type-body: 400 16px/24px var(--font-ui);
+    --type-support: 400 16px/20px var(--font-ui);
+    --type-label: 500 16px/20px var(--font-ui);
+    --type-eyebrow: 500 16px/20px var(--font-mono);
+    --type-data: 500 16px/20px var(--font-mono);
+    /* Space and shape. */
+    --gap-related: 8px; --gap-item: 16px; --gap-section: 32px;
+    --pad-chip: 12px; --pad-card: 16px; --pad-sheet: 20px;
+    --rc-chip: 2px; --rc-input: 2px; --rc-card: 3px; --rc-sheet: 4px;
+    --r-card: 6px; --r-sheet: 8px;
+    --edge: 0.75px; --ring-strong: 2px; --lane: 4px;
+    /* Motion: two durations and one curve. */
+    --press: 120ms; --panel: 240ms; --ease: cubic-bezier(0.2, 0, 0, 1);
+    /* Status marks, drawn as masks so each shape takes its colour token. Shapes follow your design system status table where one exists. */
+    --mk-disc: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Ccircle cx='6' cy='6' r='5'/%3E%3C/svg%3E");
+    --mk-target: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Ccircle cx='6' cy='6' r='4.75' fill='none' stroke='black' stroke-width='1.5'/%3E%3Ccircle cx='6' cy='6' r='2'/%3E%3C/svg%3E");
+    --mk-half: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Ccircle cx='6' cy='6' r='4.75' fill='none' stroke='black' stroke-width='1.5'/%3E%3Cpath d='M6 1.25A4.75 4.75 0 0 0 6 10.75Z'/%3E%3C/svg%3E");
+    --mk-square: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Crect x='1.5' y='1.5' width='9' height='9'/%3E%3C/svg%3E");
+    --mk-play: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 0.8L11.4 6L2 11.2Z'/%3E%3C/svg%3E");
+    --mk-ring: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Ccircle cx='6' cy='6' r='4.25' fill='none' stroke='black' stroke-width='1.5'/%3E%3C/svg%3E");
+    --mk-diamond: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M6 0.4L11.6 6L6 11.6L0.4 6Z'/%3E%3C/svg%3E");
+    --mk-off: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Ccircle cx='6' cy='6' r='4.25' fill='none' stroke='black' stroke-width='1.5'/%3E%3Cpath d='M2.46 9.54L9.54 2.46' fill='none' stroke='black' stroke-width='1.5'/%3E%3C/svg%3E");
+  }
+  /* Night palette, applied only on an explicit data-theme="dark". */
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg-canvas: oklch(0.3988 0.0938 248.28);
+    --fg-ink: oklch(0.9851 0.0102 67.71);
+    --fg-muted: oklch(0.8685 0.0236 65.42);
+    --fg-disabled: oklch(0.6292 0.1298 247.94);
+    --accent-fill: oklch(0.8311 0.1020 204.88);
+    --on-accent: oklch(0.2411 0.0548 247.89);
+    --surface-sheet: oklch(0.3311 0.0753 247.39);
+    --surface-card: oklch(0.3988 0.0938 248.28);
+    --surface-chip: oklch(0.4698 0.1120 248.25);
+    --status-nominal: oklch(0.8307 0.1173 145.09);
+    --status-major: oklch(0.8297 0.1324 78.24);
+    --status-major-lane: oklch(0.8297 0.1324 78.24);
+    --status-critical: oklch(0.8299 0.0946 28.05);
+    --estop-fill: oklch(0.8299 0.0946 28.05);
+    --state-focus: oklch(0.8311 0.1020 204.88);
+    --state-hover: oklch(0.5106 0.1180 248.08);
+    --state-pressed: oklch(0.5505 0.1242 247.77);
+    --brand-secondary: oklch(0.8296 0.0899 295.12);
+  }
+  @media (prefers-reduced-motion: reduce) { :root { --press: 0ms; --panel: 0ms; } }
+
+  /* The status vocabulary. Each state sets one colour token and one mark shape. A chip and a card edge both read them. */
+  .s-ready { --st: var(--status-major); --st-lane: var(--status-major-lane); --st-mark: var(--mk-play); }
+  .s-prog { --st: var(--fg-ink); --st-mark: var(--mk-half); }
+  .s-rev { --st: var(--brand-secondary); --st-mark: var(--mk-square); }
+  .s-wait { --st: var(--fg-muted); --st-mark: var(--mk-ring); }
+  .s-bad { --st: var(--status-critical); --st-mark: var(--mk-diamond); }
+  .s-act { --st: var(--status-nominal); --st-mark: var(--mk-target); }
+  .s-done { --st: var(--status-nominal); --st-mark: var(--mk-disc); }
+  .s-closed { --st: var(--fg-muted); --st-mark: var(--mk-off); }
+
+  html, body { max-width: 100%; overflow-x: clip; }
+  body { margin: 0; background: var(--bg-canvas); color: var(--fg-ink); font: var(--type-body); -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1400px; min-width: 0; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: var(--gap-section) 56px; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--gap-item); }
+  .wrap > * { min-width: 0; }
+  button, select { font-family: var(--font-ui); }
+
+  /* Page head. Eyebrow, title, support text, then a full-ink hairline. */
+  header { display: grid; gap: var(--gap-related); padding-bottom: var(--gap-item); border-bottom: var(--edge) solid var(--fg-ink); }
+  .runs { font: var(--type-eyebrow); font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-muted); }
+  h1 { margin: 0; font: var(--type-title); letter-spacing: -0.02em; text-wrap: balance; }
+  .sub { margin: 0; font: var(--type-support); color: var(--fg-muted); max-width: 78ch; }
+  .sub b { color: var(--fg-ink); font-weight: 600; }
+  .copy-note { margin: 0; font: var(--type-support); color: var(--fg-ink); background: var(--surface-card); border-radius: var(--r-card); padding: var(--gap-related) var(--pad-chip); max-width: 90ch; }
+
+  /* Section: a heading with the heavy lead over the light rule (HDGroup data-lead). */
+  .sect { display: grid; gap: var(--gap-related) 0; min-width: 0; grid-template-columns: minmax(0, 1fr); margin-top: var(--gap-item); }
+  h2 { margin: 0; font: var(--type-heading); }
+  .sect-list { margin-top: var(--gap-item); }
+  .sect > h2, .sect-head, details > summary { position: relative; padding-bottom: var(--gap-related); }
+  .sect > h2::after, .sect-head::after, details > summary::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: var(--edge); background: var(--rule); pointer-events: none; }
+  .sect > h2::before, .sect-head::before, details > summary::before { content: ""; position: absolute; left: 0; bottom: 0; width: 32px; height: 2px; background: var(--fg-ink); z-index: 1; pointer-events: none; }
+  .sect-head { display: flex; flex-wrap: wrap; gap: var(--gap-related); justify-content: space-between; align-items: center; }
+  .sect > .hint { margin: 0 0 var(--gap-related); }
+  .hint { font: var(--type-support); font-size: 15px; color: var(--fg-muted); }
+
+  /* Status chip: a hairline ring, the mark in the status colour, the word in ink. Ink text never takes the status colour. */
+  .summary { display: flex; flex-wrap: wrap; gap: var(--gap-related); align-items: center; }
+  .pill, .tag { display: inline-flex; align-items: center; box-sizing: border-box; white-space: nowrap; color: var(--fg-ink); background: var(--surface-sheet); border: var(--edge) solid var(--st, var(--fg-ink)); border-radius: var(--rc-chip); }
+  .pill { height: 32px; gap: var(--gap-related); padding: 0 10px 0 9px; font: var(--type-label); font-size: 15px; }
+  .tag { height: 20px; gap: 4px; padding: 0 6px 0 4px; font: 500 12px/16px var(--font-ui); }
+  .pill::before, .tag::before { content: ""; flex: none; width: 14px; height: 14px; background: var(--st, var(--fg-muted)); -webkit-mask: var(--st-mark, var(--mk-disc)) center / contain no-repeat; mask: var(--st-mark, var(--mk-disc)) center / contain no-repeat; }
+  .tag::before { width: 10px; height: 10px; }
+  .pill.s-bad, .tag.s-bad { border-width: 1.5px; }
+  .pill.s-closed, .tag.s-closed { color: var(--fg-muted); }
+  .pill .n { align-self: stretch; display: inline-flex; align-items: center; padding-left: var(--gap-related); border-left: var(--edge) solid var(--rule); font: var(--type-data); font-size: 15px; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+
+  .status-line { min-height: 20px; font: var(--type-support); font-size: 15px; color: var(--fg-muted); }
+  .status-line.err { color: var(--fg-ink); display: flex; gap: var(--gap-related); align-items: center; }
+  .status-line.err::before { content: ""; flex: none; width: 14px; height: 14px; background: var(--status-critical); -webkit-mask: var(--mk-diamond) center / contain no-repeat; mask: var(--mk-diamond) center / contain no-repeat; }
+
+  /* Legend. */
+  .legend { display: flex; flex-wrap: wrap; gap: var(--gap-related) var(--gap-item); font: var(--type-support); font-size: 14px; color: var(--fg-muted); align-items: center; }
+  .legend.key { gap: var(--gap-related); }
+  .legend .box { display: inline-block; width: 20px; height: 14px; box-sizing: border-box; border: var(--edge) solid var(--fg-ink); border-left: var(--lane) solid var(--rule); border-radius: var(--rc-card); vertical-align: -2px; margin-right: 6px; background: var(--surface-sheet); }
+  .legend .box.sc { border-width: 2px 2px 2px var(--lane); }
+  .legend .box.st { border-top-style: dashed; border-right-style: dashed; border-bottom-style: dashed; }
+  .legend .box.sp { border-color: var(--estop-fill); border-width: 2px 2px 2px var(--lane); border-left-color: var(--rule); }
+  .legend .box.rd { outline: var(--ring-strong) solid var(--status-major-lane); outline-offset: 1px; }
+  .legend .box.wk { border-bottom: 4px solid var(--accent-fill); }
+
+  /* Controls. Hairline ring, crisp input radius. Pressed is the ink fill. */
+  .graph-bar { display: flex; flex-wrap: wrap; gap: var(--gap-related) var(--gap-item); align-items: center; }
+  .graph-bar .grp { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-width: 0; }
+  .graph-bar button, .tl-nav button { font: var(--type-label); font-size: 15px; min-height: 40px; box-sizing: border-box; padding: 0 14px; border: var(--edge) solid var(--fg-ink); background: var(--surface-sheet); color: var(--fg-ink); border-radius: var(--rc-input); cursor: pointer; transition: background var(--press) var(--ease), color var(--press) var(--ease); }
+  .graph-bar button:hover:not(:disabled), .tl-nav button:hover { background: var(--surface-card); }
+  .graph-bar button:active:not(:disabled), .tl-nav button:active { background: var(--state-pressed); transition-duration: 0ms; }
+  /* Pressed: the chip fill and a 2 px ink foot, as on a segmented control. Unpressed text steps back to muted. */
+  .graph-bar button[aria-pressed] { color: var(--fg-muted); }
+  .graph-bar button[aria-pressed="true"] { background: var(--surface-chip); color: var(--fg-ink); border-bottom: var(--ring-strong) solid var(--fg-ink); }
+  .graph-bar button[aria-pressed="true"]:hover:not(:disabled) { background: var(--state-hover); }
+  .graph-bar button:disabled { color: var(--fg-disabled); border-color: var(--rule); cursor: default; }
+  .graph-bar button:focus-visible, .tl-nav button:focus-visible { outline: 2px solid var(--state-focus); outline-offset: 2px; }
+  .graph-bar .zoom-lab { font: var(--type-data); font-size: 14px; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; color: var(--fg-muted); min-width: 4ch; text-align: center; }
+
+  /* The graph: a sheet with a hairline ring on the card tier, the cards on the sheet tier. */
+  .graph-box { overflow: auto; overscroll-behavior: contain; min-width: 0; max-width: 100%; background: var(--surface-card); border: var(--edge) solid var(--fg-ink); border-radius: var(--rc-sheet); max-height: 70vh; }
+  .graph-box:focus-visible { outline: 2px solid var(--state-focus); outline-offset: 2px; }
+  .graph-sizer { position: relative; }
+  .graph-empty { margin: 0; padding: var(--pad-sheet); font: var(--type-support); color: var(--fg-muted); }
+  .graph { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  .graph svg { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+  .col-head { position: absolute; top: 8px; font: 500 12px/16px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-muted); }
+  /* A card: crisp radius and an ink ring, the status lane on the left. Kind changes the ring, state changes the lane. */
+  .node { position: absolute; width: 190px; box-sizing: border-box; overflow: hidden; border: var(--edge) solid var(--fg-ink); border-left: var(--lane) solid var(--st, var(--rule)); border-radius: var(--rc-card); background: var(--surface-sheet); padding: 6px 8px 9px; cursor: pointer; text-align: left; font: inherit; color: inherit; display: grid; grid-template-rows: auto auto auto auto; align-content: start; gap: 3px; transition: opacity var(--press) var(--ease), background var(--press) var(--ease); }
+  .node:hover { background: var(--surface-card); }
+  .node .lab { font: 600 13px/16px var(--font-ui); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .node .ref { font: 400 11px/14px var(--font-mono); color: var(--fg-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .node > .who { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .node .row { display: flex; justify-content: space-between; gap: 6px; align-items: center; min-width: 0; }
+  .node .row > .who { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .node .row > .tag { flex: none; }
+  .node .who { font: 400 12px/15px var(--font-ui); color: var(--fg-muted); }
+  .node.s-ready { border-left-color: var(--st-lane); }
+  .node.s-act { border-left: 6px double var(--st); }
+  .node.s-closed { border-left-color: var(--rule); background: transparent; }
+  .node.s-closed .lab { color: var(--fg-muted); }
+  .node.k-scenario { border-top-width: var(--ring-strong); border-right-width: var(--ring-strong); border-bottom-width: var(--ring-strong); }
+  .node.k-stop { border-top: var(--ring-strong) solid var(--estop-fill); border-right: var(--ring-strong) solid var(--estop-fill); border-bottom: var(--ring-strong) solid var(--estop-fill); }
+  .node.k-step { border-top-style: dashed; border-right-style: dashed; border-bottom-style: dashed; }
+  .node.ready { outline: var(--ring-strong) solid var(--status-major-lane); outline-offset: 2px; }
+  .node:focus-visible { outline: 2px solid var(--state-focus); outline-offset: 2px; }
+  .node.dim { opacity: .5; }
+  .graph.focus .node { opacity: .28; }
+  .graph.focus .node.lit { opacity: 1; }
+  .node .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: var(--surface-chip); }
+  .node .bar > i, .pbar > i { display: block; height: 100%; background: var(--accent-fill); transition: width var(--panel) var(--ease); }
+  .node.work .lab::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent-fill); margin-right: 5px; vertical-align: 1px; animation: pulse 1.6s var(--ease) infinite; }
+  @keyframes pulse { 50% { opacity: .25; } }
+  .pbar { height: 8px; border-radius: 4px; background: var(--surface-chip); overflow: hidden; }
+  .pbar > i { border-radius: 4px; }
+
+  /* The detail record under the graph. */
+  .detail { background: var(--surface-sheet); border: var(--edge) solid var(--fg-ink); border-radius: var(--rc-sheet); padding: var(--pad-card) var(--pad-sheet); display: grid; gap: var(--gap-related); max-width: 90ch; }
+  .detail h3 { margin: 0; font: var(--type-heading); }
+  .detail p { margin: 0; font: var(--type-support); }
+  .detail p.hint { color: var(--fg-muted); }
+  .detail .deps { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  /* The card list. */
+  details > summary { cursor: pointer; font: var(--type-heading); list-style-position: inside; }
+  details > summary:focus-visible { outline: 2px solid var(--state-focus); outline-offset: 2px; }
+  .table-box { overflow-x: auto; background: var(--surface-sheet); border: var(--edge) solid var(--fg-ink); border-radius: var(--rc-sheet); margin-top: var(--gap-item); }
+  table { border-collapse: collapse; width: 100%; min-width: 900px; }
+  th { text-align: left; font: 500 13px/16px var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--fg-muted); padding: 10px 12px; border-bottom: var(--edge) solid var(--fg-ink); }
+  td { padding: 8px 12px; border-bottom: var(--edge) solid var(--rule); vertical-align: top; font: var(--type-support); font-size: 15px; }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.m { font: 400 13px/18px var(--font-mono); color: var(--fg-muted); }
+  select { font: var(--type-support); font-size: 15px; color: var(--fg-ink); background: var(--surface-sheet); border: var(--edge) solid var(--fg-ink); border-radius: var(--rc-input); min-height: 36px; padding: 0 8px; }
+  select:focus-visible { outline: 2px solid var(--state-focus); outline-offset: 2px; }
+  /* Narrow widths: each row stacks as a block, so the page never scrolls sideways. */
+  @media (max-width: 760px) {
+    .table-box { overflow-x: visible; }
+    table { min-width: 0; }
+    thead { display: none; }
+    table, tbody, tr, td { display: block; }
+    tr { padding: var(--gap-related) var(--pad-chip); border-bottom: var(--edge) solid var(--rule); }
+    tbody tr:last-child { border-bottom: 0; }
+    td { padding: 2px 0; border: 0; overflow-wrap: anywhere; }
+    td::before { display: block; font: 500 12px/16px var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--fg-muted); }
+    td:nth-child(1) { font-weight: 600; }
+    td:nth-child(1)::before { content: "Card"; }
+    td:nth-child(2)::before { content: "Area"; }
+    td:nth-child(3)::before { content: "Builds"; }
+    td:nth-child(4)::before { content: "Reviews"; }
+    td:nth-child(5)::before { content: "State"; }
+    td:nth-child(6)::before { content: "Reference"; }
+    td:nth-child(7)::before { content: "Needs"; }
+    td:nth-child(8)::before { content: "Note"; }
+    td:empty { display: none; }
+  }
+
+  /* Empty and loading text. */
+  .note { margin: 0; padding: var(--gap-item); font: var(--type-support); color: var(--fg-muted); border: var(--edge) dashed var(--rule); border-radius: var(--r-card); }
+
+  /* Checklist. */
+  .checks { display: grid; gap: var(--gap-related); margin: 0; padding: 0; list-style: none; max-width: 110ch; }
+  .checks > li { background: var(--surface-card); border-radius: var(--r-card); padding: var(--pad-chip) var(--pad-card); font: var(--type-support); }
+  .checks > li.note { background: transparent; border: var(--edge) dashed var(--rule); color: var(--fg-muted); }
+  .checks ol { margin: var(--gap-related) 0 0; padding-left: 22px; display: grid; gap: 4px; color: var(--fg-muted); }
+  .checks ol li::marker { font-family: var(--font-mono); }
+
+  /* Timeline. */
+  .tl-wrap { position: relative; width: 100%; max-width: 100%; min-width: 0; overflow: hidden; }
+  .timeline { display: flex; gap: 0; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; padding: 4px 2px 14px; scrollbar-width: thin; }
+  .timeline:focus-visible { outline: 2px solid var(--state-focus); outline-offset: 2px; }
+  .tl-day { display: flex; flex: none; }
+  .tl-daylab { flex: none; writing-mode: vertical-rl; transform: rotate(180deg); font: 500 13px/16px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-ink); padding: 6px 4px; margin-right: 10px; border-right: var(--ring-strong) solid var(--fg-ink); align-self: stretch; }
+  .tl-card { flex: none; width: 280px; scroll-snap-align: start; display: grid; grid-template-rows: auto auto 1fr; position: relative; padding-right: 14px; }
+  .tl-axis { position: relative; height: 34px; }
+  .tl-axis::before { content: ""; position: absolute; left: 0; right: -14px; top: 16px; height: 1px; background: var(--rule); }
+  .tl-card:first-child .tl-axis::before { left: 9px; }
+  .tl-dot { position: absolute; left: 3px; top: 10px; width: 10px; height: 10px; border-radius: 50%; background: var(--surface-sheet); border: 2px solid var(--fg-ink); box-sizing: content-box; }
+  .tl-card.now .tl-dot { background: var(--accent-fill); border-color: var(--accent-fill); outline: 3px solid var(--surface-chip); }
+  .tl-hour { position: absolute; left: 26px; top: 6px; display: flex; align-items: center; font: var(--type-data); font-size: 15px; letter-spacing: 0.04em; color: var(--fg-ink); font-variant-numeric: tabular-nums; }
+  .tl-card.now .tl-hour::after { content: "latest"; margin-left: 8px; font: 500 11px/16px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-ink); border: var(--edge) solid var(--accent-fill); border-radius: var(--rc-chip); padding: 0 6px; }
+  .tl-body { background: var(--surface-card); border-radius: var(--r-card); padding: var(--pad-chip) var(--pad-card) var(--pad-card); display: grid; gap: 6px; align-content: start; min-width: 0; }
+  .tl-card.now .tl-body { box-shadow: 0 0 0 var(--ring-strong) var(--accent-fill); }
+  .tl-title { font: 600 16px/20px var(--font-ui); }
+  .tl-body ul { margin: 0; padding-left: 16px; display: grid; gap: 4px; font: var(--type-support); font-size: 15px; color: var(--fg-ink); }
+  .tl-body li::marker { color: var(--fg-muted); }
+  .tl-nav { display: flex; gap: 6px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+  /* The scroll fades are off: the page uses no gradients. The arrows and the scrollbar show that the row scrolls. */
+  .tl-fade { display: none; }
+  @media (max-width: 520px) { .tl-card { width: min(280px, 78vw); } }
+
+  /* Where each part stands. */
+  .live-groups { display: grid; gap: var(--gap-item); }
+  .live-group { display: grid; gap: var(--gap-related); }
+  .live-group h3 { margin: 0; font: var(--type-label); font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-muted); display: flex; gap: var(--gap-related); align-items: center; padding-bottom: 6px; border-bottom: var(--edge) solid var(--rule); }
+  .live-group h3 .tag { letter-spacing: 0; text-transform: none; font-family: var(--font-mono); }
+  .live-grid { display: grid; gap: var(--gap-related); grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+  .live-card { background: var(--surface-card); border-left: var(--lane) solid var(--st, var(--rule)); border-radius: 0 var(--r-card) var(--r-card) 0; padding: var(--pad-chip) var(--pad-card) var(--pad-card); display: grid; gap: 6px; align-content: start; min-width: 0; }
+  .live-card.g-prod { --st: var(--status-nominal); }
+  .live-card.g-main { --st: var(--fg-ink); }
+  .live-card.g-epic { --st: var(--brand-secondary); }
+  .live-head { display: flex; justify-content: space-between; gap: var(--gap-related); align-items: baseline; flex-wrap: wrap; }
+  .live-name { font: 600 16px/20px var(--font-ui); }
+  .live-ver { font: 400 13px/16px var(--font-mono); color: var(--fg-muted); overflow-wrap: anywhere; }
+  .live-where { font: var(--type-support); font-size: 14px; color: var(--fg-muted); }
+  .live-card .lbl { font: 500 12px/16px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-muted); margin-top: 2px; }
+  .live-card ul { margin: 0; padding-left: 16px; display: grid; gap: 3px; font: var(--type-support); font-size: 15px; }
+  .live-card ul.miss li::marker { content: "– "; color: var(--fg-muted); }
+
+  /* Being worked on now. The accent marks activity and the progress fill. Status keeps its own colours. */
+  .work-grid { display: grid; gap: var(--gap-related); grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
+  .work-card { background: var(--surface-card); border: 0; border-left: var(--lane) solid var(--accent-fill); border-radius: 0 var(--r-card) var(--r-card) 0; padding: var(--pad-chip) var(--pad-card); display: grid; gap: var(--gap-related); min-width: 0; cursor: pointer; text-align: left; font: inherit; color: inherit; transition: background var(--press) var(--ease); }
+  .work-card:hover { background: var(--surface-chip); }
+  .work-card:focus-visible { outline: 2px solid var(--state-focus); outline-offset: 2px; }
+  .work-head { display: flex; justify-content: space-between; gap: var(--gap-related); align-items: baseline; }
+  .work-name { font: 600 16px/20px var(--font-ui); }
+  .work-pct { font: var(--type-data); letter-spacing: 0.04em; color: var(--fg-ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .work-who { font: 400 13px/18px var(--font-mono); color: var(--fg-muted); overflow-wrap: anywhere; }
+  .work-step { font: var(--type-support); font-size: 15px; }
+
+  /* Who is doing what. A solid ink rule heads our columns. A dashed muted rule heads the columns outside our sessions. */
+  .own-grid { display: grid; gap: var(--gap-item); grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); }
+  .own-col { background: var(--surface-card); border-radius: var(--r-card); padding: var(--pad-chip) var(--pad-card) var(--gap-related); display: grid; gap: 0; align-content: start; min-width: 0; border-top: var(--ring-strong) solid var(--fg-ink); }
+  .own-col.ext { border-top-style: dashed; border-top-color: var(--fg-muted); }
+  .own-head { font: 600 16px/20px var(--font-ui); display: flex; justify-content: space-between; gap: var(--gap-related); align-items: baseline; padding-bottom: var(--gap-related); }
+  .own-head .hint { font: 500 12px/16px var(--font-mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--fg-muted); text-align: end; }
+  .own-item { display: grid; gap: 2px; padding: var(--gap-related) 0; border: 0; border-top: var(--edge) solid var(--rule); cursor: pointer; text-align: left; font: inherit; color: inherit; background: none; }
+  .own-item:hover .l { text-decoration: underline; text-underline-offset: 3px; }
+  .own-item:focus-visible { outline: 2px solid var(--state-focus); outline-offset: 2px; }
+  .own-item .t { display: flex; gap: var(--gap-related); justify-content: space-between; align-items: center; }
+  .own-item .l { font: 600 15px/20px var(--font-ui); min-width: 0; }
+  .own-item .tag { flex: none; }
+  .own-item .s { font: var(--type-support); font-size: 14px; color: var(--fg-muted); overflow-wrap: anywhere; }
+  .own-item .s b { color: var(--fg-ink); font-weight: 600; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .node, .work-card, .graph-bar button, .tl-nav button, .node .bar > i, .pbar > i { transition: none; }
+    .node.work .lab::before { animation: none; }
+    .timeline { scroll-behavior: auto; }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <!-- PLACEHOLDERS: TITLE, EYEBROW, STEP_NAME, SCENARIO_NAME_LOWER, PLAN, SESSIONS_NOTE. scripts/page.py fill replaces them from the goal config. -->
+    <div class="runs">{{EYEBROW}}</div>
+    <h1>{{TITLE}}</h1>
+    <p class="sub">Each card is a piece of work, a {{STEP_NAME}} or a {{SCENARIO_NAME_LOWER}}. Arrows run from what a card needs to the card. A card with an amber ring is ready now: everything it needs is done, so it can start. A grey card is closed: postponed, superseded or out of scope. It never blocks another card.</p>
+    <p class="sub"><b>Plan.</b> {{PLAN}}</p>
+    <p class="copy-note">{{SESSIONS_NOTE}}</p>
+  </header>
+
+  <div class="summary" id="summary" aria-label="Cards by state"></div>
+  <div class="legend key" aria-label="Status marks">
+    <span class="pill s-ready">Ready now</span>
+    <span class="pill s-prog">In progress</span>
+    <span class="pill s-rev">In review</span>
+    <span class="pill s-wait">Waiting</span>
+    <span class="pill s-bad">Blocked</span>
+    <span class="pill s-act">Code complete</span>
+    <span class="pill s-done">Done</span>
+    <span class="pill s-closed">Closed</span>
+  </div>
+  <div class="legend">
+    <span><span class="box"></span>Build piece</span>
+    <span><span class="box st"></span>Deploy or merge step</span>
+    <span><span class="box sc"></span>{{SCENARIO_NAME}}</span>
+    <span><span class="box sp"></span>Safety STOP</span>
+    <span><span class="box rd"></span>Ready now</span>
+    <span><span class="box wk"></span>Being worked on now (the bar shows how far)</span>
+    <span><span class="pill s-act">Code complete</span> Our code is finished. Only steps outside our coding are left</span>
+    <span class="hint">Select a card to show only what it needs and what needs it. Select it again, or Clear focus, to see every card.</span>
+  </div>
+  <div class="status-line" id="status" role="status" aria-live="polite">Loading the plan…</div>
+
+  <div class="graph-bar" id="graphBar" role="toolbar" aria-label="Graph controls">
+    <div class="grp" id="laneChips" role="group" aria-label="Show lanes"></div>
+    <div class="grp">
+      <button type="button" id="gHideDone" aria-pressed="false">Hide done</button>
+      <button type="button" id="gClear" disabled>Clear focus</button>
+    </div>
+    <div class="grp" role="group" aria-label="Zoom">
+      <button type="button" id="gZoomOut" aria-label="Zoom out">&minus;</button>
+      <span class="zoom-lab" id="gZoomLab" aria-live="polite">100%</span>
+      <button type="button" id="gZoomIn" aria-label="Zoom in">+</button>
+      <button type="button" id="gFit">Fit</button>
+    </div>
+  </div>
+  <div class="graph-box" id="graphBox" tabindex="0" aria-label="Dependency graph"><div class="graph-sizer" id="sizer"><div class="graph" id="graph"><svg id="edges" aria-hidden="true"></svg></div></div></div>
+  <div class="detail" id="detail" hidden></div>
+
+  <details class="sect-list">
+    <summary>All cards as a list</summary>
+    <div class="table-box">
+      <table>
+        <thead><tr><th>Card</th><th>Area</th><th>Builds</th><th>Reviews</th><th>State</th><th>Reference</th><th>Needs</th><th>Note</th></tr></thead>
+        <tbody id="list"></tbody>
+      </table>
+    </div>
+  </details>
+
+  <section class="sect" aria-labelledby="ownH">
+    <h2 id="ownH">Who is doing what</h2>
+    <p class="hint">Every open card, grouped by who builds it. Solid rule: our sessions and the orchestrator. Dashed rule: people outside our sessions ({{OUTSIDERS}}). Each line says who reviews it and who acts next.</p>
+    <div class="own-grid" id="owners"><p class="note">This loads here.</p></div>
+  </section>
+
+  <section class="sect" aria-labelledby="workH">
+    <h2 id="workH">Being worked on now</h2>
+    <p class="hint">Cards the orchestrator or a session is on right now. The bar is the share of that card's steps that are done. Select one to find it in the graph.</p>
+    <div class="work-grid" id="work"><p class="note">This loads here.</p></div>
+  </section>
+
+  <section class="sect">
+    <h2>{{LIVE_TITLE}}</h2>
+    <p class="hint">{{LIVE_HINT}}</p>
+    <div class="live-groups" id="live"><p class="note">This loads here.</p></div>
+  </section>
+
+  <section class="sect">
+    <div class="sect-head">
+      <h2>What happened, hour by hour</h2>
+      <div class="tl-nav"><button type="button" id="tlStart">Start of day</button><button type="button" id="tlPrev" aria-label="Scroll back">&larr;</button><button type="button" id="tlNext" aria-label="Scroll forward">&rarr;</button><button type="button" id="tlNow">Latest</button></div>
+    </div>
+    <p class="hint">A plain recap of each hour, oldest on the left. Times are local time. Scroll sideways, or use the arrows.</p>
+    <div class="tl-wrap"><div class="timeline" id="timeline" tabindex="0" aria-label="Hour by hour recap"><p class="note">The recap loads here.</p></div><div class="tl-fade l" aria-hidden="true"></div><div class="tl-fade r" aria-hidden="true"></div></div>
+  </section>
+
+  <section class="sect">
+    <h2>{{CHECKS_TITLE}}</h2>
+    <ul class="checks" id="checks"><li class="note">{{CHECKS_LOADING}}</li></ul>
+  </section>
+</div>
+
+<script>
+(function () {
+  const STATES = ["Not started", "In progress", "In review", "Waiting", "Blocked", "Code complete", "Done", "Postponed", "Superseded", "Out of scope"];
+  const W = 190, H = 104, GX = 34, GY = 10, TOP = 30, LEFT = 10;
+  // PLACEHOLDERS: LANES (a JSON array body, filled in place of the comment) and STORAGE_KEY (one per tracker, bump its -vN suffix when LANES change).
+  const LANES = [/*{{LANES}}*/];
+  const ZMIN = 0.6, ZMAX = 1.2, ZSTEP = 0.1, LS = "{{STORAGE_KEY}}";
+  const clampZ = (z) => Math.min(ZMAX, Math.max(ZMIN, Math.round(z * 100) / 100));
+  let activeLanes = new Set(LANES), hideDone = false, scale = 1, scaleSaved = false, canvasW = 0, canvasH = 0, lastPos = new Map();
+  try {
+    const sv = JSON.parse(localStorage.getItem(LS) || "null");
+    if (sv) {
+      if (Array.isArray(sv.lanes)) activeLanes = new Set(sv.lanes.filter(l => LANES.includes(l)));
+      hideDone = !!sv.hideDone;
+      if (typeof sv.scale === "number") { scale = clampZ(sv.scale); scaleSaved = true; }
+    }
+  } catch (e) { /* storage unavailable or corrupt: use defaults */ }
+  function saveView() { try { localStorage.setItem(LS, JSON.stringify({ lanes: [...activeLanes], hideDone, scale })); } catch (e) { /* storage unavailable: skip */ } }
+  const $ = (id) => document.getElementById(id);
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const say = (m, err) => { $("status").textContent = m; $("status").classList.toggle("err", !!err); };
+  let nodes = [], byId = new Map(), focus = null, col = null;
+
+  // Progress tracks our coding. A card whose code is finished counts as done for every card that needs it.
+  const isDone = (n) => n && (n.status === "Done" || n.status === "Code complete");
+  // A closed card is postponed, superseded or out of scope. It never blocks a card that needs it.
+  const CLOSED = new Set(["Postponed", "Superseded", "Out of scope", "On hold", "ADS only"]);
+  const isClosed = (n) => !!n && CLOSED.has(n.status);
+  const settled = (n) => isDone(n) || isClosed(n);
+  // A card counts as worked on when it carries a progress number and is not done.
+  const working = (n) => n && !isDone(n) && typeof n.progress === "number" && isFinite(n.progress);
+  const pct = (n) => Math.max(0, Math.min(100, Math.round(n.progress)));
+  // Our side is the orchestrator and the sessions that OWNER_PREFIXES names. Anyone else is outside our sessions.
+  // PLACEHOLDER: OWNER_PREFIXES is a regex alternation, for example build- or ops-|build-.
+  const OURS = /^(orchestrator|{{OWNER_PREFIXES}}|us\b)/i;
+  const ownerGroup = (n) => ((n.owner || "Unassigned").split(/[,(]/)[0].trim() || "Unassigned");
+  const isOurs = (g) => OURS.test(g);
+  function effective(n) {
+    if (n.status === "Done") return { label: "Done", cls: "s-done" };
+    // Code complete: our code is finished. What is left is outside our coding, such as a deploy or a test run record.
+    if (n.status === "Code complete") return { label: "Code complete", cls: "s-act" };
+    if (isClosed(n)) return { label: n.status, cls: "s-closed", closed: true };
+    if (n.status === "Blocked") return { label: "Blocked", cls: "s-bad" };
+    const open = (n.deps || []).filter(d => !settled(byId.get(d)));
+    if (n.status === "In review") return { label: "In review", cls: "s-rev" };
+    if (n.status === "In progress") return { label: "In progress", cls: "s-prog" };
+    if (open.length === 0) return { label: "Ready now", cls: "s-ready", ready: true };
+    return { label: "Waiting on " + open.length, cls: "s-wait" };
+  }
+
+  // Levels count only the dependencies that are shown, so hidden cards leave no gaps.
+  function levels(vis) {
+    const memo = new Map();
+    const lv = (id, seen) => {
+      if (memo.has(id)) return memo.get(id);
+      if (seen.has(id)) return 0;
+      seen.add(id);
+      const n = byId.get(id); const ds = ((n && n.deps) || []).filter(d => vis.has(d));
+      const v = ds.length ? 1 + Math.max(...ds.map(d => lv(d, seen))) : 0;
+      seen.delete(id); memo.set(id, v); return v;
+    };
+    const shownNodes = nodes.filter(n => vis.has(n.id));
+    shownNodes.forEach(n => lv(n.id, new Set()));
+    const maxLv = Math.max(0, ...shownNodes.filter(n => n.kind !== "scenario").map(n => memo.get(n.id)));
+    shownNodes.forEach(n => { if (n.kind === "scenario") memo.set(n.id, maxLv + 1); });
+    return memo;
+  }
+
+  function related(id) {
+    const up = new Set(), down = new Set();
+    const walkUp = (x) => (byId.get(x)?.deps || []).forEach(d => { if (!up.has(d)) { up.add(d); walkUp(d); } });
+    const walkDown = (x) => nodes.forEach(n => { if ((n.deps || []).includes(x) && !down.has(n.id)) { down.add(n.id); walkDown(n.id); } });
+    walkUp(id); walkDown(id);
+    return { up, down };
+  }
+
+  function visibleSet() {
+    const laneOk = (n) => !LANES.includes(n.lane) || activeLanes.has(n.lane);
+    const vis = new Set(), dim = new Set();
+    nodes.forEach(n => { if (laneOk(n) && !(hideDone && settled(n))) vis.add(n.id); });
+    return { vis, dim };
+  }
+
+  function applyScale() {
+    const graph = $("graph"), sizer = $("sizer");
+    graph.style.transform = "scale(" + scale + ")";
+    sizer.style.width = Math.ceil(canvasW * scale) + "px";
+    sizer.style.height = Math.ceil(canvasH * scale) + "px";
+    $("gZoomLab").textContent = Math.round(scale * 100) + "%";
+    $("gZoomOut").disabled = scale <= ZMIN + 1e-6;
+    $("gZoomIn").disabled = scale >= ZMAX - 1e-6;
+  }
+  function setScale(z) {
+    const box = $("graphBox");
+    const cx = (box.scrollLeft + box.clientWidth / 2) / scale, cy = (box.scrollTop + box.clientHeight / 2) / scale;
+    scale = clampZ(z); scaleSaved = true; applyScale(); saveView();
+    box.scrollLeft = cx * scale - box.clientWidth / 2; box.scrollTop = cy * scale - box.clientHeight / 2;
+  }
+  function fitScale() { if (canvasW) setScale((($("graphBox").clientWidth - 2) / canvasW)); }
+  function scrollToNode(id) {
+    const p = lastPos.get(id), box = $("graphBox"); if (!p) return;
+    const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    box.scrollTo({ left: Math.max(0, (p.x + W / 2) * scale - box.clientWidth / 2), top: Math.max(0, (p.y + H / 2) * scale - box.clientHeight / 2), behavior: smooth ? "smooth" : "auto" });
+  }
+
+  function renderGraph(scrollFocus) {
+    const graph = $("graph"), svg = $("edges");
+    graph.querySelectorAll(".node,.col-head").forEach(e => e.remove());
+    $("sizer").querySelectorAll(".graph-empty").forEach(e => e.remove());
+    svg.replaceChildren();
+    lastPos = new Map();
+    let { vis, dim } = visibleSet();
+    if (focus && !byId.has(focus)) { focus = null; renderDetail(); }
+    // A focused card shows only its own chain: what it needs and what needs it.
+    // The chain ignores the lane filter, so no link in it goes missing, but it
+    // keeps Hide done. The focused card itself always shows.
+    if (focus) { const r = related(focus); vis = new Set([focus, ...[...r.up, ...r.down].filter(x => !(hideDone && settled(byId.get(x))))]); }
+    $("gClear").disabled = !focus;
+    const shown = nodes.filter(n => vis.has(n.id));
+    if (!shown.length) {
+      canvasW = 0; canvasH = 0; graph.style.width = "0px"; graph.style.height = "0px"; applyScale();
+      $("sizer").append(el("p", "graph-empty", nodes.length ? "No cards match this filter." : "No cards yet."));
+      return;
+    }
+    const L = levels(vis);
+    const cols = new Map();
+    shown.forEach(n => { const l = L.get(n.id); if (!cols.has(l)) cols.set(l, []); cols.get(l).push(n); });
+    const pos = new Map(); let maxY = 0, ci = 0;
+    [...cols.keys()].sort((a, b) => a - b).forEach(l => {
+      const list = cols.get(l).sort((a, b) => (LANES.indexOf(a.lane) - LANES.indexOf(b.lane)) || ((a.order || 0) - (b.order || 0)));
+      const x = LEFT + ci * (W + GX);
+      const head = el("div", "col-head", ci === 0 ? "Start here" : (list.every(n => n.kind === "scenario") ? "{{SCENARIO_PLURAL}}" : "Step " + ci));
+      ci++;
+      head.style.left = x + "px"; graph.append(head);
+      list.forEach((n, i) => { const y = TOP + i * (H + GY); pos.set(n.id, { x, y }); maxY = Math.max(maxY, y + H); });
+    });
+    lastPos = pos;
+    canvasW = LEFT + ci * (W + GX) - GX + LEFT; canvasH = maxY + 14;
+    graph.style.width = canvasW + "px"; graph.style.height = canvasH + "px";
+    svg.setAttribute("width", canvasW); svg.setAttribute("height", canvasH);
+    applyScale();
+
+    const rel = focus ? related(focus) : null;
+    graph.classList.toggle("focus", !!focus);
+    const ns = "http://www.w3.org/2000/svg";
+    shown.forEach(n => (n.deps || []).forEach(d => {
+      const a = pos.get(d), b = pos.get(n.id); if (!a || !b) return;
+      const x1 = a.x + W, y1 = a.y + H / 2, x2 = b.x, y2 = b.y + H / 2, mx = (x1 + x2) / 2;
+      const p = document.createElementNS(ns, "path");
+      p.setAttribute("d", `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2 - 4},${y2}`);
+      const upSide = (x) => rel && (x === focus || rel.up.has(x));
+      const downSide = (x) => rel && (x === focus || rel.down.has(x));
+      const lit = !!rel && ((upSide(d) && upSide(n.id)) || (downSide(d) && downSide(n.id)));
+      const doneEdge = settled(byId.get(d));
+      p.setAttribute("fill", "none");
+      p.setAttribute("stroke", lit ? "var(--state-focus)" : (doneEdge ? "var(--status-nominal)" : "var(--line-dep)"));
+      p.setAttribute("stroke-width", lit ? "2.4" : "1.3");
+      p.setAttribute("stroke-dasharray", doneEdge || lit ? "" : "4 3");
+      p.setAttribute("opacity", rel && !lit ? "0.15" : "0.9");
+      svg.append(p);
+      const tip = document.createElementNS(ns, "circle");
+      tip.setAttribute("cx", x2 - 3); tip.setAttribute("cy", y2); tip.setAttribute("r", "2.6");
+      tip.setAttribute("fill", lit ? "var(--state-focus)" : (doneEdge ? "var(--status-nominal)" : "var(--line-dep)"));
+      tip.setAttribute("opacity", rel && !lit ? "0.15" : "1");
+      svg.append(tip);
+    }));
+
+    shown.forEach(n => {
+      const p = pos.get(n.id), eff = effective(n);
+      const b = el("button", "node k-" + n.kind + " " + eff.cls + (eff.ready ? " ready" : "") + (dim.has(n.id) ? " dim" : "") + (working(n) ? " work" : ""));
+      b.type = "button"; b.title = [n.label, n.ref, n.owner].filter(Boolean).join("\n"); b.style.left = p.x + "px"; b.style.top = p.y + "px"; b.style.height = H + "px";
+      if (rel && (n.id === focus || rel.up.has(n.id) || rel.down.has(n.id))) b.classList.add("lit");
+      b.setAttribute("aria-label", n.label + ", " + eff.label);
+      const top = el("div", "row"); top.append(el("span", "who", n.lane), el("span", "tag " + eff.cls, eff.label));
+      b.append(top, el("div", "lab", n.label), el("div", "ref", n.ref || ""), el("div", "who", working(n) ? (n.worker || n.owner || "") + " · " + pct(n) + "%" : (n.owner || "") + (n.reviewer ? " · review: " + n.reviewer : "")));
+      if (working(n)) { const bar = el("div", "bar"); const f = el("i"); f.style.width = pct(n) + "%"; bar.append(f); b.append(bar); b.setAttribute("aria-label", n.label + ", " + eff.label + ", " + pct(n) + "% done, worked on by " + (n.worker || n.owner || "")); }
+      b.addEventListener("click", () => { focus = focus === n.id ? null : n.id; renderGraph(!!focus); renderDetail(); });
+      graph.append(b);
+    });
+    if (scrollFocus && focus) scrollToNode(focus);
+  }
+
+  function renderLaneChips() {
+    const box = $("laneChips"); box.replaceChildren();
+    const mk = (label, pressed, fn) => { const b = el("button", "", label); b.type = "button"; b.setAttribute("aria-pressed", String(pressed)); b.addEventListener("click", fn); box.append(b); };
+    mk("All", LANES.every(l => activeLanes.has(l)), () => { activeLanes = new Set(LANES); afterFilter(); });
+    LANES.forEach(l => mk(l, activeLanes.has(l), () => { const next = new Set(activeLanes); if (next.has(l)) next.delete(l); else next.add(l); activeLanes = next; afterFilter(); }));
+  }
+  function afterFilter() { renderLaneChips(); saveView(); renderGraph(false); }
+  $("gHideDone").addEventListener("click", () => { hideDone = !hideDone; $("gHideDone").setAttribute("aria-pressed", String(hideDone)); saveView(); renderGraph(false); });
+  $("gClear").addEventListener("click", () => { focus = null; renderGraph(false); renderDetail(); });
+  $("gZoomOut").addEventListener("click", () => setScale(scale - ZSTEP));
+  $("gZoomIn").addEventListener("click", () => setScale(scale + ZSTEP));
+  $("gFit").addEventListener("click", fitScale);
+  $("gHideDone").setAttribute("aria-pressed", String(hideDone));
+  renderLaneChips();
+
+  function renderDetail() {
+    const box = $("detail");
+    if (!focus || !byId.get(focus)) { box.hidden = true; return; }
+    const n = byId.get(focus), eff = effective(n);
+    box.replaceChildren();
+    const h = el("h3", "", n.label); const tag = el("span", "pill " + eff.cls, eff.label);
+    const head = el("div", "summary"); head.append(h, tag);
+    box.append(head);
+    box.append(el("p", "", [n.owner && "Builds: " + n.owner, n.reviewer && "Reviews: " + n.reviewer, n.ref].filter(Boolean).join(" · ")));
+    if (n.next) box.append(el("p", "", "Next: " + n.next));
+    if (working(n)) {
+      box.append(el("p", "", "Worked on now by " + (n.worker || n.owner || "someone") + ": " + pct(n) + "% done" + (n.step ? ". Now: " + n.step : ".")));
+      const bar = el("div", "pbar"); bar.setAttribute("role", "progressbar"); bar.setAttribute("aria-valuemin", "0"); bar.setAttribute("aria-valuemax", "100"); bar.setAttribute("aria-valuenow", String(pct(n))); bar.setAttribute("aria-label", n.label + " progress");
+      const f = el("i"); f.style.width = pct(n) + "%"; bar.append(f); box.append(bar);
+    }
+    if (n.note) box.append(el("p", "", n.note));
+    const open = (n.deps || []).filter(d => !settled(byId.get(d)));
+    const needs = el("div", "deps");
+    (n.deps || []).forEach(d => { const x = byId.get(d); if (!x) return; const e2 = effective(x); needs.append(el("span", "pill " + e2.cls, x.label)); });
+    box.append(el("p", "hint", (n.deps || []).length ? (open.length ? `Needs ${n.deps.length}, of which ${open.length} not done:` : "Everything it needs is done:") : "Needs nothing first."));
+    if ((n.deps || []).length) box.append(needs);
+    box.hidden = false;
+  }
+
+  function renderSummary() {
+    const s = $("summary"); s.replaceChildren();
+    const counts = {};
+    nodes.forEach(n => { const e = effective(n); const k = e.closed ? "Closed" : (e.ready ? "Ready now" : (e.label.startsWith("Waiting") ? "Waiting" : e.label)); counts[k] = counts[k] || { n: 0, cls: e.cls }; counts[k].n++; });
+    ["Ready now", "In progress", "In review", "Waiting", "Blocked", "Code complete", "Done", "Closed"].forEach(k => {
+      if (!counts[k]) return; const p = el("span", "pill " + counts[k].cls); p.append(el("span", "", k), el("span", "n", String(counts[k].n))); s.append(p);
+    });
+    const sc = nodes.filter(n => n.kind === "scenario" && !isClosed(n));
+    const scReady = sc.filter(n => (n.deps || []).every(d => settled(byId.get(d)))).length;
+    s.append(el("span", "hint", `{{SCENARIO_PLURAL}} with every dependency done: ${scReady} of ${sc.length}`));
+  }
+
+  function renderList() {
+    const body = $("list"); body.replaceChildren();
+    nodes.forEach(n => {
+      const tr = el("tr");
+      const st = el("td"); const sel = el("select"); sel.id = "st-" + n.id; sel.setAttribute("aria-label", "State of " + n.label);
+      STATES.forEach(x => sel.add(new Option(x, x))); if (!STATES.includes(n.status)) sel.add(new Option(n.status, n.status));
+      sel.value = n.status;
+      sel.addEventListener("change", async () => {
+        try { await col.doc(n.id).update({ status: sel.value }); say(n.label + ": state set to " + sel.value + "."); }
+        catch (e) { say("Could not save the state (" + (e && e.code || "error") + "). Reload and try again.", true); sel.value = n.status; }
+      });
+      st.append(sel);
+      tr.append(el("td", "", n.label), el("td", "", n.lane), el("td", "", n.owner), el("td", "", n.reviewer || ""), st, el("td", "m", n.ref),
+        el("td", "", (n.deps || []).map(d => byId.get(d)?.label || d).join(", ")), el("td", "", n.note));
+      body.append(tr);
+    });
+  }
+
+  function renderChecks(checks) {
+    const ul = $("checks"); ul.replaceChildren();
+    if (!checks.length) { ul.append(el("li", "note", "{{CHECKS_EMPTY}}")); return; }
+    checks.forEach(c => {
+      const li = el("li", c.note ? "note" : "", c.text);
+      if (Array.isArray(c.sub) && c.sub.length) { const ol = el("ol"); c.sub.forEach(s => ol.append(el("li", "", s))); li.append(ol); }
+      ul.append(li);
+    });
+  }
+
+  function renderLive(rows) {
+    const box = $("live"); box.replaceChildren();
+    if (!rows.length) { box.append(el("p", "note", "Nothing recorded yet.")); return; }
+    // PLACEHOLDERS: LIVE_PROD, LIVE_MAIN, LIVE_EPIC name the three groups of the live collection.
+    const groups = [["prod", "{{LIVE_PROD}}", "s-done"], ["main", "{{LIVE_MAIN}}", "s-prog"], ["epic", "{{LIVE_EPIC}}", "s-rev"]];
+    groups.forEach(([g, title, cls]) => {
+      const items = rows.filter(r => r.group === g).sort((a, b) => (a.order || 0) - (b.order || 0));
+      if (!items.length) return;
+      const wrap = el("div", "live-group"); const h = el("h3", "", title); h.append(el("span", "tag " + cls, String(items.length))); wrap.append(h);
+      const grid = el("div", "live-grid");
+      items.forEach(r => {
+        const c = el("article", "live-card g-" + g);
+        const head = el("div", "live-head"); head.append(el("span", "live-name", r.name || ""), el("span", "live-ver", r.version || "")); c.append(head);
+        if (r.where) c.append(el("div", "live-where", r.where));
+        if (Array.isArray(r.has) && r.has.length) { c.append(el("div", "lbl", "Has")); const ul = el("ul"); r.has.forEach(x => ul.append(el("li", "", x))); c.append(ul); }
+        if (Array.isArray(r.missing) && r.missing.length) { c.append(el("div", "lbl", "Not yet")); const ul = el("ul", "miss"); r.missing.forEach(x => ul.append(el("li", "", x))); c.append(ul); }
+        grid.append(c);
+      });
+      wrap.append(grid); box.append(wrap);
+    });
+  }
+
+  let tlScrolled = false;
+  function renderTimeline(rows) {
+    const box = $("timeline"); box.replaceChildren();
+    if (!rows.length) { box.append(el("p", "note", "No recap yet.")); return; }
+    const days = [];
+    rows.forEach(r => { let d = days.find(x => x.day === r.day); if (!d) { d = { day: r.day, dayOrder: r.dayOrder || 0, rows: [] }; days.push(d); } d.rows.push(r); });
+    days.sort((a, b) => a.dayOrder - b.dayOrder);
+    const last = days[days.length - 1];
+    let lastCard = null;
+    days.forEach(d => {
+      const wrap = el("div", "tl-day"); wrap.append(el("div", "tl-daylab", d.day || ""));
+      d.rows.sort((a, b) => (a.order || 0) - (b.order || 0)).forEach((r, i) => {
+        const card = el("article", "tl-card");
+        const axis = el("div", "tl-axis"); axis.append(el("span", "tl-dot"), el("span", "tl-hour", r.hour || "")); card.append(axis);
+        const body = el("div", "tl-body");
+        if (r.text) body.append(el("div", "tl-title", r.text));
+        if (Array.isArray(r.points) && r.points.length) { const ul = el("ul"); r.points.forEach(x => ul.append(el("li", "", x))); body.append(ul); }
+        card.append(body); wrap.append(card);
+        if (d === last && i === d.rows.length - 1) lastCard = card;
+      });
+      box.append(wrap);
+    });
+    if (lastCard) lastCard.classList.add("now");
+    if (!tlScrolled) { tlScrolled = true; requestAnimationFrame(() => { box.scrollLeft = box.scrollWidth; }); }
+  }
+  function tlScroll(dx) { const b = $("timeline"); const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches; b.scrollBy({ left: dx, behavior: smooth ? "smooth" : "auto" }); }
+  $("tlPrev").addEventListener("click", () => tlScroll(-286));
+  $("tlNext").addEventListener("click", () => tlScroll(286));
+  $("tlStart").addEventListener("click", () => tlScroll(-1e6));
+  $("tlNow").addEventListener("click", () => tlScroll(1e6));
+
+  function renderOwners() {
+    const box = $("owners"); box.replaceChildren();
+    const open = nodes.filter(n => !settled(n) && n.kind !== "scenario");
+    if (!open.length) { box.append(el("p", "note", "No open cards.")); return; }
+    const groups = new Map();
+    open.forEach(n => { const g = ownerGroup(n); if (!groups.has(g)) groups.set(g, []); groups.get(g).push(n); });
+    const order = [...groups.keys()].sort((a, b) => (isOurs(b) - isOurs(a)) || a.localeCompare(b));
+    order.forEach(g => {
+      const items = groups.get(g).sort((a, b) => (a.order || 0) - (b.order || 0));
+      const col = el("div", "own-col " + (isOurs(g) ? "us" : "ext"));
+      const head = el("div", "own-head"); head.append(el("span", "", g), el("span", "hint", (isOurs(g) ? "ours" : "outside our sessions") + " · " + items.length)); col.append(head);
+      items.forEach(n => {
+        const eff = effective(n);
+        const b = el("button", "own-item"); b.type = "button";
+        const t = el("div", "t"); t.append(el("span", "l", n.label), el("span", "tag " + eff.cls, eff.label)); b.append(t);
+        const parts = [];
+        if (n.reviewer) parts.push(["Review", n.reviewer]);
+        if (n.next) parts.push(["Next", n.next]);
+        if (n.ref) parts.push(["Ref", n.ref]);
+        parts.forEach(([k, v]) => { const s = el("div", "s"); s.append(el("b", "", k + ": "), document.createTextNode(v)); b.append(s); });
+        b.addEventListener("click", () => { if (!activeLanes.has(n.lane) && LANES.includes(n.lane)) { activeLanes = new Set([...activeLanes, n.lane]); renderLaneChips(); saveView(); } focus = n.id; renderGraph(true); renderDetail(); $("graphBox").scrollIntoView({ block: "nearest" }); });
+        col.append(b);
+      });
+      box.append(col);
+    });
+  }
+
+  function renderWork() {
+    const box = $("work"); box.replaceChildren();
+    const items = nodes.filter(working).sort((a, b) => pct(b) - pct(a));
+    if (!items.length) { box.append(el("p", "note", "Nobody is on a card right now.")); return; }
+    items.forEach(n => {
+      const c = el("button", "work-card"); c.type = "button";
+      const head = el("div", "work-head"); head.append(el("span", "work-name", n.label), el("span", "work-pct", pct(n) + "%")); c.append(head);
+      const bar = el("div", "pbar"); bar.setAttribute("role", "progressbar"); bar.setAttribute("aria-valuemin", "0"); bar.setAttribute("aria-valuemax", "100"); bar.setAttribute("aria-valuenow", String(pct(n))); bar.setAttribute("aria-label", n.label + " progress");
+      const f = el("i"); f.style.width = pct(n) + "%"; bar.append(f); c.append(bar);
+      c.append(el("div", "work-who", (n.worker || n.owner || "") + (n.ref ? " · " + n.ref : "")));
+      if (n.step) c.append(el("div", "work-step", n.step));
+      c.addEventListener("click", () => { if (!activeLanes.has(n.lane) && LANES.includes(n.lane)) { activeLanes = new Set([...activeLanes, n.lane]); renderLaneChips(); saveView(); } if (hideDone && isDone(n)) hideDone = false; focus = n.id; renderGraph(true); renderDetail(); $("graphBox").scrollIntoView({ block: "nearest" }); });
+      box.append(c);
+    });
+  }
+
+
+  let fitted = false;
+  function renderAll() { byId = new Map(nodes.map(n => [n.id, n])); if (focus && !byId.has(focus)) focus = null; renderSummary(); renderOwners(); renderWork(); renderGraph(false); renderDetail(); renderList(); if (!fitted && canvasW) { fitted = true; if (!scaleSaved) fitScale(); } }
+
+  async function start() {
+    if (!window.claude || !window.claude.use) { say("Open this page on claude.ai to load the plan.", true); return; }
+    const db = await window.claude.use("db");
+    if (!db) { say("The plan store is not available. Sign in to claude.ai and reload.", true); return; }
+    col = db.collection("nodes");
+    col.orderBy("order").onSnapshot(
+      (snap) => { nodes = snap.docs.map(d => ({ ...(d.data() || {}), id: d.id })); renderAll(); say(nodes.length + " cards. Updated " + new Date().toLocaleTimeString() + "."); },
+      (e) => say("Lost the connection to the plan store (" + (e && e.code || "error") + "). Reload the page.", true)
+    );
+    db.collection("checks").orderBy("order").onSnapshot((snap) => renderChecks(snap.docs.map(d => d.data() || {})), () => {});
+    db.collection("live").onSnapshot((snap) => renderLive(snap.docs.map(d => d.data() || {})), () => {});
+    db.collection("timeline").onSnapshot((snap) => renderTimeline(snap.docs.map(d => d.data() || {})), () => {});
+  }
+  start();
+})();
+</script>
+
+</body></html>
