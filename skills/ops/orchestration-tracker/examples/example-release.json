@@ -1,0 +1,49 @@
+{
+ "page": {
+  "title": "Widget Service v2 Tracker",
+  "eyebrow": "Release 2.0 · widget service · target date set after M1",
+  "plan": "The team ships v2 of the widget service. It splits the API from the worker, moves storage to a new database, and releases one container image. Go gate: a full rehearsal on a staging cluster. Spec: docs/specs/widget-v2.md.",
+  "sessions_note": "Sessions: api-build (API and worker), db-migrate (schema and data), ops-pack (image, pipeline, rehearsal). The orchestrator integrates, merges into the release branch and runs the rehearsal.",
+  "step_name": "rehearsal step",
+  "scenario_name": "Milestone",
+  "scenario_plural": "Milestones",
+  "outsiders": "the platform team, the support lead, you",
+  "owner_prefixes": "api-|db-|ops-",
+  "storage_key": "widget-v2-graph-v1",
+  "live": {
+   "title": "Where each part stands",
+   "hint": "Proved means it passed on staging. Merged means it is in the release branch. In review means it sits in an open PR.",
+   "prod": "Proved on staging",
+   "main": "Merged into the release branch",
+   "epic": "In an open PR"
+  },
+  "checks": {
+   "title": "Rehearsal steps"
+  }
+ },
+ "lanes": ["Milestones", "API", "Worker", "Data", "Packaging", "Rehearsal"],
+ "nodes": [
+  {"id": "api-split", "label": "Split the API from the worker", "lane": "API", "owner": "api-build", "status": "In review", "ref": "PR 101", "next": "Fix the two review comments. The orchestrator merges PR 101 into the release branch.", "progress": 80, "worker": "api-build", "step": "Address review comments"},
+  {"id": "api-auth", "label": "Token auth on every route", "lane": "API", "owner": "api-build", "deps": ["api-split"], "ref": "Issue 102", "next": "Add the token check to the remaining routes and extend the tests."},
+  {"id": "wk-queue", "label": "Queue-based worker", "lane": "Worker", "owner": "api-build", "status": "In progress", "deps": ["api-split"], "ref": "Issue 103", "next": "Wire the retry policy and the dead-letter queue.", "progress": 35, "worker": "api-build", "step": "Write the retry policy"},
+  {"id": "db-schema", "label": "New storage schema", "lane": "Data", "owner": "db-migrate", "status": "Done", "ref": "PR 98", "next": "Merged into the release branch."},
+  {"id": "db-copy", "label": "Data copy tool", "lane": "Data", "owner": "db-migrate", "deps": ["db-schema"], "ref": "Issue 104", "next": "Copy in batches of 10,000 rows. Resume after a failure."},
+  {"id": "db-verify", "label": "Row count and checksum check", "lane": "Data", "owner": "db-migrate", "kind": "step", "deps": ["db-copy"], "next": "Compare source and target for every table after each copy."},
+  {"id": "pk-image", "label": "One container image", "lane": "Packaging", "owner": "ops-pack", "deps": ["api-auth", "wk-queue"], "ref": "Issue 105", "next": "Build API and worker into one image with two entry points."},
+  {"id": "pk-pipeline", "label": "Release pipeline", "lane": "Packaging", "owner": "ops-pack", "status": "Waiting", "deps": ["pk-image"], "ref": "Issue 106", "next": "The platform team owns the signing key. Ask them for access."},
+  {"id": "M1", "label": "M1: each part works alone", "lane": "Milestones", "owner": "orchestrator", "kind": "scenario", "deps": ["api-auth", "wk-queue", "db-verify", "pk-image"]},
+  {"id": "rh-full", "label": "Full staging rehearsal", "lane": "Rehearsal", "owner": "orchestrator", "kind": "scenario", "deps": ["M1", "pk-pipeline"], "next": "Run the rehearsal steps in order. Record each result."}
+ ],
+ "checks": [
+  {"id": "r1", "text": "R1. Create the staging cluster with an empty database"},
+  {"id": "r2", "text": "R2. Install the release image", "sub": ["API answers the health check", "Worker takes a job from the queue", "Token auth refuses an unsigned request"]},
+  {"id": "r3", "text": "R3. Copy a snapshot of production data and run the verify step"}
+ ],
+ "live": [
+  {"id": "l1", "group": "epic", "name": "API and worker split", "version": "PR 98, PR 101", "where": "release/2.0", "has": ["New storage schema", "Separate API and worker entry points"], "missing": ["Token auth on every route", "Run on staging"]},
+  {"id": "l2", "group": "main", "name": "Widget service v1", "version": "1.9.4", "where": "main", "has": ["Single process", "Old storage schema"], "missing": ["Queue-based worker"]}
+ ],
+ "timeline": [
+  {"date": "2026-11-02", "hour": "09:00", "text": "The orchestrator replanned the release with the user.", "points": ["First target: the split and the data copy.", "Go gate: a full rehearsal on staging."]}
+ ]
+}
