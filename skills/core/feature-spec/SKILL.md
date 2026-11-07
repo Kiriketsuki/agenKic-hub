@@ -159,12 +159,7 @@ Fix any issues inline. No need to re-review. Just fix and move on. Then:
 
 - Write the complete, filled spec to `./docs/specs/todo/feature_spec.md`.
 - Rename it to `./docs/specs/todo/[kebab-case-feature-name]-spec.md`.
-- Sign the bottom (above any existing `---`) with **your Clault Kiper signature for the model you are currently running as**. Derive it. Do not hardcode:
-  ```
-  ---
-  *Authored by: Clault Kiper{S|O|H} {major.minor}*
-  ```
-  Take the suffix and version from `000-System/Agents/AGENTS.md`, using your own current model identity. The spec file gets this signature. The Step 5 daily note does not (it is a shared, auto-generated note).
+- Do not add an `*Authored by*` footer. A spec lives in a code repo, and the vault signature rule covers vault notes only.
 - Tell the user the final filename and path.
 
 ---
