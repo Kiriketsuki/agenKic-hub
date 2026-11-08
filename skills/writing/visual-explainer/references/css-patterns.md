@@ -4,7 +4,7 @@ Reusable patterns for layout, connectors, theming, and visual effects in self-co
 
 ## Theme Setup
 
-Always define both light and dark palettes via custom properties. Start with whichever fits the chosen aesthetic, ensure both work.
+Always define both light and dark palettes via custom properties. Start with whichever fits the chosen aesthetic, make sure both work.
 
 ```css
 :root {
@@ -246,9 +246,9 @@ function example() {
 </div>
 ```
 
-### Implementation Plans: Don't Dump Full Files
+### Implementation Plans: Do Not Dump Full Files
 
-For implementation plans and architecture docs, **don't display entire source files inline**. Instead:
+For implementation plans and architecture docs, **do not display entire source files inline**. Instead:
 
 1. **Show structure, not code:**
    ```html
@@ -292,7 +292,7 @@ If someone needs the full file, put it in a collapsible section or link to it.
 
 ## Directory Tree
 
-For file structures, use `<pre>` with monospace + `white-space: pre`. Tree connectors (`├──`, `└──`, `│`) only work when vertically aligned — they become noise if text wraps.
+For file structures, use `<pre>` with monospace + `white-space: pre`. Tree connectors (`├──`, `└──`, `│`) only work when vertically aligned. They become noise if text wraps.
 
 ```css
 .dir-tree {
@@ -339,7 +339,7 @@ For labeled trees, wrap in a card. For side-by-side comparisons, put two cards i
 @media (max-width: 900px) { .dir-compare { grid-template-columns: 1fr; } }
 ```
 
-**Never** render tree connectors inside wrapping text (`white-space: normal`), flex children, or grid items — the vertical pipes lose alignment and the hierarchy becomes unreadable.
+**Never** render tree connectors inside wrapping text (`white-space: normal`), flex children, or grid items. The vertical pipes lose alignment and the hierarchy becomes unreadable.
 
 ## Overflow Protection
 
@@ -454,11 +454,11 @@ By default, `list-style-position: outside` places list markers (bullets, numbers
 
 ## Mermaid Containers
 
-Mermaid diagrams have two common layout issues: they render too small to read, and they left-align in their container leaving awkward dead space (especially for narrow vertical flowcharts).
+Mermaid diagrams have two common layout issues. They render too small to read. They left-align in their container and leave awkward dead space (especially for narrow vertical flowcharts).
 
 ### Centering (Required)
 
-Mermaid SVGs render at a fixed size based on content. Without explicit centering, they default to top-left alignment. **Always center Mermaid diagrams** — narrow vertical flowcharts look particularly bad when left-aligned in a wide container.
+Mermaid SVGs render at a fixed size based on content. Without explicit centering, they default to top-left alignment. **Always center Mermaid diagrams.** Narrow vertical flowcharts look particularly bad when left-aligned in a wide container.
 
 ```css
 /* WRONG — diagram hugs left edge */
@@ -498,7 +498,7 @@ mermaid.initialize({
 }
 ```
 
-**3. Constrain container width** so the diagram doesn't float in dead space:
+**3. Constrain container width** so the diagram does not float in dead space:
 ```css
 .mermaid-wrap--constrained {
   max-width: 800px;
@@ -506,13 +506,13 @@ mermaid.initialize({
 }
 ```
 
-**Rule of thumb:** If the diagram has 10+ nodes or the text is smaller than 12px rendered, increase fontSize to 18-20px or apply CSS zoom.
+**Rule of thumb:** If the diagram has 10+ nodes or the text renders smaller than 12px, increase fontSize. Use 18-20px or apply CSS zoom.
 
 ### Zoom Controls
 
 Add zoom controls to every `.mermaid-wrap` container for complex diagrams.
 
-**Small diagrams in slides.** If a diagram has fewer than ~7 nodes with no branching, it will render tiny in a full-viewport slide container. For simple linear flows (A → B → C → D), use CSS pipeline cards instead of Mermaid — see `slide-patterns.md` "CSS Pipeline Slide." Reserve Mermaid for complex graphs where automatic edge routing is actually needed.
+**Small diagrams in slides.** If a diagram has fewer than ~7 nodes with no branching, it will render tiny in a full-viewport slide container. For simple linear flows (A → B → C → D), use CSS pipeline cards instead of Mermaid. See `slide-patterns.md` "CSS Pipeline Slide." Reserve Mermaid for complex graphs that need automatic edge routing.
 
 ### Full Pattern
 
@@ -613,7 +613,7 @@ Add zoom controls to every `.mermaid-wrap` container for complex diagrams.
 
 **How the new zoom/pan engine works:**
 
-The SVG is rendered into `.mermaid-canvas` which is absolutely positioned inside `.mermaid-viewport`. Zooming sets the SVG's `width` and `height` styles directly. Panning applies `transform: translate()` to the canvas. The viewport has `overflow: hidden` to clip the panned content. This approach avoids CSS `zoom` (which had cross-browser quirks) and gives precise control over the diagram's size and position.
+The script renders the SVG into `.mermaid-canvas`, which has absolute position inside `.mermaid-viewport`. Zooming sets the SVG's `width` and `height` styles directly. Panning applies `transform: translate()` to the canvas. The viewport has `overflow: hidden` to clip the panned content. This approach avoids CSS `zoom` (which had cross-browser quirks) and gives precise control over the diagram's size and position.
 
 ### HTML
 
@@ -1012,7 +1012,7 @@ Use `::after` or a literal arrow character:
 ```
 
 ### SVG Curved Connector (between arbitrary nodes)
-For connections that aren't simple vertical/horizontal, use an absolutely positioned SVG overlay:
+For connections that are not simple vertical/horizontal, use an absolutely positioned SVG overlay:
 ```html
 <svg class="connectors" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;">
   <path d="M 150,100 C 150,200 350,100 350,200" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 3"/>
@@ -1027,7 +1027,7 @@ Position the parent container as `position: relative` to scope the SVG overlay.
 
 ### Staggered Fade-In on Load
 
-Define the keyframe once, then stagger via a `--i` CSS variable set per element. This approach works regardless of DOM nesting or interleaved non-animated elements (unlike `nth-child` which breaks when siblings aren't all the same type).
+Define the keyframe once, then stagger via a `--i` CSS variable set per element. This approach works regardless of DOM nesting or interleaved non-animated elements (unlike `nth-child` which breaks when siblings are not all the same type).
 
 ```css
 @keyframes fadeUp {
@@ -1121,12 +1121,12 @@ Uses `@property` to animate a custom property as an integer, then display it via
 
 ### Choreography
 
-Don't use the same animation for everything. Mix types by element role, with easing stagger (fast-then-slow, not linear):
+Do not use the same animation for everything. Mix types by element role, with easing stagger (fast-then-slow, not linear):
 
-- **Cards**: `fadeUp` — the default entrance, reliable and subtle
-- **KPI / badges**: `fadeScale` — scale draws the eye to important numbers
-- **SVG connectors**: `drawIn` — reveals flow direction, pairs with card stagger
-- **Hero numbers**: `countUp` — counting motion signals "this number matters"
+- **Cards**: `fadeUp`: the default entrance, reliable and subtle
+- **KPI / badges**: `fadeScale`: scale draws the eye to important numbers
+- **SVG connectors**: `drawIn`: reveals flow direction, pairs with card stagger
+- **Hero numbers**: `countUp`: counting motion signals "this number matters"
 - **Stagger timing**: `calc(var(--i) * 0.06s)` with lower `--i` values on important elements so they appear first
 
 ### Respect Reduced Motion
@@ -1466,7 +1466,7 @@ Opening paragraph styled distinctly from body text.
 
 ### Pull Quotes
 
-Key insights pulled out for emphasis. Use sparingly — one or two per article maximum.
+Key insights pulled out for emphasis. Use sparingly: one or two per article maximum.
 
 ```css
 /* Border left — most versatile */
@@ -1719,7 +1719,7 @@ Avoid these in reading-first content:
 
 ## Generated Images
 
-For AI-generated illustrations embedded as base64 data URIs via `surf gemini --generate-image`. Use sparingly — hero banners, conceptual illustrations, educational diagrams, decorative accents.
+For AI-generated illustrations embedded as base64 data URIs via `surf gemini --generate-image`. Use sparingly: hero banners, conceptual illustrations, educational diagrams, decorative accents.
 
 ### Hero Banner
 
@@ -1798,7 +1798,7 @@ Generate with `--aspect-ratio 1:1` or `--aspect-ratio 4:3` for inline illustrati
 
 ### Side Accent
 
-Small image floated beside a section. Use when the illustration supports but doesn't dominate the content.
+Small image floated beside a section. Use when the illustration supports but does not dominate the content.
 
 ```css
 .accent-img {

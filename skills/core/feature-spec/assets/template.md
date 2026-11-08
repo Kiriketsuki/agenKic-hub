@@ -45,7 +45,7 @@
 - [New field / table / schema delta]
 
 **API Contracts** (if applicable):
-- `[METHOD] /path` — [description, inputs, outputs]
+- `[METHOD] /path`: [description, inputs, outputs]
 
 **Dependencies**: [external services, feature flags, migrations]
 

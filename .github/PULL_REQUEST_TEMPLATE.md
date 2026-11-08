@@ -7,7 +7,7 @@
 | Bug | `fix: Name of Bug` |
 | Hotfix | `hotfix: Name of Hotfix` |
 
-> All PRs are **squash merged**. Keep individual commits on your branch descriptive — they'll be squashed into one on main.
+> All PRs are **squash merged**. Keep individual commits on your branch descriptive. GitHub squashes them into one commit on main.
 
 ---
 

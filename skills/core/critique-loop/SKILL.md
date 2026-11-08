@@ -77,7 +77,7 @@ python <skill-dir>/scripts/evaluate.py evaluate --config <run>/config.json --rub
 ## Stop and resume
 
 - `passed`: Every configured score condition and acceptance gate passes with sufficient evidence.
-- `max_rounds`: All rounds are consumed. Do not extend the budget or lower the threshold to claim success.
+- `max_rounds`: The loop used all rounds. Do not extend the budget or lower the threshold to claim success.
 - `time_limit`: The configured elapsed-time budget expired. Check before expensive actions and after completion. This soft limit does not kill processes.
 - `stalled`: The configured number of consecutive revisions lacks sufficient improvement. Use the comparison rule in contracts.md.
 - `blocked`: Required tools, independent agents, or essential evidence remain unavailable after reasonable recovery. Self-review never counts as independent critique.
