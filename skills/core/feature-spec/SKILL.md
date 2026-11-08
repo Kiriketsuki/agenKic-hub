@@ -1,6 +1,6 @@
 ---
 name: feature-spec
-description: "Use when the user wants to create a new feature specification, start speccing a feature, or fill out a feature spec sheet. Triggers: \"Spec a feature\", \"New feature spec\", \"Create spec\", \"/spec\", \"Start feature spec\", \"spec this out\". Always invoke this skill when the user wants to define what a feature should do before building it — even casual phrasings like \"let's spec this out\", \"write up the spec\", \"plan this feature\", \"define the feature\", or just \"spec it\" should trigger this. The skill enters plan mode immediately, interviews the user conversationally section by section, and produces a filled feature_spec.md in the target repo's docs/specs/todo/ directory."
+description: "Use when the user wants to create a new feature specification, start speccing a feature, or fill out a feature spec sheet. Triggers: \"Spec a feature\", \"New feature spec\", \"Create spec\", \"/spec\", \"Start feature spec\", \"spec this out\". Always invoke this skill when the user wants to define what a feature should do before building it — even casual phrasings like \"let's spec this out\", \"write up the spec\", \"plan this feature\", \"define the feature\", or just \"spec it\" should trigger this. The skill interviews the user conversationally section by section and produces a filled feature_spec.md in the target repo's docs/specs/todo/ directory."
 ---
 
 ## Configuration
@@ -15,7 +15,7 @@ When neither is set, skip Step 5. The rest of the skill needs no configuration.
 
 ## Purpose
 
-Produce a filled `[feature-name]-spec.md` in the target repo's `docs/specs/todo/` directory by interviewing the user section-by-section. The repo is the current working directory by default, or a path the caller/handoff specifies (e.g. a brand-new repo created for the feature). Create `docs/specs/todo/` if missing. Enter plan mode at the start and stay there. This is a planning exercise from first question to final file.
+Produce a filled `[feature-name]-spec.md` in the target repo's `docs/specs/todo/` directory by interviewing the user section-by-section. The repo is the current working directory by default, or a path the caller/handoff specifies (e.g. a brand-new repo created for the feature). Create `docs/specs/todo/` if missing. This is a planning exercise from first question to final file.
 
 **Hard boundary**: this skill ends when you have written the spec file and fired any downstream updates (daily note, PR). Do not begin implementation, do not suggest code changes, do not offer to "start on T1". The spec is the deliverable.
 
@@ -40,9 +40,8 @@ This avoids the frustrating pattern of re-asking questions the user already answ
 
 ## Workflow
 
-### Step 1: Enter Plan Mode + Read Context
+### Step 1: Read Context
 
-- Call `EnterPlanMode` immediately, before saying anything else to the user.
 - Scan the CWD for context: README, package.json, pyproject.toml, go.mod, existing specs, migration files, API route files. Anything that reveals the stack, architecture, and domain vocabulary.
 - Run `git branch --show-current` and `gh pr view --json number,title,body 2>/dev/null` to detect if the user is on a non-default branch with an open PR. Store branch name and PR number/body if found. You will need them in Step 4. (Skip quietly if the target repo is not a git repo, e.g. a brand-new repo that has not been `git init`-ed.)
 - Copy the bundled template (`assets/template.md` relative to this skill's directory) verbatim to `./docs/specs/todo/feature_spec.md` (create the directory if missing). This is the working draft you will progressively fill in.
@@ -226,7 +225,6 @@ Rules:
 
 ## Guidelines
 
-- **Stay in plan mode throughout.** You entered it in Step 1. Do not exit until the skill is fully complete.
 - **Do not begin implementation.** The skill ends when you have written the spec and fired the downstream updates. Do not suggest starting on tasks, writing code, or making any implementation changes.
 - **No emojis** anywhere: questions, file content, log entries.
 - **Do not ask what you can read.** Repo context is free, so spend it.
