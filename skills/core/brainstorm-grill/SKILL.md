@@ -1,45 +1,47 @@
 ---
 name: brainstorm-grill
-description: "The relentless variant of brainstorm. Interrogates a plan or design exhaustively, walking down every branch of the decision tree and resolving dependencies one-by-one, giving a recommended answer for every question. Then converges on an approved design and chains into feature-spec. Use when the user wants to stress-test a plan, get grilled on their design, harden an idea against gaps, or says 'grill me', 'grill this', 'interrogate my plan', 'poke holes in this'."
+description: "The relentless variant of brainstorm. Interrogates a plan or design exhaustively. Walks down every branch of the decision tree, resolves dependencies one by one, and gives a recommended answer for every question. Then converges on an approved design and chains into feature-spec. For a grill that ends at decisions and a brief.md with no feature-spec chain, use grill-me instead. Use when the user wants to stress-test a plan, get grilled on a design, harden an idea against gaps, or says 'grill me', 'grill this', 'interrogate my plan', 'poke holes in this'."
 attribution: "Combines the brainstorm skill (adapted from the claude-plugins-official repository by Anthropic, https://github.com/anthropics/claude-plugins-official) with the grill-me skill by Matt Pocock (https://github.com/mattpocock/skills/blob/main/skills/productivity/grill-me/SKILL.md)."
 model: opus
 ---
 
 # Brainstorm: Grill Mode
 
-Same destination as `brainstorm` — an approved design handed off to feature-spec — reached by a harder road. Instead of gently drawing the idea out, you interrogate it. Walk down every branch of the decision tree, resolve the dependencies between decisions one at a time, and refuse to move on while a branch is still unresolved. The goal is shared understanding with no soft spots left.
+This skill has the same destination as `brainstorm`: an approved design handed to feature-spec. It takes a harder road. You do not draw the idea out gently. You interrogate it. Walk down every branch of the decision tree and resolve the dependencies between decisions one at a time. Do not move on while a branch is open. The goal is that you and the user understand the plan fully, with no soft spots.
 
-This is a sibling of `brainstorm`, not a replacement. Default `brainstorm` stays gentle. Invoke this one only when the user wants to be grilled.
+This skill is a sibling of `brainstorm`, not a replacement. Default `brainstorm` stays gentle. Invoke this skill only when the user wants a grill.
+
+`grill-me` (`skills/core/grill-me`) is the variant that ends at decisions and a `brief.md`. It has no design step and no feature-spec chain. Use `grill-me` when the user wants decisions and not a spec.
 
 <HARD-GATE>
-Do NOT write any code, scaffold any project, or take any implementation action until you have presented a design and the user has approved it. Grilling is interrogation, not implementation. This applies to EVERY project regardless of perceived simplicity.
+Do NOT write any code, scaffold any project, or take any implementation action until you present a design and the user approves it. Grilling is interrogation, not implementation. This applies to EVERY project, whatever its apparent simplicity.
 </HARD-GATE>
 
 ## What "grill properly" means
 
-The difference from default brainstorm is the questioning, not the outcome:
+The questioning differs from default brainstorm. The outcome does not.
 
 | Default brainstorm | Grill mode |
 |---|---|
 | Gentle clarifying questions | Relentless interrogation of every decision |
-| Asks, then waits | Asks via AskUserQuestion — recommended answer is option 1, reasoning in its description |
-| Moves on when the user answers | Does not move on until the branch and its dependencies are resolved |
-| Accepts vague answers, refines later | Pushes back on vague answers immediately; pins down the testable version |
-| Proposes 2-3 approaches near the end | Surfaces forks the moment they appear, walks each branch to resolution |
+| Asks, then waits | Asks via AskUserQuestion. Your recommended answer is option 1, with the reasoning in its description |
+| Moves on when the user answers | Moves on only after the branch and its dependencies have an answer |
+| Accepts vague answers and refines later | Pushes back on a vague answer at once and pins down the testable version |
+| Proposes 2-3 approaches near the end | Surfaces each fork when it appears and walks each branch to resolution |
 
-**Every question carries your recommendation.** Never ask a bare question. Ask through the **AskUserQuestion** tool: the `question` states the decision, and the `options` are the candidate answers — the first option is your recommendation, its label ending in " (Recommended)", its `description` carrying the "because Y" reasoning. The user can pick it, choose another option, or use the built-in "Other" to override or argue — but they are never left to fill a blank cold.
+**Every question carries your recommendation.** Never ask a bare question. Ask through the **AskUserQuestion** tool. The `question` states the decision. The `options` are the candidate answers. The first option is your recommendation. Its label ends in " (Recommended)" and its `description` gives the "because Y" reasoning. The user can pick it, choose another option, or use the built-in "Other" to override or argue. The user never has to fill a blank cold.
 
-**Explore before asking.** If a question can be answered by reading the codebase, read the codebase instead of asking. Spend repo context freely; only ask the user what the repo genuinely cannot tell you.
+**Explore before you ask.** If the codebase can answer a question, read the codebase. Spend repo context freely. Ask the user only what the repo cannot tell you.
 
 ## Checklist
 
 Create a task for each item and complete them in order:
 
-1. **Explore project context** — files, docs, recent commits, existing patterns. Answer everything you can from the repo before opening your mouth.
-2. **Scope check** — if the request is really several independent subsystems, say so before grilling. Help decompose, then grill the first sub-project.
-3. **Grill the decision tree** — round by round along the frontier, each question with a recommended answer, walking every branch and resolving dependencies between decisions.
-4. **Present design** — in sections scaled to complexity, get approval after each section.
-5. **Hand off to feature-spec** — invoke the feature-spec skill to formalize the approved design.
+1. **Explore project context.** Read files, docs, recent commits, and existing patterns. Answer from the repo everything it can answer.
+2. **Scope check.** If the request is really several independent subsystems, say so before you grill. Help decompose it, then grill the first sub-project.
+3. **Grill the decision tree.** Work round by round along the frontier. Give each question a recommended answer. Walk every branch and resolve the dependencies between decisions.
+4. **Present the design.** Use sections scaled to complexity. Get approval after each section.
+5. **Hand off to feature-spec.** Invoke the feature-spec skill to formalize the approved design.
 
 ## Process Flow
 
@@ -72,58 +74,66 @@ digraph brainstorm_grill {
 
 ## The Grilling Protocol
 
-**Map the decision tree first.** Before the first question, build (in your head, or out loud if it helps) the set of decisions this plan requires and how they depend on each other. The **frontier** is the set of decisions whose prerequisites are all settled. Grill the frontier round by round: each settled answer prunes branches downstream and pushes the frontier outward.
+**Map the decision tree first.** Before the first question, list the decisions the plan needs and how they depend on each other. You can do this silently or aloud. The **frontier** is the set of decisions whose prerequisites are all settled. Grill the frontier round by round. Each settled answer prunes the branches below it and pushes the frontier outward.
 
-**Dispatch fact-finding async.** When a frontier question depends on an environment fact (does the repo use X, what does the schema look like), spawn a subagent to find it and keep grilling the rest of the frontier. Do not block the round on a lookup you can run in the background.
+**Dispatch fact-finding in the background.** Some frontier questions depend on an environment fact. Examples: does the repo use X, or what does the schema look like. Spawn a subagent to find the fact and keep grilling the rest of the frontier. Do not block the round on a lookup that can run in the background.
 
-**Every question carries a recommendation — asked through AskUserQuestion.** Do not grill in plain prose. Each open decision becomes one AskUserQuestion question:
+**Ask every question through AskUserQuestion, with a recommendation.** Do not grill in plain prose. Each open decision becomes one AskUserQuestion question:
 
-- `question` — the specific decision, framed concretely.
-- `header` — a short tag for the decision (max 12 chars), e.g. "Storage", "Auth", "Scope".
-- `options` — the candidate answers, 2-4 of them. **Option 1 is your recommendation**, its `label` ending in " (Recommended)", its `description` carrying the "because Y" reasoning grounded in the repo, the constraints, or the goal. The remaining options are the live alternatives, each with a `description` of its trade-off.
-- `multiSelect: false` — a decision resolves to exactly one answer.
+- `question`: the specific decision, framed concretely.
+- `header`: a short tag for the decision (max 12 characters), such as "Storage", "Auth", or "Scope".
+- `options`: the candidate answers, 2-4 of them. **Option 1 is your recommendation.** Its `label` ends in " (Recommended)". Its `description` gives the "because Y" reasoning, grounded in the repo, the constraints, or the goal. The other options are the live alternatives. Each `description` states the trade-off.
+- `multiSelect: false`: a decision resolves to exactly one answer.
 
-The user can accept your recommendation, pick an alternative, or use the automatic "Other" choice to override or argue. For open-ended decisions ("what does 'works' mean here?"), make option 1 the recommended testable definition and the others plausible variants — never leave it as a blank prose prompt. When the fork is between concrete artifacts (competing layouts, API shapes, code snippets), put a short mockup of each in the option's `preview` field so the user compares them side by side.
+The user can accept your recommendation, pick an alternative, or use the automatic "Other" choice to override or argue. For an open-ended decision such as "what does 'works' mean here?", make option 1 the recommended testable definition and make the others plausible variants. Never leave a blank prose prompt. Sometimes the fork is between concrete artifacts. Examples are layout options, API shapes, or code snippets. Then put a short mockup of each in the option's `preview` field. The user then compares them side by side.
 
-Ask the **current frontier as one round** — every decision whose prerequisites are settled goes into the same AskUserQuestion call (the tool takes up to 4; larger frontiers split into consecutive calls, most constraining decisions first). Never batch a question with one of its own prerequisites — a later answer must not be able to invalidate an earlier question in the same round. Never ask without recommending.
+Ask the **current frontier as one round**. Every decision whose prerequisites are settled goes into the same AskUserQuestion call. The tool takes up to 4 questions. Split a larger frontier into consecutive calls, with the most constraining decisions first. Never batch a question with one of its own prerequisites. A later answer must not be able to invalidate an earlier question in the same round. Never ask without a recommendation.
 
-**Resolve dependencies before descending.** When an answer opens sub-decisions, walk those sub-branches to resolution before returning to siblings. Track what is settled so you never re-litigate a closed branch and never leave one dangling.
+**Resolve dependencies before you descend.** When an answer opens sub-decisions, walk those sub-branches to resolution before you return to the siblings. Track what is settled. Never re-litigate a closed branch. Never leave a branch dangling.
 
-**Push back on vagueness.** "When it works" / "something simple" / "the usual" are not answers — they are deferrals. Convert them into something testable on the spot: "'Works' meaning a user can do X and Y is true in the system — yes?" Do not accept a hand-wave and move on.
+**Push back on vagueness.** "When it works", "something simple", and "the usual" are not answers. They are deferrals. Convert each one into a testable statement on the spot. For example: "'Works' means a user can do X and Y is true in the system. Correct?" Do not accept a hand-wave and move on.
 
-**Probe for the gaps the user hasn't considered.** Failure modes, edge cases, what happens under concurrency, what happens when the input is empty / huge / malformed, what the rollback path is, what the success metric actually is. If the plan has an unexamined assumption, name it and make them defend it or drop it.
+**Probe for the gaps the user has not considered.** Check these areas:
 
-**Explore the codebase instead of asking, whenever possible.** "Which auth library?" — read package.json. "What's the existing error pattern?" — grep the codebase. Only escalate to the user the decisions the code cannot answer.
+- failure modes and edge cases
+- behavior under concurrency
+- empty, huge, or malformed input
+- the rollback path
+- the real success metric
 
-**Know when to stop.** Grilling ends when every branch of the decision tree is resolved and you can state the design back with no open questions. Relentless does not mean infinite — it means thorough. Once shared understanding is reached, stop grilling and present the design.
+If the plan has an unexamined assumption, name it. Make the user defend it or drop it.
+
+**Explore the codebase instead of asking, whenever possible.** For "Which auth library?", read package.json. For "What is the existing error pattern?", search the codebase. Escalate to the user only the decisions the code cannot answer.
+
+**Know when to stop.** Grilling ends when every branch of the decision tree has an answer. You must be able to state the design back with no open questions. Relentless does not mean infinite. It means thorough. When you and the user agree on the plan, stop grilling and present the design.
 
 ## Presenting the Design
 
-Same as brainstorm:
+Present the design as `brainstorm` does:
 
-- Scale each section to its complexity — a few sentences if straightforward, up to 200-300 words if nuanced.
+- Scale each section to its complexity. Use a few sentences if the section is simple. Use up to 200-300 words if it has nuance.
 - Ask after each section whether it looks right.
-- Cover: architecture, components, data flow, error handling, testing.
-- Because you grilled the decisions, this design should contain few surprises — it is the resolved decision tree written down.
+- Cover architecture, components, data flow, error handling, and testing.
+- You grilled the decisions, so the design should hold few surprises. It is the resolved decision tree written down.
 
-**Design for isolation and clarity:** break the system into small units with one clear purpose each, communicating through well-defined interfaces, understandable and testable independently. For each unit: what does it do, how do you use it, what does it depend on. When a file grows large, that is a signal it is doing too much.
+**Design for isolation and clarity.** Break the system into small units with one clear purpose each. The units talk through well-defined interfaces. Each unit stays easy to understand and test on its own. For each unit, state what it does, how to use it, and what it depends on. A file that grows large does too much.
 
-**In existing codebases:** explore structure before proposing changes, follow existing patterns, fold in targeted improvements where existing problems affect the work, but don't propose unrelated refactoring.
+**In existing codebases,** explore the structure before you propose changes. Follow existing patterns. Fold in targeted improvements where existing problems affect the work. Do not propose unrelated refactoring.
 
-## After the Design Is Approved
+## After the User Approves the Design
 
-Once the user approves the design, invoke the **feature-spec** skill to formalize it into a structured spec file. Pass along a summary of every decision resolved during grilling so feature-spec pre-fills instead of re-interviewing:
+When the user approves the design, invoke the **feature-spec** skill to formalize it into a structured spec file. Pass a summary of every decision resolved during the grill. Then feature-spec pre-fills the spec and does not re-interview the user.
 
 > "Design approved. Invoking feature-spec to formalize this into a structured spec."
 
-Then invoke the feature-spec skill. brainstorm-grill ends here — feature-spec takes over for the structured output (the spec lands in the target repo's `docs/specs/todo/`).
+Then invoke the feature-spec skill. brainstorm-grill ends here. feature-spec takes over the structured output. The spec lands in the `docs/specs/todo/` folder of the target repo.
 
 ## Key Principles
 
-- **Grill the frontier round by round** — batch decisions whose prerequisites are all settled; never batch a decision with its own prerequisite.
-- **Every question carries your recommendation** — ask via AskUserQuestion, recommendation as option 1, no bare questions.
-- **Resolve dependencies in order** — settle constraining decisions first.
-- **No vagueness survives** — convert hand-waves into testable statements immediately.
-- **Explore the repo before asking** — code answers free questions.
-- **YAGNI ruthlessly** — grill out features that don't earn their place.
-- **Relentless, not infinite** — stop when the tree is resolved, then present and converge.
+- **Grill the frontier round by round.** Batch the decisions whose prerequisites are all settled. Never batch a decision with its own prerequisite.
+- **Every question carries your recommendation.** Ask via AskUserQuestion with the recommendation as option 1. Ask no bare questions.
+- **Resolve dependencies in order.** Settle the constraining decisions first.
+- **No vagueness survives.** Convert each hand-wave into a testable statement at once.
+- **Explore the repo before you ask.** The code answers the free questions.
+- **YAGNI ruthlessly.** Grill out each feature that does not earn its place.
+- **Relentless, not infinite.** Stop when every branch has an answer, then present and converge.
