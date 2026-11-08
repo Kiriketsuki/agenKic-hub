@@ -40,7 +40,7 @@ When a user's follow-up message corrects Claude's previous action:
 → Create instinct: "When doing X, prefer Y"
 
 ### 2. Error Resolutions
-When an error is followed by a fix:
+When a fix follows an error:
 - Tool output contains error
 - Next few tool calls fix it
 - Same error type resolved similarly multiple times
@@ -48,7 +48,7 @@ When an error is followed by a fix:
 → Create instinct: "When encountering error X, try Y"
 
 ### 3. Repeated Workflows
-When the same sequence of tools is used multiple times:
+When you see the same sequence of tools several times:
 - Same tool sequence with similar inputs
 - File patterns that change together
 - Time-clustered operations
@@ -56,7 +56,7 @@ When the same sequence of tools is used multiple times:
 → Create workflow instinct: "When doing X, follow steps Y, Z, W"
 
 ### 4. Tool Preferences
-When certain tools are consistently preferred:
+When you see a consistent preference for certain tools:
 - Always uses Grep before Edit
 - Prefers Read over Bash cat
 - Uses specific Bash commands for certain tasks
@@ -132,7 +132,7 @@ When creating instincts, determine scope based on these heuristics:
 | Tool workflow preferences | **global** | "Grep before Edit", "Read before Write" |
 | Git practices | **global** | "Conventional commits", "Small focused commits" |
 
-**When in doubt, default to `scope: project`** — it's safer to be project-specific and promote later than to contaminate the global space.
+**When in doubt, default to `scope: project`**. It is safer to be project-specific and promote later than to contaminate the global space.
 
 ## Confidence Calculation
 
@@ -149,12 +149,12 @@ Confidence adjusts over time:
 
 ## Instinct Promotion (Project → Global)
 
-An instinct should be promoted from project-scoped to global when:
+Promote an instinct from project-scoped to global when:
 1. The **same pattern** (by id or similar trigger) exists in **2+ different projects**
 2. Each instance has confidence **>= 0.8**
 3. The domain is in the global-friendly list (security, general-best-practices, workflow)
 
-Promotion is handled by the `instinct-cli.py promote` command or the `/evolve` analysis.
+The `instinct-cli.py promote` command or the `/evolve` analysis handles promotion.
 
 ## Important Guidelines
 
@@ -190,9 +190,9 @@ Analysis:
 
 ## Integration with Skill Creator
 
-When instincts are imported from Skill Creator (repo analysis), they have:
+When you import instincts from Skill Creator (repo analysis), they have:
 - `source: "repo-analysis"`
 - `source_repo: "https://github.com/..."`
 - `scope: "project"` (since they come from a specific repo)
 
-These should be treated as team/project conventions with higher initial confidence (0.7+).
+Treat these as team/project conventions with higher initial confidence (0.7+).

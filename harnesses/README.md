@@ -15,8 +15,8 @@ notes. The setup scripts symlink or copy these into place.
 ## Status
 
 `claude-code/` is the primary harness. The other directories are scaffolds: each README
-documents which files belong there and where they install. Real configs land as they
-are ported and sanitized.
+documents which files belong there and where they install. Real configs land when
+maintainers port and sanitize them.
 
 ## Adding a harness
 

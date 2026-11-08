@@ -1,12 +1,12 @@
 # External Libraries (CDN)
 
-Optional CDN libraries for cases where pure CSS/HTML isn't enough. Only include what the diagram actually needs — most diagrams need zero external JS.
+Optional CDN libraries for cases where pure CSS/HTML is not enough. Only include what the diagram actually needs. Most diagrams need zero external JS.
 
-## Mermaid.js — Diagramming Engine
+## Mermaid.js: Diagramming Engine
 
-Use for flowcharts, sequence diagrams, ER diagrams, state machines, mind maps, class diagrams, and any diagram where automatic node positioning and edge routing saves effort. Mermaid handles layout — you handle theming.
+Use for flowcharts, sequence diagrams, ER diagrams, state machines, mind maps, class diagrams, and any diagram where automatic node positioning and edge routing saves effort. Mermaid handles layout. You handle theming.
 
-Do NOT use for dashboards — CSS Grid card layouts with Chart.js look better for those. Data tables use `<table>` elements.
+Do NOT use for dashboards. CSS Grid card layouts with Chart.js look better for those. Data tables use `<table>` elements.
 
 **CDN:**
 ```html
@@ -17,7 +17,7 @@ Do NOT use for dashboards — CSS Grid card layouts with Chart.js look better fo
 </script>
 ```
 
-**With ELK layout** (required for `layout: 'elk'` — it's a separate package, not bundled in core):
+**With ELK layout** (required for `layout: 'elk'`, because it is a separate package, not bundled in core):
 ```html
 <script type="module">
   import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
@@ -28,11 +28,11 @@ Do NOT use for dashboards — CSS Grid card layouts with Chart.js look better fo
 </script>
 ```
 
-Without the ELK import and registration, `layout: 'elk'` silently falls back to dagre. Only import ELK when you actually need it — it adds significant bundle weight. Most simple diagrams render fine with dagre.
+Without the ELK import and registration, `layout: 'elk'` silently falls back to dagre. Only import ELK when you actually need it. It adds significant bundle weight. Most simple diagrams render fine with dagre.
 
 ### Deep Theming
 
-Always use `theme: 'base'` — it's the only theme where all `themeVariables` are fully customizable. The built-in themes (`default`, `dark`, `forest`, `neutral`) ignore most variable overrides.
+Always use `theme: 'base'`. It is the only theme where all `themeVariables` are fully customizable. The built-in themes (`default`, `dark`, `forest`, `neutral`) ignore most variable overrides.
 
 ```html
 <script type="module">
@@ -72,7 +72,7 @@ Always use `theme: 'base'` — it's the only theme where all `themeVariables` ar
 
 ### CSS Overrides on Mermaid SVG
 
-Mermaid renders SVG. Override its classes for pixel-perfect control that `themeVariables` can't reach:
+Mermaid renders SVG. Override its classes for pixel-perfect control that `themeVariables` cannot reach:
 
 ```css
 /* Container — see css-patterns.md "Mermaid Zoom Controls" for the full zoom pattern */
@@ -142,11 +142,11 @@ Mermaid renders SVG. Override its classes for pixel-perfect control that `themeV
 
 ### classDef and style Gotchas
 
-`classDef` values and per-node `style` directives are static text inside `<pre>` — they can't use CSS variables or JS ternaries. Two rules:
+`classDef` values and per-node `style` directives are static text inside `<pre>`. They cannot use CSS variables or JS ternaries. Two rules:
 
 1. **Never set `color:` in classDef or per-node `style` directives.** It hardcodes a text color that breaks in the opposite color scheme. This applies to both `classDef highlight fill:...,color:#2c2a25` and `style I fill:...,color:#2c2a25`. Let the CSS overrides above handle text color via `var(--text)`.
 
-2. **Use semi-transparent fills (8-digit hex) for node backgrounds.** They layer over whatever Mermaid's base theme background is, producing a tint that works in both light and dark modes. Use `20`–`44` alpha for subtle, `55`–`77` for prominent:
+2. **Use semi-transparent fills (8-digit hex) for node backgrounds.** They layer over the Mermaid base theme background. This produces a tint that works in both light and dark modes. Use `20` to `44` alpha for subtle, `55` to `77` for prominent:
 
 ```
 classDef highlight fill:#b5761433,stroke:#b57614,stroke-width:2px
@@ -158,14 +158,14 @@ classDef muted fill:#7c6f6411,stroke:#7c6f6444,stroke-width:1px
 Mermaid uses certain characters for shape syntax. Node labels containing these characters cause syntax errors unless quoted.
 
 **Shape characters to watch:**
-- `[/text/]` — parallelogram
-- `[\text\]` — trapezoid (alt)
-- `[/text\]` — trapezoid
-- `[\text/]` — trapezoid (alt)
-- `[(text)]` — cylindrical
-- `[[text]]` — subroutine
-- `((text))` — circle
-- `{{text}}` — hexagon
+- `[/text/]`: parallelogram
+- `[\text\]`: trapezoid (alt)
+- `[/text\]`: trapezoid
+- `[\text/]`: trapezoid (alt)
+- `[(text)]`: cylindrical
+- `[[text]]`: subroutine
+- `((text))`: circle
+- `{{text}}`: hexagon
 
 **If your node label starts with `/`, `\`, `(`, or `{`, wrap it in quotes:**
 
@@ -188,14 +188,14 @@ UI -->|'Use as Reference'| RET
 UI -->|Use as Reference| RET
 ```
 
-Avoid opaque light fills like `fill:#fefce8` — they render as bright boxes in dark mode.
+Avoid opaque light fills like `fill:#fefce8`. They render as bright boxes in dark mode.
 
 ### stateDiagram-v2 Label Limitations
 
 State diagram transition labels have a strict parser. Avoid:
-- `<br/>` — only works in flowcharts; causes a parse error in state diagrams
-- Parentheses in labels — `cancel()` can confuse the parser
-- Multiple colons — the first `:` is the label delimiter; extra colons in the label text may break parsing
+- `<br/>`: works only in flowcharts. It causes a parse error in state diagrams
+- Parentheses in labels: `cancel()` can confuse the parser
+- Multiple colons: the first `:` is the label delimiter. Extra colons in the label text may break parsing
 
 If you need multi-line labels or special characters, use a `flowchart` instead of `stateDiagram-v2`. Flowcharts support quoted labels (`|"label with: special chars"|`) and `<br/>` for line breaks.
 
@@ -226,7 +226,7 @@ A[handleRequest] --> B[query users]
 userSvc["User Service"] --> authSvc["Auth Service"]
 ```
 
-**Max 10-12 nodes per Mermaid diagram.** Beyond that, readability collapses even with zoom controls and increased fontSize. For complex architectures (15+ elements), use the **hybrid pattern**: a simple 5-8 node Mermaid overview showing module relationships, followed by CSS Grid cards with detailed function lists. Never cram everything into one diagram. Use `subgraph` blocks to group related nodes when under the limit:
+**Max 10-12 nodes per Mermaid diagram.** Beyond that, readability collapses even with zoom controls and increased fontSize. For complex architectures (15+ elements), use the **hybrid pattern**. Build a simple 5-8 node Mermaid overview of module relationships. Follow it with CSS Grid cards with detailed function lists. Never cram everything into one diagram. Use `subgraph` blocks to group related nodes when under the limit:
 
 ```
 subgraph Auth
@@ -248,9 +248,9 @@ Auth --> API
 | `--x` | Cross | Rejected or blocked |
 | `-->\|label\|` | Labeled | Decision branches, data descriptions |
 
-**Escape pipes in labels.** If a label contains a literal `|`, use `#124;` (HTML entity) or rephrase to avoid it — pipes delimit edge labels in flowcharts.
+**Escape pipes in labels.** If a label contains a literal `|`, use `#124;` (HTML entity) or rephrase to avoid it. Pipes delimit edge labels in flowcharts.
 
-**Sequence diagram messages must be plain text.** Unlike flowchart labels, sequence diagram messages (the text after `:`) cannot be quoted or escaped. Curly braces `{}`, square brackets `[]`, angle brackets `<>`, and `&` will silently break the parser and the entire diagram renders as raw text. Write human-readable descriptions, not code:
+**Sequence diagram messages must be plain text.** Unlike flowchart labels, sequence diagram messages (the text after `:`) do not accept quoting or escaping. Curly braces `{}`, square brackets `[]`, angle brackets `<>`, and `&` will silently break the parser and the entire diagram renders as raw text. Write human-readable descriptions, not code:
 
 ```
 %% WRONG — parser chokes on braces, brackets, ampersand
@@ -264,7 +264,7 @@ B->>B: User removes query 2, keeps 1 and 3
 B->>S: POST /submit with selected indices
 ```
 
-**Don't mix diagram syntax.** Each diagram type has its own syntax. `-->` works in flowcharts but not in sequence diagrams (`->>` instead). `:::className` works in flowcharts but not in ER diagrams. When in doubt, check the examples below for correct syntax per type.
+**Do not mix diagram syntax.** Each diagram type has its own syntax. Use `->>` in sequence diagrams, because `-->` works only in flowcharts. `:::className` works in flowcharts but not in ER diagrams. When in doubt, check the examples below for correct syntax per type.
 
 ### Layout Direction: TD vs LR
 
@@ -417,7 +417,7 @@ graph TD
 </pre>
 ```
 
-Do NOT use native `C4Context` / `C4Container` syntax — it hardcodes sharp corners, its own font, and inline colors that ignore `themeVariables`. Use `graph TD` + `subgraph` for C4 boundaries instead; it inherits all theme settings automatically.
+Do NOT use native `C4Context` / `C4Container` syntax. It hardcodes sharp corners, its own font, and inline colors that ignore `themeVariables`. Use `graph TD` + `subgraph` for C4 boundaries instead. It inherits all theme settings automatically.
 
 ### Which Mermaid Diagram Type?
 
@@ -435,18 +435,18 @@ Quick-reference for choosing the right Mermaid syntax:
 
 ### Dark Mode Handling
 
-Mermaid initializes once — it can't reactively switch themes. Read the preference at load time inside your `<script type="module">`:
+Mermaid initializes once. It cannot reactively switch themes. Read the preference at load time inside your `<script type="module">`:
 
 ```javascript
 const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 // Use isDark to pick light or dark values in themeVariables
 ```
 
-The CSS overrides on the container (`.mermaid-wrap`) and page will still respond to `prefers-color-scheme` normally — only the Mermaid SVG internals are static.
+The CSS overrides on the container (`.mermaid-wrap`) and page will still respond to `prefers-color-scheme` normally. Only the Mermaid SVG internals are static.
 
-## Chart.js — Data Visualizations
+## Chart.js: Data Visualizations
 
-Use for bar charts, line charts, pie/doughnut charts, radar charts, and other data-driven visualizations in dashboard-type diagrams. Overkill for static numbers — use pure SVG/CSS for simple progress bars and sparklines.
+Use for bar charts, line charts, pie/doughnut charts, radar charts, and other data-driven visualizations in dashboard-type diagrams. Overkill for static numbers. Use pure SVG/CSS for simple progress bars and sparklines.
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
@@ -502,7 +502,7 @@ Wrap the canvas in a styled container:
 }
 ```
 
-## anime.js — Orchestrated Animations
+## anime.js: Orchestrated Animations
 
 Use when a diagram has 10+ elements and you want a choreographed entrance sequence (staggered reveals, path drawing, count-up numbers). For simpler diagrams, CSS `animation-delay` staggering is sufficient.
 
@@ -545,7 +545,7 @@ Use when a diagram has 10+ elements and you want a choreographed entrance sequen
 </script>
 ```
 
-When using anime.js, set initial opacity to 0 in CSS so elements don't flash before the animation:
+When using anime.js, set initial opacity to 0 in CSS so elements do not flash before the animation:
 ```css
 .ve-card { opacity: 0; }
 
@@ -554,15 +554,15 @@ When using anime.js, set initial opacity to 0 in CSS so elements don't flash bef
 }
 ```
 
-## Google Fonts — Typography
+## Google Fonts: Typography
 
-Always load with `display=swap` for fast rendering. Pick a distinctive pairing — body + mono at minimum, optionally a display font for the title.
+Always load with `display=swap` for fast rendering. Pick a distinctive pairing: body + mono at minimum, optionally a display font for the title.
 
 **FORBIDDEN as `--font-body` (AI slop signals):**
-- Inter — the single most overused AI default font
-- Roboto — generic Android/Google default
-- Arial, Helvetica — system defaults with no character
-- system-ui alone without a named font — signals zero design intent
+- Inter: the single most overused AI default font
+- Roboto: generic Android/Google default
+- Arial, Helvetica: system defaults with no character
+- system-ui alone without a named font: signals zero design intent
 
 ```html
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -578,7 +578,7 @@ Define as CSS variables for easy reference:
 }
 ```
 
-**Font pairings** (rotate — never use the same pairing twice in a row):
+**Font pairings** (rotate: never use the same pairing twice in a row):
 
 | Body / Headings | Mono / Labels | Feel | Use for |
 |---|---|---|---|
@@ -594,9 +594,9 @@ Define as CSS variables for easy reference:
 | Geist | Geist Mono | Vercel-inspired, sharp | Modern API docs |
 | Red Hat Display | Red Hat Mono | Cohesive family | System overviews |
 | Libre Franklin | Inconsolata | Classic, reliable | Data-dense tables |
-| Playfair Display | Roboto Mono | Elegant contrast | Executive summaries |
+| Playfair Display | Roboto Mono | Serif and mono contrast | Executive summaries |
 
-The first 5 pairings are recommended for most use cases. Vary across consecutive diagrams.
+The first 5 pairings suit most use cases. Vary across consecutive diagrams.
 
 ### Typography by Content Voice
 
@@ -609,4 +609,4 @@ For prose-heavy pages (documentation, articles, essays), match typography to the
 | **Bold / Contemporary** | Bricolage Grotesque, Space Grotesk, DM Sans | Product pages, feature announcements |
 | **Minimal / Focused** | Source Serif 4 + Source Sans 3, Karla + Inconsolata | Tutorials, how-tos, focused reading |
 
-**Literata** deserves special mention — it has optical sizing designed specifically for screen reading. Google's answer to Georgia, but modernized.
+**Literata** deserves special mention. It has optical sizing designed specifically for screen reading. Google's answer to Georgia, but modernized.

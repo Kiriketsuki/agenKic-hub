@@ -5,13 +5,13 @@ description: "Spawns parallel agents in isolated worktrees to fix bugs using com
 
 ## Context
 
-When a bug or failing test is identified -- either directly by the user or from a
-council-result.json -- this skill spawns 3 agents in isolated git worktrees. Each
+When the user names a bug or failing test, or a
+council-result.json identifies one, this skill spawns 3 agents in isolated git worktrees. Each
 agent takes a different fix strategy, implements it, and runs the test suite. The
 orchestrator compares results and presents the winning approach.
 
 This eliminates the single-agent guess-and-iterate loop. Three strategies race in
-parallel; the best one wins.
+parallel. The best one wins.
 
 ## Triggers
 
@@ -60,7 +60,7 @@ If `--test` was not provided, detect the test framework:
 | `Cargo.toml` | `cargo test` |
 | `Makefile` with `test` target | `make test` |
 
-If no test framework is detected, ask the user: "No test framework detected. What
+If you detect no test framework, ask the user: "No test framework detected. What
 command should I use to validate fixes?"
 
 ### Step 3 -- Define Strategies
@@ -161,7 +161,7 @@ If NO strategy passes:
    - Common failure points across strategies
 2. Spawn a 4th "synthesis" agent that receives all three agents' approaches and errors:
    ```
-   Three fix strategies were attempted and all failed. Here is what each tried
+   Three fix strategies ran and all failed. Here is what each tried
    and where it broke:
    [Agent 1 approach + error]
    [Agent 2 approach + error]

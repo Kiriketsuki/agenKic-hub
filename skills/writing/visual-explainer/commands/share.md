@@ -17,16 +17,16 @@ Upload a generated HTML file to the AutoConnect docs server, organized by reposi
 
 ## Flags
 
-- `--repo <name>` — Target repo directory. One of: `AutoConnect`, `StandManagement`, `BHAManagement`, `FleetManagement`, `RemoteSupervisor`. If omitted, detect from `$PWD`.
-- `--name <custom-name>` — Override the filename on the server (default: use the source filename).
+- `--repo <name>`: Target repo directory. One of: `AutoConnect`, `StandManagement`, `BHAManagement`, `FleetManagement`, `RemoteSupervisor`. If omitted, detect from `$PWD`.
+- `--name <custom-name>`: Override the filename on the server (default: use the source filename).
 
 ## Behavior
 
-1. **Locate the file.** If no path is given, find the most recently modified `.html` file in `/tmp/visual-explainer/`.
+1. **Locate the file.** If the user gives no path, find the most recently modified `.html` file in `/tmp/visual-explainer/`.
 
 2. **Determine the repo.** In priority order:
    - Use `--repo` flag if provided
-   - Detect from `$PWD` — if the current directory is under your work repos root (for example `~/work/<RepoName>`), use that repo name
+   - Detect from `$PWD`. If the current directory is under your work repos root (for example `~/work/<RepoName>`), use that repo name
    - If neither works, ask the user which repo this belongs to
 
 3. **Upload via SCP.** Transfer the file to the per-repo directory:
@@ -76,7 +76,7 @@ The root `index.html` dynamically reads each repo's directory listing and presen
 - **Upload base**: `~/autoconnect_docs/ve-uploads/<repo>/`
 - **Serve base**: `http://192.168.1.29:8081/<repo>/`
 - **Auth**: `sg-server-user` / `B!lt0n1213` (via sshpass)
-- **Index**: `http://192.168.1.29:8081/` — root index with all repos
+- **Index**: `http://192.168.1.29:8081/`: root index with all repos
 
 ## Valid Repo Names
 

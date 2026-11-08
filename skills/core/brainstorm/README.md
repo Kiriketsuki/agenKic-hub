@@ -18,16 +18,16 @@ Collaborative design exploration before implementation. The skill understands th
 | 2 | Artifact tool, one self-contained HTML page | The user must see a rendered layout, mockup or side-by-side | One tool call, no process, the page persists at a URL |
 | 3 | `scripts/start-server.sh` live server | Several rounds of iterate-and-click on the same surface | A background process, a port, a lifecycle to clean up |
 
-## Which file gets read when
+## When the skill reads each file
 
-- `SKILL.md` — always.
-- `visuals.md` — when a visual moment arrives.
-- `scripts/SERVER.md` — only at rung 3, before starting the server.
+- `SKILL.md`: always.
+- `visuals.md`: when a visual moment arrives.
+- `scripts/SERVER.md`: only at rung 3, before starting the server.
 
 ## Environment
 
-- `BRAINSTORM_NODE` — overrides node resolution in `scripts/start-server.sh`.
+- `BRAINSTORM_NODE`: overrides node resolution in `scripts/start-server.sh`.
 
 ## Changes
 
-`visual-companion.md` became `visuals.md`, with the operational server detail split out to `scripts/SERVER.md`. `spec-document-reviewer-prompt.md` was removed as unreferenced.
+`visual-companion.md` became `visuals.md`, with the operational server detail split out to `scripts/SERVER.md`. The maintainer removed `spec-document-reviewer-prompt.md` as unreferenced.

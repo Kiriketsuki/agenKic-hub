@@ -1,15 +1,15 @@
-# Feature: Canon Hub Supercharge
+# Feature: Canon Hub Upgrade
 
 ## Overview
 
 **User Story**: As the hub author, I want the canon hub to install my full
 environment, skills in groups, external rice components, and a guided
-onboarding path, so that a fresh machine reaches my complete setup from one
+onboarding path. Then a fresh machine reaches my complete setup from one
 entry point.
 
 **Problem**: The canon hub has a flat 23-skill tree with one all-or-nothing
-manifest, a statusline that is only a README pointer to chrysaki-claude, no
-link to the dots or chrysaki repos, and no onboarding path. The Aurrigo hub
+manifest. Its statusline is only a README pointer to chrysaki-claude. It has no
+link to the dots or chrysaki repos. It has no onboarding path. The Aurrigo hub
 now carries a richer, proven onboarding stack that the canon hub lacks.
 
 **Out of Scope**: Any change to aurrigo-agentic-hub (frozen donor). Any sync
@@ -20,10 +20,10 @@ repos stay sources of truth). A Chrysaki restyle of the onboarding deck.
 ## Success Condition
 
 > This feature is complete when a fresh Linux or macOS machine, using only
-> canon's README.md and docs/WALKTHROUGH.md, installs chosen skill groups and
-> external components (statusline, tmux theme, dots) through setup.sh,
-> attaches and detaches a tmux session, opens the command palette, and
-> completes a first skill run, unaided.
+> canon's README.md and docs/WALKTHROUGH.md, installs chosen skill groups.
+> It also installs external components (statusline, tmux theme, dots) through setup.sh.
+> The same machine then attaches and detaches a tmux session.
+> It opens the command palette and completes a first skill run, unaided.
 
 ## Open Questions
 
@@ -122,7 +122,7 @@ public.
 ## Acceptance Scenarios
 
 ```gherkin
-Feature: Canon Hub Supercharge
+Feature: Canon Hub Upgrade
   As the hub author
   I want grouped skills, external components, and a guided onboarding path
   So that a fresh machine reaches my complete setup from one entry point
