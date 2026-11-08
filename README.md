@@ -152,6 +152,7 @@ Feel none of these? Install nothing.
 | [agent-route](skills/core/agent-route/) | Recommend the right subagent type for a task |
 | [brainstorm](skills/core/brainstorm/) | Collaborative design exploration before implementation, one question at a time |
 | [brainstorm-grill](skills/core/brainstorm-grill/) | The relentless variant: interrogates a plan along the decision-tree frontier |
+| [grill-me](skills/core/grill-me/) | Grills a plan until every decision is settled, then writes a brief.md decision record and stops |
 | [continuous-learning-v2](skills/ops/continuous-learning-v2/) | Instinct-based learning system that observes sessions via hooks and evolves instincts into skills |
 | [context-handoff](skills/core/context-handoff/) | Write a session handoff before context runs out |
 | [context-resume](skills/core/context-resume/) | Resume work from a previous session handoff |
