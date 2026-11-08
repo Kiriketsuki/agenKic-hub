@@ -126,7 +126,7 @@ B	124	task/124-docs	docs
 ```
 
 A header `id<TAB>issue<TAB>branch<TAB>setup` is optional. Blank lines and lines
-starting with `#` are ignored. IDs must be unique. Use letters, digits, `_`, or
+starting with `#` do not count. IDs must be unique. Use letters, digits, `_`, or
 `-`, with a letter or digit first. Each selected ID needs a nonempty UTF-8 brief.
 
 A brief should state the task, allowed files, excluded files, tests, and reporting
@@ -163,7 +163,7 @@ Keep briefs short enough for the operating system's argument-size limit.
 
 | Profile | Command | Use when |
 | --- | --- | --- |
-| `none` | No command | No dependency setup is needed |
+| `none` | No command | No dependency setup required |
 | `docs` | No command | The task only changes documentation |
 | `uv` | `uv sync --locked` | The repository has a current `uv.lock` |
 | `npm` | `npm ci` | The repository has a current npm lockfile |

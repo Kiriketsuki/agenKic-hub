@@ -18,13 +18,13 @@ An architecture question is a fenced mermaid block that costs zero tool calls, n
 
 This test applies to all three rungs. Stay in the terminal when the content is text or tabular:
 
-- **Requirements and scope questions** — "what does X mean?", "which features are in scope?"
-- **Conceptual A/B/C choices** — picking between approaches described in words
-- **Tradeoff lists** — pros/cons, comparison tables
-- **Technical decisions** — API design, data modeling, architectural approach selection
-- **Clarifying questions** — anything where the answer is words, not a visual preference
+- **Requirements and scope questions**: "what does X mean?", "which features are in scope?"
+- **Conceptual A/B/C choices**: picking between approaches described in words
+- **Tradeoff lists**: pros/cons, comparison tables
+- **Technical decisions**: API design, data modeling, architectural approach selection
+- **Clarifying questions**: anything where the answer is words, not a visual preference
 
-A question *about* a UI topic is not automatically a visual question. "What kind of wizard do you want?" is conceptual — use the terminal. "Which of these wizard layouts feels right?" is visual — climb the ladder.
+A question *about* a UI topic is not automatically a visual question. "What kind of wizard do you want?" is conceptual, so use the terminal. "Which of these wizard layouts feels right?" is visual, so climb the ladder.
 
 ## Rung 2 recipe
 
@@ -36,7 +36,7 @@ Write one self-contained HTML file, then publish it with the Artifact tool. Load
 - 2 to 4 options per page. Explain the question on the page itself.
 - Iterate by editing the same file and republishing. The URL stays stable.
 
-No click capture, no live reload, no process, no cleanup. This covers most of what the live server was built for.
+No click capture, no live reload, no process, no cleanup. This covers most of what the live server does.
 
 ## Climbing to rung 3
 

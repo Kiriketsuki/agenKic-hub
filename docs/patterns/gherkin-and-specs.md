@@ -6,7 +6,7 @@ The repo's [feature-spec skill](https://github.com/Kiriketsuki/agenKic-hub/blob/
 
 Gherkin is a plain-text language for describing software behavior as concrete examples. Each example states a starting condition, an action, and an expected outcome. The format is readable by anyone, and test frameworks such as Cucumber can execute it directly.
 
-A Gherkin file is built from a few keywords.
+A few keywords make up a Gherkin file.
 
 ### Feature
 
@@ -83,7 +83,7 @@ MoSCoW is a prioritisation scheme. The name comes from its four buckets:
 | Must-Have | The feature fails without it. Each entry carries an acceptance condition. |
 | Should-Have | Important, but the feature ships without it if time runs out. |
 | Could-Have (Nice-to-Have) | Desirable extras. First to be cut. |
-| Won't-Have | Explicitly out of scope, written down to prevent scope creep. |
+| Will-Not-Have | Explicitly out of scope, written down to prevent scope creep. |
 
 The value is in the disagreements it forces early. When everything is a Must-Have, nothing is.
 
@@ -103,6 +103,6 @@ The skill interviews the user section by section and fills a template. A finishe
 1. Read the success condition first. It is the contract.
 2. Check the Must-Have list. That is what the implementation must deliver.
 3. Read the Gherkin scenarios as the test plan. Each scenario should trace to at least one automated test.
-4. Treat Won't-Have and out-of-scope entries as binding. Work that touches them needs a new spec.
+4. Treat Will-Not-Have and out-of-scope entries as binding. Work that touches them needs a new spec.
 
 The [implement-spec skill](https://github.com/Kiriketsuki/agenKic-hub/blob/main/skills/core/implement-spec/SKILL.md) consumes these specs and turns the scenarios into tasks for subagents.

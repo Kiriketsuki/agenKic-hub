@@ -15,7 +15,7 @@ Generate self-contained HTML files for technical diagrams, visualizations, and d
 
 **Table rendering is opt-in.** Only generate HTML tables when the user explicitly requests visual or HTML output. Do not generate HTML pages proactively for terminal output -- present data as plain text in the terminal unless asked.
 
-**Design system integration.** This skill works alongside the `polish`, `normalize`, and `teach-impeccable` skills. If a project has a `## Design Context` section in its CLAUDE.md (written by `teach-impeccable`), read it before choosing aesthetics -- adapt the palette, typography, and tone to match the project's established design language. When no project-level design context exists, use the aesthetic directions below.
+**Design system integration.** This skill works alongside the `polish`, `normalize`, and `teach-impeccable` skills. If a project has a `## Design Context` section in its CLAUDE.md (written by `teach-impeccable`), read it before choosing aesthetics. Adapt the palette, typography, and tone to match the project's established design language. When no project-level design context exists, use the aesthetic directions below.
 
 ## Available Commands
 
@@ -36,9 +36,9 @@ Detailed prompt templates in `./commands/`. Invoke as `/visual-explainer:diff-re
 
 ### 1. Think (5 seconds, not 5 minutes)
 
-Before writing HTML, commit to a direction. Don't default to "dark theme with blue accents" every time.
+Before writing HTML, commit to a direction. Do not default to "dark theme with blue accents" every time.
 
-**Check for project design context first.** If the project has a `## Design Context` section in CLAUDE.md (written by the `teach-impeccable` skill), use its palette, typography preferences, and design principles as the starting point. The aesthetic directions below are fallbacks for projects without established design language.
+**Check for project design context first.** If the project has a `## Design Context` section in CLAUDE.md (written by the `teach-impeccable` skill), use it. Take its palette, typography preferences, and design principles as the starting point. The aesthetic directions below are fallbacks for projects without established design language.
 
 **Visual is always default.** Even essays, blog posts, and articles get visual treatment -- extract structure into cards, diagrams, grids, tables.
 
@@ -59,7 +59,7 @@ For prose accents, see "Prose Page Elements" in `./references/css-patterns.md`. 
 - Monochrome terminal (green/amber on near-black, monospace everything, CRT glow optional)
 
 **Flexible aesthetics (use with caution):**
-- IDE-inspired (borrow a real, named color scheme: Dracula, Nord, Catppuccin Mocha/Latte, Solarized Dark/Light, Gruvbox, One Dark, Rose Pine) -- commit to the actual palette, don't approximate
+- IDE-inspired (borrow a real, named color scheme: Dracula, Nord, Catppuccin Mocha/Latte, Solarized Dark/Light, Gruvbox, One Dark, Rose Pine) -- commit to the actual palette, do not approximate
 - Data-dense (small type, tight spacing, maximum information, muted colors)
 
 **Explicitly forbidden:**
@@ -67,15 +67,15 @@ For prose accents, see "Prose Page Elements" in `./references/css-patterns.md`. 
 - Gradient mesh (pink/purple/cyan blobs) -- too generic
 - Any combination of Inter font + violet/indigo accents + gradient text
 
-Vary the choice each time. If the last diagram was dark and technical, make the next one light and editorial. The swap test: if you replaced your styling with a generic dark theme and nobody would notice the difference, you haven't designed anything.
+Vary the choice each time. If the last diagram was dark and technical, make the next one light and editorial. The swap test: if you replaced your styling with a generic dark theme and nobody would notice the difference, you have not designed anything.
 
 ### 2. Structure
 
-**Read the reference material** before generating. Don't memorize it -- read it each time to absorb the patterns.
+**Read the reference material** before generating. Do not memorize it -- read it each time to absorb the patterns.
 - For text-heavy architecture overviews (card content matters more than topology): read `./templates/architecture.html`
 - For flowcharts, sequence diagrams, ER, state machines, mind maps, class diagrams, C4: read `./templates/mermaid-flowchart.html`
 - For data tables, comparisons, audits, feature matrices: read `./templates/data-table.html`
-- For slide deck presentations (when `--slides` flag is present or `/generate-slides` is invoked): read `./templates/slide-deck.html` and `./references/slide-patterns.md`
+- For slide deck presentations (when the `--slides` flag is present or the user invokes `/generate-slides`): read `./templates/slide-deck.html` and `./references/slide-patterns.md`
 - For prose-heavy publishable pages (READMEs, articles, blog posts, essays): read the "Prose Page Elements" section in `./references/css-patterns.md` and "Typography by Content Voice" in `./references/libraries.md`
 
 **For CSS/layout patterns and SVG connectors**, read `./references/css-patterns.md`.
@@ -97,7 +97,7 @@ Vary the choice each time. If the last diagram was dark and technical, make the 
 | Class diagram | **Mermaid** | Inheritance, composition, aggregation lines with automatic routing |
 | C4 architecture | **Mermaid** | Use `graph TD` + `subgraph` for C4 (not native `C4Context` -- it ignores themes) |
 | Data table | HTML `<table>` | Semantic markup, accessibility, copy-paste behavior |
-| Timeline | CSS (central line + cards) | Simple linear layout doesn't need a layout engine |
+| Timeline | CSS (central line + cards) | Simple linear layout does not need a layout engine |
 | Dashboard | CSS Grid + Chart.js | Card grid with embedded charts |
 
 **Mermaid theming:** Always use `theme: 'base'` with custom `themeVariables` so colors match your page palette. Use `layout: 'elk'` for complex graphs (requires the `@mermaid-js/layout-elk` package -- see `./references/libraries.md` for the CDN import). Override Mermaid's SVG classes with CSS for pixel-perfect control. See `./references/libraries.md` for full theming guide.
@@ -106,13 +106,13 @@ Vary the choice each time. If the last diagram was dark and technical, make the 
 
 **Never use bare `<pre class="mermaid">`.** It renders but has no zoom/pan controls -- diagrams become tiny and unusable. Always use the full `diagram-shell` pattern from `templates/mermaid-flowchart.html`: the HTML structure (`.diagram-shell` > `.mermaid-wrap` > `.zoom-controls` + `.mermaid-viewport` > `.mermaid-canvas`), the CSS, and the ~200-line JS module for zoom/pan/fit. Copy it wholesale.
 
-**Mermaid scaling:** Diagrams with 10+ nodes render too small by default. For 10-12 nodes, increase `fontSize` in themeVariables to 18-20px and set `INITIAL_ZOOM` to 1.5-1.6. For 15+ elements, don't try to scale -- use the hybrid pattern instead (simple Mermaid overview + CSS Grid cards). See "Architecture / System Diagrams" below.
+**Mermaid scaling:** Diagrams with 10+ nodes render too small by default. For 10-12 nodes, increase `fontSize` in themeVariables to 18-20px and set `INITIAL_ZOOM` to 1.5-1.6. For 15+ elements, do not try to scale -- use the hybrid pattern instead (simple Mermaid overview + CSS Grid cards). See "Architecture / System Diagrams" below.
 
 **Mermaid layout direction:** Prefer `flowchart TD` (top-down) over `flowchart LR` (left-to-right) for complex diagrams. LR spreads horizontally and makes labels unreadable when there are many nodes. Use LR only for simple 3-4 node linear flows. See `./references/libraries.md` "Layout Direction: TD vs LR".
 
 **Mermaid line breaks in flowchart labels:** Use `<br/>` in quoted flowchart labels for multi-line text. Do not use escaped `\n` labels -- Mermaid does not treat them as line breaks. The `diagram-shell` render code inserts Mermaid's SVG via the lenient HTML parser (`DOMParser(..., 'text/html')`), which accepts the `<br>` markup Mermaid emits inside `<foreignObject>` labels. Never insert Mermaid output with the strict `image/svg+xml` parser or `canvas.innerHTML` -- see "Mermaid SVG insertion" in `./references/css-patterns.md`.
 
-**Mermaid CSS class collision constraint:** Never define `.node` as a page-level CSS class. Mermaid.js uses `.node` internally on SVG `<g>` elements with `transform: translate(x, y)` for positioning. Page-level `.node` styles (hover transforms, box-shadows) leak into diagrams and break layout. Use the namespaced `.ve-card` class for card components instead. The only safe way to style Mermaid's `.node` is scoped under `.mermaid` (e.g., `.mermaid .node rect`).
+**Mermaid CSS class collision constraint:** Never define `.node` as a page-level CSS class. Mermaid.js uses `.node` internally on SVG `<g>` elements with `transform: translate(x, y)` for positioning. Page-level `.node` styles (hover transforms, box-shadows) leak into diagrams and break layout. Use the namespaced `.ve-card` class for card components instead. The only safe way to style Mermaid's `.node` is to scope it under `.mermaid` (e.g., `.mermaid .node rect`).
 
 ### 3. Style
 
@@ -154,13 +154,13 @@ Put your primary aesthetic in `:root` and the alternate in the media query:
 @media (prefers-color-scheme: light) { :root { /* light values */ } }
 ```
 
-**Surfaces whisper, they don't shout.** Build depth through subtle lightness shifts (2-4% between levels), not dramatic color changes. Borders should be low-opacity rgba (`rgba(255,255,255,0.08)` in dark mode, `rgba(0,0,0,0.08)` in light) -- visible when you look, invisible when you don't.
+**Surfaces whisper, they do not shout.** Build depth through subtle lightness shifts (2-4% between levels), not dramatic color changes. Borders should be low-opacity rgba (`rgba(255,255,255,0.08)` in dark mode, `rgba(0,0,0,0.08)` in light) -- visible when you look, invisible when you do not.
 
-**Backgrounds create atmosphere.** Don't use flat solid colors for the page background. Subtle gradients, faint grid patterns via CSS, or gentle radial glows behind focal areas. The background should feel like a space, not a void.
+**Backgrounds create atmosphere.** Do not use flat solid colors for the page background. Subtle gradients, faint grid patterns via CSS, or gentle radial glows behind focal areas. The background should feel like a space, not a void.
 
 **Visual weight signals importance.** Not every section deserves equal visual treatment. Executive summaries and key metrics should dominate the viewport on load (larger type, more padding, subtle accent-tinted background zone). Reference sections (file maps, dependency lists, decision logs) should be compact and stay out of the way. Use `<details>/<summary>` for sections that are useful but not primary -- the collapsible pattern is in `./references/css-patterns.md`.
 
-**Surface depth creates hierarchy.** Vary card depth to signal what matters. Hero sections get elevated shadows and accent-tinted backgrounds (`ve-card--hero` pattern). Body content stays flat (default `.ve-card`). Code blocks and secondary content feel recessed (`ve-card--recessed`). See the depth tiers in `./references/css-patterns.md`. Don't make everything elevated -- when everything pops, nothing does.
+**Surface depth creates hierarchy.** Vary card depth to signal what matters. Hero sections use elevated shadows and accent-tinted backgrounds (`ve-card--hero` pattern). Body content stays flat (default `.ve-card`). Code blocks and secondary content feel recessed (`ve-card--recessed`). See the depth tiers in `./references/css-patterns.md`. Do not make everything elevated -- when everything pops, nothing does.
 
 **Animation earns its place.** Staggered fade-ins on page load are almost always worth it -- they guide the eye through the diagram's hierarchy. Mix animation types by role: `fadeUp` for cards, `fadeScale` for KPIs and badges, `drawIn` for SVG connectors, `countUp` for hero numbers. Hover transitions on interactive-feeling elements make the diagram feel alive. Always respect `prefers-reduced-motion`. CSS transitions and keyframes handle most cases. For orchestrated multi-element sequences, anime.js via CDN is available (see `./references/libraries.md`).
 
@@ -169,13 +169,13 @@ Put your primary aesthetic in `:root` and the alternate in the media query:
 - Pulsing/breathing effects on static content
 - Continuous animations that run after page load (except for progress indicators)
 
-Keep animations purposeful: entrance reveals, hover feedback, and user-initiated interactions. Nothing should glow or pulse on its own.
+Keep animations purposeful: entrance reveals, hover feedback, and interactions the user starts. Nothing should glow or pulse on its own.
 
 ### 4. Deliver
 
 **Output location:** Two modes controlled by the `--publish` flag:
 - **Without `--publish`** (default): write to `/tmp/visual-explainer/` and open in browser. Output is ephemeral -- not tracked in git.
-- **With `--publish`**: write to `./docs/html/<type>/` relative to the current project root. The `<type>` subdirectory matches the command: `diagrams/`, `slides/`, `reviews/`, `recaps/`, `plans/`. This output is tracked in git and served by GitHub Pages if the `deploy-docs` workflow is configured.
+- **With `--publish`**: write to `./docs/html/<type>/` relative to the current project root. The `<type>` subdirectory matches the command: `diagrams/`, `slides/`, `reviews/`, `recaps/`, `plans/`. Git tracks this output, and GitHub Pages serves it if you configure the `deploy-docs` workflow.
 
 Use a descriptive filename based on content: `modem-architecture.html`, `pipeline-flow.html`, `schema-overview.html`.
 
@@ -183,7 +183,7 @@ Use a descriptive filename based on content: `modem-architecture.html`, `pipelin
 - Linux: `xdg-open <path>/filename.html`
 - macOS: `open <path>/filename.html`
 
-**Tell the user** the file path and whether it was written to the tracked `./docs/` directory or the temp location.
+**Tell the user** the file path and whether you wrote it to the tracked `./docs/` directory or the temp location.
 
 ## Diagram Types
 
@@ -192,12 +192,12 @@ Three approaches depending on complexity:
 
 **Simple topology (under 10 elements):** Use Mermaid. A `graph TD` with custom `themeVariables` produces readable diagrams with automatic edge routing.
 
-**Text-heavy overviews (under 15 elements):** CSS Grid with explicit row/column placement. Sections as rounded cards with colored borders and monospace labels. Vertical flow arrows between sections. The reference template at `./templates/architecture.html` demonstrates this pattern. Use when cards need descriptions, code references, tool lists, or other rich content that Mermaid nodes can't hold.
+**Text-heavy overviews (under 15 elements):** CSS Grid with explicit row/column placement. Sections as rounded cards with colored borders and monospace labels. Vertical flow arrows between sections. The reference template at `./templates/architecture.html` shows this pattern. Use when cards need descriptions, code references, tool lists, or other rich content that Mermaid nodes cannot hold.
 
-**Complex architectures (15+ elements):** Use the **hybrid pattern** -- a simple Mermaid overview (5-8 nodes showing module relationships) followed by detailed CSS Grid cards for each module's internals. This gives you visual topology AND readable details. The overview diagram uses module names with `<small>` tags for key function names. The cards below show full function lists with new/modified badges. Never try to cram 15+ elements into a single Mermaid diagram -- it will render unreadably small even with zoom controls.
+**Complex architectures (15+ elements):** Use the **hybrid pattern**. Start with a simple Mermaid overview (5-8 nodes showing module relationships). Follow it with detailed CSS Grid cards for each module's internals. This gives you visual topology AND readable details. The overview diagram uses module names with `<small>` tags for key function names. The cards below show full function lists with new/modified badges. Never try to cram 15+ elements into a single Mermaid diagram -- it will render unreadably small even with zoom controls.
 
 ### Flowcharts / Pipelines
-**Use Mermaid.** Automatic node positioning and edge routing produces proper diagrams with connecting lines, decision diamonds, and parallel branches. Prefer `graph TD` (top-down); use `graph LR` only for simple 3-4 node linear flows. Color-code node types with Mermaid's `classDef` or rely on `themeVariables` for automatic styling.
+**Use Mermaid.** Automatic node positioning and edge routing produces proper diagrams with connecting lines, decision diamonds, and parallel branches. Prefer `graph TD` (top-down). Use `graph LR` only for simple 3-4 node linear flows. Color-code node types with Mermaid's `classDef` or rely on `themeVariables` for automatic styling.
 
 ### Sequence Diagrams
 **Use Mermaid.** Lifelines, messages, activation boxes, notes, and loops all need automatic layout. Use Mermaid's `sequenceDiagram` syntax. Style actors and messages via CSS overrides on `.actor`, `.messageText`, `.activation` classes.
@@ -225,7 +225,7 @@ Three approaches depending on complexity:
 **Flowchart-as-C4 pattern:** Persons -> rounded nodes `(("Name"))`, systems -> rectangles `["Name"]`, databases -> cylinders `[("Name")]`, boundaries -> `subgraph` blocks, relationships -> labeled arrows `-->|"protocol"|`. Use `classDef` + `:::className` to visually differentiate external systems (e.g., dashed borders). This inherits `themeVariables`, `fontFamily`, and CSS overrides like every other Mermaid diagram.
 
 ### Data Tables / Comparisons / Audits
-Use a real `<table>` element -- not CSS Grid pretending to be a table. Tables get accessibility, copy-paste behavior, and column alignment for free. The reference template at `./templates/data-table.html` demonstrates all patterns below.
+Use a real `<table>` element -- not CSS Grid pretending to be a table. Tables get accessibility, copy-paste behavior, and column alignment for free. The reference template at `./templates/data-table.html` shows all patterns below.
 
 Layout patterns:
 - Sticky `<thead>` so headers stay visible when scrolling long tables
@@ -242,7 +242,7 @@ Status indicators (use styled `<span>` elements, never emoji):
 - Neutral/info: dim text or muted badge
 
 Cell content:
-- Wrap long text naturally -- don't truncate or force single-line
+- Wrap long text naturally -- do not truncate or force single-line
 - Use `<code>` for technical references within cells
 - Secondary detail text in `<small>` with dimmed color
 - Keep numeric columns right-aligned with `tabular-nums`
@@ -257,7 +257,7 @@ Card grid layout. Hero numbers large and prominent. Sparklines via inline SVG `<
 
 For visualizing implementation plans, extension designs, or feature specifications. The goal is **understanding the approach**, not reading the full source code.
 
-**Don't dump full files.** Displaying entire source files inline overwhelms the page and defeats the purpose of a visual explanation. Instead:
+**Do not dump full files.** Displaying entire source files inline overwhelms the page and defeats the purpose of a visual explanation. Instead:
 - Show **file structure with descriptions** -- list functions/exports with one-line explanations
 - Show **key snippets only** -- the 5-10 lines that illustrate the core logic
 - Use **collapsible sections** for full code if truly needed
@@ -286,14 +286,14 @@ When visualizing documentation, extract structure into visual elements:
 | Comparisons | Side-by-side panels or table |
 | Warnings/notes | Callout boxes |
 
-Don't just format the prose -- transform it. A feature list becomes a card grid. Install steps become a numbered flow. An API reference becomes a table.
+Do not just format the prose -- transform it. A feature list becomes a card grid. Install steps become a numbered flow. An API reference becomes a table.
 
 ### Prose Accent Elements
 
 Use these sparingly within visual pages to highlight key points or provide breathing room. See "Prose Page Elements" in `./references/css-patterns.md` for CSS patterns.
 
 - **Lead paragraph** -- larger intro text to set context before diving into cards/grids
-- **Pull quote** -- highlight a key insight; one per page maximum
+- **Pull quote** -- highlight a key insight. Use one per page maximum
 - **Callout box** -- warnings, tips, important notes
 - **Section divider** -- visual break between major sections
 
@@ -301,11 +301,11 @@ Use these sparingly within visual pages to highlight key points or provide breat
 
 ## Slide Deck Mode
 
-An alternative output format for presenting content as a magazine-quality slide presentation instead of a scrollable page. **Opt-in only** -- the agent generates slides when the user invokes `/generate-slides`, passes `--slides` to an existing prompt (e.g., `/diff-review --slides`), or explicitly asks for a slide deck. Never auto-select slide format.
+An alternative output format presents content as a slide presentation instead of a scrollable page. **Opt-in only.** The agent generates slides in only three cases. The user invokes `/generate-slides`, passes `--slides` to an existing prompt (for example `/diff-review --slides`), or explicitly asks for a slide deck. Never auto-select slide format.
 
 **Before generating slides**, read `./references/slide-patterns.md` (engine CSS, slide types, transitions, nav chrome, presets) and `./templates/slide-deck.html` (reference template showing all 10 types). Also read `./references/css-patterns.md` for shared patterns and `./references/libraries.md` for Mermaid/Chart.js theming.
 
-**Slides are not pages reformatted.** They're a different medium. Each slide is exactly one viewport tall (100dvh) with no scrolling. Typography is 2-3x larger. Compositions are bolder. The agent composes a narrative arc (impact -> context -> deep dive -> resolution) rather than mechanically paginating the source.
+**Slides are not pages reformatted.** They are a different medium. Each slide is exactly one viewport tall (100dvh) with no scrolling. Typography is 2-3x larger. Compositions are bolder. The agent composes a narrative arc (impact -> context -> deep dive -> resolution) rather than mechanically paginating the source.
 
 **Content completeness.** Changing the medium does not mean dropping content. Follow the "Planning a Deck from a Source Document" process in `slide-patterns.md` before writing any HTML: inventory the source, map every item to slides, verify coverage. Every section, decision, data point, specification, and collapsible detail from the source must appear in the deck. If a plan has 7 sections, the deck covers all 7. If there are 6 decisions, present all 6 -- not the 2 that fit on one slide. Collapsible details in the source become their own slides. Add more slides rather than cutting content. A 22-slide deck that covers everything beats a 13-slide deck that looks polished but is missing 40% of the source.
 
@@ -315,7 +315,7 @@ An alternative output format for presenting content as a magazine-quality slide 
 
 **Curated presets:** Four slide-specific presets as starting points (Midnight Editorial, Warm Signal, Terminal Mono, Swiss Clean) plus the existing 8 aesthetic directions adapted for slides. Pick one and commit. See `slide-patterns.md` for preset CSS values.
 
-**`--slides` flag on existing prompts:** When a user passes `--slides` to `/diff-review`, `/plan-review`, `/project-recap`, or other prompts, the agent gathers data using the prompt's normal data-gathering instructions, then presents the content as a slide deck instead of a scrollable page. The slide version tells the same story with different structure and pacing -- but the same breadth of coverage. Don't use the slide format as an excuse to summarize or skip sections that the scrollable version would have included.
+**`--slides` flag on existing prompts:** When a user passes `--slides` to `/diff-review`, `/plan-review`, `/project-recap`, or other prompts, the agent gathers data using the prompt's normal data-gathering instructions. Then it presents the content as a slide deck instead of a scrollable page. The slide version tells the same story with different structure and pacing -- but the same breadth of coverage. Do not use the slide format as an excuse to summarize or skip sections that the scrollable version would have included.
 
 ## File Structure
 
@@ -348,8 +348,8 @@ Before delivering, verify:
 - **The swap test**: Would replacing your fonts and colors with a generic dark theme make this indistinguishable from a template? If yes, push the aesthetic further.
 - **Both themes**: Toggle your OS between light and dark mode. Both should look intentional, not broken.
 - **Information completeness**: Does the diagram actually convey what the user asked for? Pretty but incomplete is a failure.
-- **No overflow**: Resize the browser to different widths. No content should clip or escape its container. Every grid and flex child needs `min-width: 0`. Side-by-side panels need `overflow-wrap: break-word`. Never use `display: flex` on `<li>` for marker characters -- it creates anonymous flex items that can't shrink, causing lines with many inline `<code>` badges to overflow. Use absolute positioning for markers instead. See the Overflow Protection section in `./references/css-patterns.md`.
-- **Mermaid zoom controls**: Every `.mermaid-wrap` container must have zoom controls (+/-/reset/expand buttons), Ctrl/Cmd+scroll zoom, click-and-drag panning, and click-to-expand (clicking without dragging opens the diagram full-size in a new tab). The expand button provides the same functionality. See `./references/css-patterns.md` for the full pattern including the `openMermaidInNewTab()` function.
+- **No overflow**: Resize the browser to different widths. No content should clip or escape its container. Every grid and flex child needs `min-width: 0`. Side-by-side panels need `overflow-wrap: break-word`. Never use `display: flex` on `<li>` for marker characters -- it creates anonymous flex items that cannot shrink, causing lines with many inline `<code>` badges to overflow. Use absolute positioning for markers instead. See the Overflow Protection section in `./references/css-patterns.md`.
+- **Mermaid zoom controls**: Every `.mermaid-wrap` container must have zoom controls (+/-/reset/expand buttons), Ctrl/Cmd+scroll zoom, and click-and-drag panning. It must also have click-to-expand (clicking without dragging opens the diagram full-size in a new tab). The expand button provides the same functionality. See `./references/css-patterns.md` for the full pattern including the `openMermaidInNewTab()` function.
 - **File opens cleanly**: No console errors, no broken font loads, no layout shifts.
 - **Design system alignment**: If a project has a `## Design Context` in CLAUDE.md, verify the output respects its palette and typography. Run through the `polish` skill's checklist mentally: alignment, spacing, contrast, interaction states.
 
@@ -371,7 +371,7 @@ These patterns are explicitly forbidden. They signal "AI-generated template" and
 **Forbidden accent colors:**
 - Indigo-500/violet-500 (`#8b5cf6`, `#7c3aed`, `#a78bfa`) -- Tailwind's default purple range
 - The cyan + magenta + pink neon gradient combination (`#06b6d4` -> `#d946ef` -> `#f472b6`)
-- Any palette that could be described as "Tailwind defaults with purple/pink/cyan accents"
+- Any palette that reads as "Tailwind defaults with purple/pink/cyan accents"
 
 **Forbidden color effects:**
 - Gradient text on headings (`background: linear-gradient(...); background-clip: text;`) -- this screams AI-generated
@@ -386,7 +386,7 @@ These patterns are explicitly forbidden. They signal "AI-generated template" and
 - Emoji icons in section headers
 - Section headers that all use the same icon-in-rounded-box pattern
 
-**Required:** Use styled monospace labels with colored dot indicators (see `.section-label` in templates), numbered badges (`section__num` pattern), or asymmetric section dividers. If an icon is genuinely needed, use an inline SVG that matches the palette -- not emoji.
+**Required:** Use styled monospace labels with colored dot indicators (see `.section-label` in templates), numbered badges (`section__num` pattern), or asymmetric section dividers. If you need an icon, use an inline SVG that matches the palette -- not emoji.
 
 ### Layout & Hierarchy
 

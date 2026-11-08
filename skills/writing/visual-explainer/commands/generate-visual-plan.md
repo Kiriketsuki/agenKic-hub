@@ -2,17 +2,17 @@
 name: generate-visual-plan
 description: Generate a visual HTML implementation plan -- detailed feature specification with state machines, code snippets, and edge cases
 ---
-Load the visual-explainer skill, then generate a comprehensive visual implementation plan for `$@` as a self-contained HTML page.
+Load the visual-explainer skill, then generate a complete visual implementation plan for `$@` as a self-contained HTML page.
 
 Follow the visual-explainer skill workflow. Read the reference template, CSS patterns, and mermaid theming references before generating. Use an editorial or blueprint aesthetic, but vary fonts and palette from previous diagrams.
 
 **Data gathering phase** -- understand the context before designing. Only read files within the current working directory:
 
 1. **Parse the feature request.** Extract:
-   - The core problem being solved
+   - The core problem to solve
    - Desired user-facing behavior
    - Any constraints or requirements mentioned
-   - Scope boundaries (what's explicitly out of scope)
+   - Scope boundaries (what is explicitly out of scope)
 
 2. **Read the relevant codebase.** Identify:
    - Files that will need modification
@@ -29,15 +29,15 @@ Follow the visual-explainer skill workflow. Read the reference template, CSS pat
 4. **Check for prior art.** Search for:
    - Similar features already implemented
    - Related issues or discussions
-   - Existing code that can be reused or extended
+   - Existing code that you can reuse or extend
 
 **Design phase** -- work through the implementation before writing HTML:
 
-1. **State design.** What new state variables are needed? What existing state is affected? Draw the state machine if behavior has multiple modes.
+1. **State design.** What new state variables does the feature need? What existing state does it affect? Draw the state machine if behavior has multiple modes.
 
-2. **API design.** What commands, functions, or endpoints are added? What are the signatures? What are the error cases?
+2. **API design.** What commands, functions, or endpoints does the feature add? What are the signatures? What are the error cases?
 
-3. **Integration design.** How does this feature interact with existing functionality? What hooks or events are involved?
+3. **Integration design.** How does this feature interact with existing functionality? What hooks or events does it use?
 
 4. **Edge cases.** Walk through unusual scenarios: concurrent operations, error conditions, boundary values, user mistakes.
 
@@ -47,11 +47,11 @@ Follow the visual-explainer skill workflow. Read the reference template, CSS pat
 - Every file that needs modification with the specific changes
 - Every edge case with expected behavior
 - Every assumption about the codebase that the plan relies on
-Verify each against the code. If something cannot be verified, mark it as uncertain. This fact sheet is your source of truth during HTML generation.
+Verify each against the code. If you cannot verify something, mark it as uncertain. This fact sheet is your source of truth during HTML generation.
 
 **Diagram structure** -- the page should include:
 
-1. **Header** -- feature name, one-line description, scope summary. *Visual treatment: use a distinctive header with monospace label ("Feature Plan", "Implementation Spec", etc.), large italic title, and muted subtitle. Set the tone for the page.*
+1. **Header** -- feature name, one-line description, scope summary. *Visual treatment: use a distinctive header. Give it a monospace label ("Feature Plan", "Implementation Spec", etc.), a large italic title, and a muted subtitle. Set the tone for the page.*
 
 2. **The Problem** -- side-by-side comparison panels showing current behavior vs. desired behavior. Use concrete examples, not abstract descriptions. *Visual treatment: two-column grid with rose-tinted "Before" header and sage-tinted "After" header. Numbered flow steps with arrows between them.*
 
@@ -67,7 +67,7 @@ Verify each against the code. If something cannot be verified, mark it as uncert
 
 6. **Commands / API** -- table with command/function name, parameters, and behavior description. Use `<code>` for technical names. *Visual treatment: bordered table with sticky header, alternating row backgrounds.*
 
-7. **Edge Cases** -- table listing scenarios and expected behaviors. Be thorough -- include error conditions, concurrent operations, boundary values. *Visual treatment: same table style as Commands section.*
+7. **Edge Cases** -- table listing scenarios and expected behaviors. Be thorough. Include error conditions, concurrent operations, boundary values. *Visual treatment: same table style as Commands section.*
 
 8. **Test Requirements** -- table or card grid showing test categories and specific tests to add. Group by: unit tests, integration tests, edge case tests. *Visual treatment: compact table with file references.*
 
@@ -94,6 +94,6 @@ Verify each against the code. If something cannot be verified, mark it as uncert
 - Use `overflow-wrap: break-word` on all text containers
 - Never use `display: flex` on `<li>` for markers -- use absolute positioning
 
-If `--publish` is specified, write to `./docs/html/plans/`. Otherwise write to `/tmp/visual-explainer/`. Open the result in the browser and tell the user the file path.
+If the user passes `--publish`, write to `./docs/html/plans/`. Otherwise write to `/tmp/visual-explainer/`. Open the result in the browser and tell the user the file path.
 
 Ultrathink.

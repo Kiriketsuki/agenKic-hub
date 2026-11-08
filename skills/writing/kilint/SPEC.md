@@ -1,24 +1,20 @@
 # kilint - build spec
 
-`kilint` is a personal anti-slop prose linter. It is inspired by the ASD-STE100
-experiment in `reference/` but it is not that tool and must not copy its code. The
-reference implementation is a 120-line heuristic script; kilint is a configurable,
-testable package with profiles, path routing, suppression, comment-aware source
+`kilint` is a personal anti-slop prose linter. The ASD-STE100 experiment in `reference/` inspired it. It is not that tool and must not copy its code. The
+reference implementation is a 120-line heuristic script. kilint is a configurable, testable package. It has profiles, path routing, suppression, comment-aware source
 linting, and delta scoring.
 
 Read `reference/README.md`, `reference/experiment-results.md` and
 `reference/before-after-samples.md` for the background. Read `reference/ste-lint.py`
-only to understand which heuristics were tested - do not copy its structure, its
+only to understand which heuristics the experiment tested - do not copy its structure, its
 regexes verbatim, or its output format.
 
 ## Design goals
 
 1. **Configurable, not opinionated by hardcode.** Every word list, threshold, and
    severity is overridable in TOML. The defaults encode the author's house style.
-2. **The delta is the signal.** A single absolute score is weak evidence. First-class
-   support for scoring two texts and reporting the change.
-3. **No false-positive tax.** A linter that cries wolf on his daily notes gets
-   uninstalled. Path routing and profiles must make personal writing exempt by default.
+2. **The delta is the signal.** A single absolute score is weak evidence. Direct support for scoring two texts and reporting the change.
+3. **No false-positive tax.** A linter that cries wolf on his daily notes drives the user to uninstall it. Path routing and profiles must make personal writing exempt by default.
 4. **Form only.** kilint checks the FORM of prose. It cannot judge truth or substance.
    Say so in the README. Never auto-fix text.
 5. **Stdlib only.** Python 3.11+, `tomllib` from stdlib. No third-party runtime deps.
@@ -50,8 +46,7 @@ regexes verbatim, or its output format.
 
 ## Text pipeline (text.py)
 
-Order matters. Each stage must preserve line/column offsets so violations can be
-reported at real positions. Use a masking approach: replace masked spans with spaces
+Order matters. Each stage must preserve line/column offsets so the linter can report violations at real positions. Use a masking approach: replace masked spans with spaces
 of equal length rather than deleting them.
 
 1. Split YAML frontmatter (`---` fenced, first line only). Parse it for a `kilint:`
@@ -61,19 +56,15 @@ of equal length rather than deleting them.
    HTML blocks, HTML comments (but read directives out of them first), math (`$$`).
 3. Mask URLs, bare autolinks, markdown link *targets* (keep link text), image alts,
    footnote definitions, and reference definitions.
-4. Mask markdown table delimiter rows; keep cell text as prose.
+4. Mask markdown table delimiter rows. Keep cell text as prose.
 5. Strip leading heading markers, list bullets, numbered-list markers, blockquote `>`.
 6. Sentence segmentation: split on `.!?:` followed by whitespace + capital/digit/quote.
    Protect: abbreviations (`e.g.`, `i.e.`, `etc.`, `vs.`, `Dr.`, `No.`, `Fig.`),
    decimals, version strings, ellipses, and `file.md:12` style refs.
 7. Word count: tokens matching `[A-Za-z][A-Za-z0-9'’\-/]*` plus bare numbers.
 
-A **block** is a paragraph, a list, a heading, or a table. Rules that operate on
-paragraphs must treat a list as one block but must NOT count each list item as a
-sentence for the long-paragraph rule - this is the documented false positive in
-`reference/experiment-results.md` where STE's short sentences were penalised. Fix it:
-`STR001` counts sentences only in true prose paragraphs, and its default cap is
-sentence-count AND word-count based (a paragraph trips only if it exceeds both).
+A **block** is a paragraph, a list, a heading, or a table. Rules that operate on paragraphs must treat a list as one block. Do NOT count each list item as a sentence for the long-paragraph rule. `reference/experiment-results.md` documents this false positive. The old tool penalised STE's short sentences. Fix it:
+`STR001` counts sentences only in true prose paragraphs. Its default cap uses sentence count AND word count (a paragraph trips only if it exceeds both).
 
 ## Rules (rules.py)
 
@@ -116,10 +107,7 @@ Registry maps id -> rule. `--list-rules` prints id, name, category, default seve
 | `WRD007` | emoji | error | any emoji codepoint. Enforces the vault's no-emoji rule. |
 | `WRD008` | vague-quantifier | info | `several/various/a number of/some amount of` in technical claims. Off by default. |
 
-Word-list rules must be **word-boundary and case-insensitive**, must not fire inside
-masked spans, and must not match substrings (`ensure` must not match `ensures` twice,
-`unlock` must not match `unlocked` unless the list says so - support a trailing `*`
-in list entries to opt into prefix matching).
+Word-list rules must be **word-boundary and case-insensitive**. They must not fire inside masked spans. They must not match substrings: `ensure` must not match `ensures` twice, and `unlock` must not match `unlocked` unless the list says so. Support a trailing `*` in list entries to opt into prefix matching.
 
 ### Verbs
 
@@ -143,8 +131,7 @@ in list entries to opt into prefix matching).
   breakdown.
 - **Never report a score for texts under `min_words` (default 40).** Print `n/a
   (too short)` instead. This is the documented noise problem with short outputs in
-  `reference/experiment-results.md`. Violations are still listed; only the normalised
-  score is suppressed.
+  `reference/experiment-results.md`. Violations are still listed. Kilint suppresses only the normalised score.
 
 ## Profiles (profiles.py)
 
@@ -160,7 +147,7 @@ Four built-ins. A profile sets thresholds and per-rule severity overrides
 - `prose` - lecture notes, long-form explanation, anything with a voice.
   `max_sentence_words 35`, only `PUN002 WRD003 WRD004 WRD007 SEN001` active,
   everything else off, threshold `3.0`.
-- `off` - no rules run; the file is skipped and reported as skipped.
+- `off` - no rules run. The tool skips the file and reports it as skipped.
 
 Profiles are extensible: `[profiles.myname]` in config creates or overrides one,
 and `extends = "flavored"` inherits.
@@ -175,7 +162,7 @@ Discovery order, first hit wins for the file, then merged shallow-to-deep:
 4. `~/.config/kilint/config.toml`
 5. the shipped `kilint.toml` next to the package
 
-Later entries are the base; earlier entries override. Merge is deep for tables,
+Later entries are the base. Earlier entries override. Merge is deep for tables,
 replace for arrays, except `extend_*` keys which append.
 
 ```toml
@@ -209,7 +196,7 @@ glob = "**/docs/**/*.md"
 profile = "flavored"
 ```
 
-Path routing: `[[paths]]` entries are evaluated in order, **last match wins**, matched
+Path routing: The linter evaluates `[[paths]]` entries in order. The **last match wins**, matched
 against the path relative to the config file's directory, then against the absolute
 path. Support `**`, `*`, `?` via `fnmatch` on a normalised POSIX path.
 
@@ -225,8 +212,7 @@ Everything else: `flavored`.
 
 - File level: `<!-- kilint-disable-file -->` anywhere, or frontmatter `kilint: off`.
 - Frontmatter: a `kilint:` block supporting `profile: strict` and
-  `disable: [VRB001, SEN001]`. Parse it with a small hand-rolled reader; do not add a
-  YAML dependency.
+  `disable: [VRB001, SEN001]`. Parse it with a small hand-rolled reader. Do not add a YAML dependency.
 - Next line: `<!-- kilint-disable-next-line VRB001,SEN001 -->` (omit ids to disable all).
 - Region: `<!-- kilint-disable VRB001 -->` ... `<!-- kilint-enable VRB001 -->`.
 - In source files the same directives work behind any line-comment leader:
@@ -245,13 +231,13 @@ identifiers, or string literals other than docstrings.
   well enough to avoid false comments inside strings. `//` and `/* */`, plus `///` and `/** */`.
 - `.sh .bash .zsh .py-adjacent .toml .yaml .yml` - `#` comments, respecting quotes.
 - `.lua` - `--` and `--[[ ]]`.
-- Unknown extension: refuse with a clear message unless `--as markdown|text|source` is given.
+- Unknown extension: refuse with a clear message unless the user passes `--as markdown|text|source`.
 
 Comment prose gets the resolved profile but with two forced adjustments, because
 comments are terse by nature:
 - `SEN001` cap raised by config key `comment_sentence_bonus` (default +10 words).
 - `STR001` off.
-- A comment shorter than `comment_min_words` (default 6) is skipped entirely.
+- The linter skips a comment shorter than `comment_min_words` (default 6) entirely.
 
 Rationale for the README: docstrings and public API comments benefit from the
 discipline. A three-word `# why this is weird` note does not.
@@ -278,11 +264,9 @@ kilint [PATHS...] [options]
   --version
 ```
 
-Exit codes: `0` clean or `--no-fail`; `1` at least one file over threshold; `2` usage
-error, unreadable file, or bad config.
+Exit codes: `0` clean or `--no-fail`. `1` at least one file over threshold. `2` usage error, unreadable file, or bad config.
 
-Directory arguments are walked, honouring path routing and skipping `off` files. Only
-`.md`, `.markdown`, `.txt` and the known source extensions are collected.
+The linter walks directory arguments, honouring path routing and skipping `off` files. It collects only `.md`, `.markdown`, `.txt` and the known source extensions.
 
 ## Output (report.py)
 
@@ -316,19 +300,14 @@ delta   -72%       6 violations removed, 0 added
 
 Write tests from this spec. Cover at minimum:
 
-- **text.py**: fenced/inline code masking preserves offsets; frontmatter split; URL and
-  link-target masking; abbreviation-safe sentence splitting; list items not counted as
-  paragraph sentences; word counting.
-- **rules.py**: one positive and one negative case per rule id. Negative cases must
-  include the known false-positive traps: `is based on` (not passive), `ensure` inside
-  a code span (not flagged), an em-dash inside a fenced block (not flagged), `unlocked`
-  not matching `unlock`, a numbered list of 9 short steps not tripping `STR001`.
+- **text.py**: fenced/inline code masking preserves offsets. Frontmatter split. URL and link-target masking. Abbreviation-safe sentence splitting. List items not counted as paragraph sentences. Word counting.
+- **rules.py**: one positive and one negative case per rule id. Negative cases must include the known false-positive traps. These are: `is based on` (not passive). `ensure` inside a code span (not flagged). An em-dash inside a fenced block (not flagged). `unlocked`
+  not matching `unlock`. A numbered list of 9 short steps not tripping `STR001`.
 - **config.py**: discovery order, deep merge, `extends`, `extend_*` append semantics,
   last-match-wins path routing, unknown key rejection.
-- **source.py**: Python docstring and comment extraction via `tokenize`; a `//` inside a
-  JS string literal is not treated as a comment; short comments skipped.
-- **cli.py**: exit codes 0/1/2; `--select`/`--ignore`; stdin; `--explain`; directory walk.
-- **report.py**: json schema stability; github annotation format; no colour when piped.
+- **source.py**: Python docstring and comment extraction via `tokenize`. A `//` inside a JS string literal is not treated as a comment. The linter skips short comments.
+- **cli.py**: exit codes 0/1/2. `--select`/`--ignore`. stdin. `--explain`. Directory walk.
+- **report.py**: json schema stability. github annotation format. No colour when piped.
 - **delta**: gone/new classification is correct.
 
 Add a regression fixture pair built from the real baseline-vs-STE README text quoted in
@@ -339,12 +318,7 @@ numbers - kilint has different rules and weights, so the numbers will differ by 
 
 ## README.md for the package
 
-Cover: what it is, the one-line install/alias, usage for each surface (PR body, docs,
-error message, code comments), the config reference, the rule table, suppression, the
-delta workflow, exit codes, and an honest limitations section that states plainly that
-kilint checks form and cannot judge whether the text is true or useful. Credit the
-ASD-STE100 spec (asd-ste100.org) and the episode kit in `reference/` as the source of the
-idea and the experiment that motivated it.
+Cover: what it is, the one-line install/alias, and usage for each surface (PR body, docs, error message, code comments). Also cover the config reference, the rule table, suppression, the delta workflow, and exit codes. Add an honest limitations section. It states plainly that kilint checks form and cannot judge whether the text is true or useful. Credit the ASD-STE100 spec (asd-ste100.org) as the source of the idea. Credit the episode kit in `reference/` as the experiment that motivated it.
 
 ## Hard constraints
 

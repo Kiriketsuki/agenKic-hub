@@ -100,7 +100,7 @@ const MODELS = Object.assign(
   A.model || {})
 ```
 
-The pattern across these workflows: fan-out work (implementers, per-repo appliers, mechanical checks) runs on the cheap tier, synthesis singletons (planner, arbiter, reviewer) run on the deep tier, and bookkeeping runs on the cheapest tier. `council-loop.mjs` adds per-role `effort` overrides to bound spend on the expensive roles. See [Model tiering](model-tiering.md) for the full rationale.
+The pattern across these workflows is simple. Fan-out work (implementers, per-repo appliers, mechanical checks) runs on the cheap tier. Synthesis singletons (planner, arbiter, reviewer) run on the deep tier. Bookkeeping runs on the cheapest tier. `council-loop.mjs` adds per-role `effort` overrides to bound spend on the expensive roles. See [Model tiering](model-tiering.md) for the full rationale.
 
 ## Budget and resume
 
@@ -116,12 +116,12 @@ Long loops must survive rate limits and token exhaustion. `council-loop.mjs` and
 
 ## Design patterns
 
-**Adversarial verify.** Never let the agent that wrote the code declare it done. `ultracode-fix.mjs` loops a reviewer against the implementers. `council-loop.mjs` goes further: an advocate argues for the change, a critic argues against it, and an arbiter issues the verdict. `autofix-swarm.mjs` adds a hard anti-gaming gate that rejects any candidate diff that touches test files or weakens assertions.
+**Adversarial verify.** Never let the agent that wrote the code declare it done. `ultracode-fix.mjs` loops a reviewer against the implementers. `council-loop.mjs` goes further. An advocate argues for the change, a critic argues against it, and an arbiter issues the verdict. `autofix-swarm.mjs` adds a hard anti-gaming gate. The gate rejects any candidate diff that touches test files or weakens assertions.
 
-**Loop until dry.** Convergence is a checked condition, not a hope. `council-loop.mjs` re-convenes the council after each fix round until the verdict is an unconditional FOR with zero findings, bounded by `maxLoops`. `ultracode-fix.mjs` loops review and fix until `approved` is true, bounded by `maxLoops`. Every loop carries both a success condition and a hard iteration cap.
+**Loop until dry.** Convergence is a checked condition, not a hope. `council-loop.mjs` re-convenes the council after each fix round. It stops when the verdict is an unconditional FOR with zero findings, bounded by `maxLoops`. `ultracode-fix.mjs` loops review and fix until `approved` is true, bounded by `maxLoops`. Every loop carries both a success condition and a hard iteration cap.
 
-**Champion promotion.** When one fix would do, race several. `autofix-swarm.mjs` fans out 2 to 3 competing fix agents, each in an isolated worktree with a distinct strategy: minimal patch, targeted refactor, alternative root cause. A gate filters gamed candidates, then the orchestrator promotes one champion per iteration: the smallest passing diff in bug mode, the best metric in perf mode. Failures retire to a dead-ends ledger so later iterations never re-spend on them.
+**Champion promotion.** When one fix would do, race several. `autofix-swarm.mjs` fans out 2 to 3 competing fix agents. Each runs in an isolated worktree with a distinct strategy: minimal patch, targeted refactor, alternative root cause. A gate filters gamed candidates. Then the orchestrator promotes one champion per iteration: the smallest passing diff in bug mode, the best metric in perf mode. Failures retire to a dead-ends ledger so later iterations never re-spend on them.
 
 **Critique before compute.** `autofix-swarm.mjs` runs a council over candidate approaches before spawning any worktree. A shortlist debate costs a fraction of a wasted fan-out.
 
-**Branch pinning.** Agents share one working tree across a long run, and the checkout a previous agent left behind is not trustworthy. `council-loop.mjs` injects a branch-pin instruction into every tree-touching agent: verify the branch first, and never commit or push to the parent branch. Encode safety invariants as injected prompt fragments, not as assumptions.
+**Branch pinning.** Agents share one working tree across a long run. Do not trust the checkout a previous agent left behind. `council-loop.mjs` injects a branch-pin instruction into every tree-touching agent. The agent verifies the branch first, and never commits or pushes to the parent branch. Encode safety invariants as injected prompt fragments, not as assumptions.

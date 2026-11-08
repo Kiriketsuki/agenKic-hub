@@ -27,12 +27,12 @@ State the design and get a yes before you write code or invoke an implementation
 
 A menu, not a checklist. Quick uses moves 1, 4 and 5. Standard uses all but decomposition. Deep uses all six. Use TodoWrite at Deep depth only, or when the user asks to see the plan.
 
-1. **Explore project context** — files, docs, recent commits.
-2. **Decompose** — when the request spans several independent subsystems, split it before refining details. Brainstorm the first sub-project through the normal flow.
-3. **Ask clarifying questions** — purpose, constraints, success criteria.
-4. **Propose approaches** — trade-offs plus your recommendation.
-5. **State the design** — and get the yes.
-6. **Hand off** — see Finishing. YAGNI ruthlessly along the way: cut features the design does not need.
+1. **Explore project context**: files, docs, recent commits.
+2. **Decompose**: when the request spans several independent subsystems, split it before refining details. Brainstorm the first sub-project through the normal flow.
+3. **Ask clarifying questions**: purpose, constraints, success criteria.
+4. **Propose approaches**: trade-offs plus your recommendation.
+5. **State the design**: and get the yes.
+6. **Hand off**: see Finishing. YAGNI ruthlessly along the way: cut features the design does not need.
 
 ## Questions
 
@@ -51,27 +51,27 @@ Length follows stakes, not a template. At Standard and Deep depth, use plan mode
 - Break the system into smaller units that each have one clear purpose, communicate through well-defined interfaces, and can be understood and tested independently
 - For each unit, you should be able to answer: what does it do, how do you use it, and what does it depend on?
 - Can someone understand what a unit does without reading its internals? Can you change the internals without breaking consumers? If not, the boundaries need work.
-- Smaller, well-bounded units are also easier for you to work with - you reason better about code you can hold in context at once, and your edits are more reliable when files are focused. When a file grows large, that's often a signal that it's doing too much.
+- Smaller, well-bounded units are also easier for you to work with. You reason better about code you can hold in context at once. Your edits are more reliable when files are focused. When a file grows large, that often signals it does too much.
 
 ## Working in existing codebases
 
 - Explore the current structure before proposing changes. Follow existing patterns.
-- Where existing code has problems that affect the work (e.g., a file that's grown too large, unclear boundaries, tangled responsibilities), include targeted improvements as part of the design - the way a good developer improves code they're working in.
-- Don't propose unrelated refactoring. Stay focused on what serves the current goal.
+- If existing code has problems that affect the work, include targeted improvements in the design. Examples are a file that has grown too large, unclear boundaries, and tangled responsibilities. A good developer improves code in this way while working in it.
+- Do not propose unrelated refactoring. Stay focused on what serves the current goal.
 
 ## Finishing
 
 Three named exits. Ask which ending the user wants when it is not obvious.
 
-1. **Default:** hand the approved design to the feature-spec skill with a summary of what was decided, so it pre-fills instead of re-interviewing.
+1. **Default:** hand the approved design to the feature-spec skill with a summary of the user's decisions, so it pre-fills instead of re-interviewing.
 2. **Build now:** the user wants to build immediately and the design is small. Say so and stop. The user invokes the implementation skill.
-3. **The brainstorm was the deliverable:** end with the decision written out in chat. No artifact is owed.
+3. **The brainstorm was the deliverable:** end with the decision written out in chat. The brainstorm owes no artifact.
 
 ## Visuals
 
 When a question is genuinely about something visual, show it. Climb the cheapest rung that
-works: a mermaid fence or a markdown table inline in chat, an Artifact page when the user
-must see something rendered, the live server when the loop needs push-reload and click
+works. Use a mermaid fence or a markdown table inline in chat. Use an Artifact page when the user
+must see something rendered. Use the live server when the loop needs push-reload and click
 capture across several turns. Do not offer a visual companion as a formal choice and do not
 script the offer. Show the thing at the rung that fits and say what you are doing. Ask first
 before climbing to rung 3, because it starts a process. Details: `visuals.md`.

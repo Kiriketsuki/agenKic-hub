@@ -22,19 +22,19 @@ Auto-detect the document type and adjust the verification strategy:
 - **Structural**: architecture claims, dependency relationships, import chains, module boundaries
 - **Temporal**: git history claims, commit attributions, timeline entries
 
-Skip subjective analysis (opinions, design judgments, readability assessments) -- these aren't verifiable facts.
+Skip subjective analysis (opinions, design judgments, readability assessments) -- these are not verifiable facts.
 
 **Phase 2: Verify against source.** For each extracted claim, go to the source. Only read files within the current working directory:
 - Re-read every file referenced in the document -- check function signatures, type definitions, behavior descriptions against the actual code
 - For claims about git history: re-run git commands (`git diff --stat`, `git log`, `git diff --name-status`, etc.) and compare output against the document's numbers
-- For diff-reviews: read both the ref version (`git show <ref>:file`) and working tree version to verify before/after claims aren't swapped or fabricated
+- For diff-reviews: read both the ref version (`git show <ref>:file`) and working tree version to verify before/after claims are not swapped or fabricated
 - For plan docs: verify that files, functions, and types the plan references actually exist and behave as described
 - For project-recaps: re-run `git log` commands to verify activity narrative and timeline
 
 Classify each claim:
 - **Confirmed**: claim matches the code/output exactly
-- **Corrected**: claim was inaccurate -- note what was wrong and what the correct value is
-- **Unverifiable**: claim can't be checked (e.g., references a file that doesn't exist, or a behavior that requires runtime testing)
+- **Corrected**: the claim is inaccurate -- note what was wrong and what the correct value is
+- **Unverifiable**: claim cannot be checked (e.g., references a file that does not exist, or a behavior that requires runtime testing)
 
 **Phase 3: Correct in place.** Edit the file directly using surgical text replacements:
 - Fix incorrect numbers, function names, file paths, behavior descriptions
@@ -53,9 +53,9 @@ Include in the summary:
 - Corrections made (with brief list of what was fixed: "Changed `processCleanup` to `runCleanup` to match actual function name in `worker.ts:45`")
 - Unverifiable claims flagged (if any)
 
-**Phase 5: Report.** Tell the user what was checked, what was corrected, and open the file (HTML in browser, markdown path in chat). If nothing needed correction, say so -- the verification still has value as confirmation.
+**Phase 5: Report.** Tell the user what was checked, what the check corrected, and open the file (HTML in browser, markdown path in chat). If nothing needed correction, say so -- the verification still has value as confirmation.
 
-This is not a re-review. It does not second-guess analysis, opinions, or design judgments. It does not change the document's structure or organization. It is a fact-checker -- it verifies that the data presented matches reality, corrects what doesn't, and leaves everything else alone.
+This is not a re-review. It does not second-guess analysis, opinions, or design judgments. It does not change the document's structure or organization. It is a fact-checker -- it verifies that the data presented matches reality, corrects what does not, and leaves everything else alone.
 
 Write corrections to the original file.
 

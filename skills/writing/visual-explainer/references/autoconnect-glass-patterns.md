@@ -8,7 +8,7 @@ Used when generating VEs for the AutoConnect DOC-Hadi documentation site.
 
 ## Geometric Chamfers + Glassmorphism (v2)
 
-**`border-radius` is forbidden in all VE output.** Use `clip-path` chamfers instead for all corners. This creates the HEX-GEO identity — engineered, precise, intentionally angular.
+**`border-radius` is forbidden in all VE output.** Use `clip-path` chamfers instead for all corners. This creates the HEX-GEO identity. The look is precise and intentionally angular.
 
 ### Clip-Path Chamfer Library
 

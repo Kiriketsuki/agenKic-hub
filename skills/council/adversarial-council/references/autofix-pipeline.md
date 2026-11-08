@@ -4,7 +4,7 @@ Invoked when the user responds `y` to a CODE motion gate. Executes autonomously 
 
 ---
 
-## Phase 1 — Validate Findings
+## Phase 1: Validate Findings
 
 Read the recommendation file written by the ARBITER.
 Skip the Critical Discoveries section -- those are informational notes, not fix targets.
@@ -27,14 +27,14 @@ Output:
 [VALIDATE] Summary: 2/3 confirmed. 1 phantom removed.
 ```
 
-Do not proceed to Phase 2 until all findings are classified.
+Do not proceed to Phase 2 until you classify all findings.
 
 ---
 
-## Phase 2 — Fix Team
+## Phase 2: Fix Team
 
 Spawn agents in parallel:
-- `FIXER-1` through `FIXER-N` — one per CONFIRMED finding (model: sonnet)
+- `FIXER-1` through `FIXER-N`: one per CONFIRMED finding (model: sonnet)
   - Each FIXER receives: the finding description, cited file:line, and the recommendation file path
   - Each FIXER: reads the file, applies the minimal fix, reports back the diff
 - `REVIEWER` (model: sonnet)
@@ -46,9 +46,9 @@ If REVIEWER rejects a fix, spawn `FIXER-N-v2` with the rejection reason and retr
 
 ---
 
-## Phase 3 — Test
+## Phase 3: Test
 
-After all fixes are applied:
+After the fixers apply all fixes:
 
 1. Detect test suite: check for `package.json` scripts (`test`, `test:unit`), `pytest`, `go test`, `cargo test`, `Makefile` with `test` target
 2. If test suite found: run it
@@ -67,7 +67,7 @@ or:
 
 If tests FAIL: report failures, but do NOT abandon the PR. The PR will note the failures.
 
-Additionally, when tests FAIL, run a regression attribution pass:
+Also, when tests FAIL, run a regression attribution pass:
 1. For each failing test, identify which file(s) the failure implicates
 2. Cross-reference with the fixes applied in Phase 2 (each FIXER reported its diff)
 3. If a failing test overlaps with an area that a FIXER touched, mark it as a
@@ -79,11 +79,11 @@ Additionally, when tests FAIL, run a regression attribution pass:
    ```
    Be conservative: only flag when the file overlap is direct. Do not speculate.
 
-This list is used in Phase 4 (PR body) and Phase 6 (registry update).
+The orchestrator uses this list in Phase 4 (PR body) and Phase 6 (registry update).
 
 ---
 
-## Phase 4 — PR
+## Phase 4: PR
 
 Create the pull request using `gh pr create`.
 
@@ -134,7 +134,7 @@ Do NOT auto-merge. Leave PR open for human review.
 
 ---
 
-## Phase 5 — Merge Gate (ONLY pause point)
+## Phase 5: Merge Gate (ONLY pause point)
 
 Present this block to the user and wait:
 
@@ -155,7 +155,7 @@ Merge? [y/N]
 
 ---
 
-## Phase 6 — Fix Registry Update
+## Phase 6: Fix Registry Update
 
 Run this phase regardless of whether the user merged (`y`) or left the PR open (`N`).
 The registry captures what this council fixed and what regressions it may have introduced,
@@ -178,7 +178,7 @@ so future councils can trace bug lineage.
 - **Council File**: the recommendation `.md` filename (e.g. `2026-03-19-143022-council-fix-auth-bug.md`)
 - **Motion**: the motion text (truncated to 60 chars)
 - **Fix Description**: one-line description of what the fix did (from FIXER diff)
-- **Fix Location**: `file:line` where the fix was applied
+- **Fix Location**: `file:line` where the fixer applied the fix
 - **Regression Symptom**: if this fix appeared in `REGRESSION_CANDIDATES`, write the failing test name and a one-line symptom description. Otherwise: `--`
 - **Regression Location**: the file implicated by the failing test. Otherwise: `--`
 - **Resolved By**: always `--` at creation time. A future council will fill this in when it closes the regression.
@@ -202,7 +202,7 @@ recommendation file with the entries just logged to the registry.
 | Situation | Action |
 |---|---|
 | Recommendation file not found | Abort. Inform: "Recommendation file not found. Rerun council to regenerate." |
-| All findings are PHANTOM | Skip Phase 2–4. Inform: "All findings were unsubstantiated. No fixes applied." |
+| All findings are PHANTOM | Skip Phases 2 to 4. Inform: "No finding has support. No fixes applied." |
 | FIXER agent fails twice | Skip that finding. Note it as "fix attempted but failed" in PR body. |
 | `gh` not authenticated | Abort Phase 4. Inform: "gh CLI not authenticated. Run `gh auth login` then retry." |
 | PR creation fails | Inform user with exact error. Leave diffs in working tree. |
@@ -211,4 +211,4 @@ recommendation file with the entries just logged to the registry.
 
 ## Fallback
 
-If this file (`references/autofix-pipeline.md`) does not exist when the `y` response is processed, fall back to the previous behavior: enter plan mode and present the full implementation plan for user approval.
+If this file (`references/autofix-pipeline.md`) does not exist when the skill processes the `y` response, fall back to the previous behavior. Enter plan mode and present the full implementation plan for user approval.

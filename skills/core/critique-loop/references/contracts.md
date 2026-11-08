@@ -102,7 +102,7 @@ Create one JSON file per reviewer. Use exactly the rubric's criterion and gate I
 }
 ```
 
-Scores are integers from 0 to 10, or null. Each reason and next_fix is a nonempty string. Use "None within the agreed scope" when no fix is needed. Numeric scores and known gate results require nonempty evidence. Unknown results still require an explanation.
+Scores are integers from 0 to 10, or null. Each reason and next_fix is a nonempty string. Use "None within the agreed scope" when no fix applies. Numeric scores and known gate results require nonempty evidence. Unknown results still require an explanation.
 
 Gate result is pass, fail, or unknown. Optional findings cannot introduce new pass conditions.
 
