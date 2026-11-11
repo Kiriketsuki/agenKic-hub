@@ -1,8 +1,8 @@
 # Pooled Claude Code Hub
 
 Put your Claude logins on one host and share their quota across your machines. The kit
-lives in its own repository, [cliproxy-hub](https://github.com/Kiriketsuki/cliproxy-hub),
-and this hub carries it as a submodule at `tools/cliproxy-hub`.
+lives in its own repository, [kliproxy-setup](https://github.com/Kiriketsuki/kliproxy-setup),
+and this hub carries it as a submodule at `tools/kliproxy-setup`.
 
 Use [multi-account setup](multi-account.md) if one config directory for each account is
 sufficient for you. That setup needs no proxy.
@@ -31,8 +31,8 @@ memory, Artifacts and connectors work as in a direct session.
 ## Get the kit
 
 ```bash
-git submodule update --init tools/cliproxy-hub
-cd tools/cliproxy-hub
+git submodule update --init tools/kliproxy-setup
+cd tools/kliproxy-setup
 cp hub.env.example hub.env
 ```
 

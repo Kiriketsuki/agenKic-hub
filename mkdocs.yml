@@ -74,4 +74,4 @@ nav:
       - Hooks: tips/hooks.md
       - Linters: tips/linters.md
       - Multi-account setup: tips/multi-account.md
-      - Pooled hub: tips/cliproxy-hub.md
+      - Pooled hub: tips/kliproxy-setup.md
