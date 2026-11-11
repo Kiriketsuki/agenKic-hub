@@ -10,6 +10,9 @@ The default is `~/.claude/`. The `CLAUDE_CONFIG_DIR` environment variable
 points Claude Code at a different directory. One directory per account gives
 you two isolated logins.
 
+To share the quota of several accounts across machines, see the
+[pooled hub](cliproxy-hub.md). That setup uses a proxy and carries a terms risk.
+
 | Account | Config dir | Workspace |
 |:---|:---|:---|
 | Personal, `<you>@personal.com` | `~/.claude/` | everywhere else |
