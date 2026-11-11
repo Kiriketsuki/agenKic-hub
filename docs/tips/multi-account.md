@@ -11,7 +11,7 @@ points Claude Code at a different directory. One directory per account gives
 you two isolated logins.
 
 To share the quota of several accounts across machines, see the
-[pooled hub](cliproxy-hub.md). That setup uses a proxy and carries a terms risk.
+[pooled hub](kliproxy-setup.md). That setup uses a proxy and carries a terms risk.
 
 | Account | Config dir | Workspace |
 |:---|:---|:---|
