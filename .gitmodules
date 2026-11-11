@@ -1,0 +1,3 @@
+[submodule "tools/cliproxy-hub"]
+	path = tools/cliproxy-hub
+	url = https://github.com/Kiriketsuki/cliproxy-hub.git
