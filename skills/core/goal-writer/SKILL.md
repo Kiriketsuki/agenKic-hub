@@ -6,6 +6,8 @@ description: >-
   turn a task into /goal, or invokes goal-writer.
   Produces a goal the user can paste, with evidence requirements and clear limits.
   Drafts only unless the user explicitly requests activation.
+  Subskill goal-review ("/goal-writer review", "review this goal") shows a goal
+  on a visual check page before the user starts it.
 ---
 
 # Goal Writer
@@ -29,8 +31,23 @@ Cover six elements:
 | Iteration | How evidence guides the next attempt |
 | Blocker | When progress needs outside input and what to report |
 
-These principles derive from [Using Goals in Codex](https://developers.openai.com/cookbook/examples/codex/using_goals_in_codex), consulted on 2026-09-11.
+These principles derive from [Using Goals in Codex](https://developers.openai.com/cookbook/examples/codex/using_goals_in_codex), consulted on 2026-09-11 and 2026-11-18.
 The workflow and examples below apply those principles to skill use.
+
+Claude Code `/goal` ([docs](https://code.claude.com/docs/en/goal), consulted on 2026-11-18) adds three rules:
+
+- A small model checks the condition after each turn. It reads only the conversation. It does not run commands or read files.
+  So each done clause names a proof that the agent prints into the chat, for example "the summary line is shown in the chat".
+- The condition holds at most 4,000 characters.
+- A turn or try bound, such as "or stop after 20 turns", is optional. Add one when the user wants a hard stop.
+
+## Subskills
+
+| Subskill | Trigger | File |
+| --- | --- | --- |
+| goal-review | `/goal-writer review`, "review this goal", or a draft the user wants to check visually | [subskills/goal-review.md](subskills/goal-review.md) |
+
+When a trigger matches, read the subskill file and follow it.
 
 ## Workflow
 
@@ -70,11 +87,23 @@ For simple goals, combine related clauses. Do not expand the draft into a featur
 - For artifacts, name the required content and the inspection method. File existence alone rarely proves quality.
 - Keep acceptance conditions fixed during iteration. Do not permit weaker tests or smaller workloads to manufacture success.
 - When the target needs discovery, draft a bounded investigation first. Its deliverable should resolve the missing acceptance decision.
+- For research, specify a claim ledger with sources, methods, results, and uncertainty.
+  Distinguish direct reproduction, approximation, indirect support, and unavailable evidence.
+  An audit may finish with unresolved claims only when its agreed deliverable permits them.
+  Missing evidence cannot satisfy a goal that requires exact reproduction.
 
-For research, specify a claim ledger with sources, methods, results, and uncertainty.
-Distinguish direct reproduction, approximation, indirect support, and unavailable evidence.
-An audit may finish with unresolved claims only when its agreed deliverable permits them.
-Missing evidence cannot satisfy a goal that requires exact reproduction.
+## Measurable end states
+
+These rules come from a goal audit on 18 Nov 2026. That goal read as complete, but five clauses could be argued either way.
+
+- **Count every done state.** Each acceptance clause ends in a number or an exact named line: "0 open", "0 blank rows", "0 failed", "rc=0", "RESULT PASS". A clause such as "follows the design" or "contract tests are green" is not done until it names what is counted and where.
+- **Fix the scope.** Name the issues, files or sets in the goal. Never write "every Task under X" when X keeps growing during the work. Name the later additions by their source, for example "plus Tasks filed from brief.md".
+- **No self-granted way out.** A deferral, a skip or "needs the user" counts only with the user's logged word or a named label the user approved. The agent's own reason alone never satisfies a clause.
+- **Separate rules from end states.** A rule that applies to every action (merge rules, review rules) goes under HOW or a named clause with a per-item check, such as "every merge row has a head SHA and CI counts". Do not leave a rule where an end state belongs.
+- **Check every reference.** Before the draft is ready, confirm each issue number, path, branch and command exists and means what the goal says (for example `gh issue view N`, `ls`, `git ls-remote`). In the 18 Nov audit, two of three feature numbers named closed Tasks.
+- **Keep it short.** A goal stays under 4000 characters. Put long lists in a file and name the file.
+
+- **Show the proof in the chat.** Each done clause names a line the agent prints into the conversation. A state that lives only in a file does not count for Claude Code `/goal`.
 
 ## Activation and runtime boundaries
 
@@ -100,6 +129,12 @@ Before returning the draft, confirm:
 
 - The outcome describes a result the user requested.
 - Every required result has observable evidence and a pass condition.
+- Each acceptance clause ends in a count or an exact named line (see Measurable end states).
+- The scope names fixed issues, files or sets, and no clause lets the agent defer work on its own word.
+- Every issue number, path, branch and command in the draft was checked to exist.
+- The draft is under 4000 characters. Print the count with the draft.
+- Each done clause names proof that appears in the chat.
+- Offer the goal-review subskill once, with the draft.
 - All six elements appear, with detail proportionate to the task.
 - Scope allows necessary investigation without granting unrelated authority.
 - Unknown facts remain visible instead of becoming invented requirements.

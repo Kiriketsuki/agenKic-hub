@@ -1,0 +1,246 @@
+<title>Goal Review</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Serif&display=swap">
+<style>
+:root{--bg:#f4efe4;--card:#fbf8f1;--ink:#1f2a33;--soft:#5d6873;--line:#cfc6b4;--grid:rgba(46,84,120,.07);--blue:#2e5478;--good:#2f6b46;--goodbg:#e2eee4;--warn:#8a5a12;--warnbg:#f6ead0;--bad:#9b2f22;--badbg:#f6dfda}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141a20;--card:#1b232b;--ink:#e8e2d4;--soft:#9aa5ae;--line:#33404b;--grid:rgba(140,180,220,.06);--blue:#8fb5d9;--good:#8fcfa3;--goodbg:#1d3326;--warn:#e2b867;--warnbg:#382c15;--bad:#f0998b;--badbg:#3b1f1b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141a20;--card:#1b232b;--ink:#e8e2d4;--soft:#9aa5ae;--line:#33404b;--grid:rgba(140,180,220,.06);--blue:#8fb5d9;--good:#8fcfa3;--goodbg:#1d3326;--warn:#e2b867;--warnbg:#382c15;--bad:#f0998b;--badbg:#3b1f1b;color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 "IBM Plex Sans",system-ui,sans-serif;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+.wrap{max-width:900px;margin:0 auto;padding-block:28px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:22px}
+h1{font:400 44px/1 "Instrument Serif",Georgia,serif;margin:0}
+h2{font:600 13px/1.2 "IBM Plex Sans",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);margin:0 0 10px}
+p{margin:0}.sub{color:var(--soft);max-width:60ch}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;min-width:0}
+textarea{width:100%;box-sizing:border-box;min-height:150px;font:13px/1.5 "IBM Plex Mono",monospace;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:12px;resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+button{font:500 14px "IBM Plex Sans",sans-serif;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button.main{background:var(--blue);border-color:var(--blue);color:var(--bg)}
+.verdict{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.stamp{font:400 30px/1 "Instrument Serif",serif;padding:10px 18px;border:2px solid;border-radius:6px;transform:rotate(-2deg)}
+.stamp.ok{color:var(--good);border-color:var(--good)}.stamp.no{color:var(--bad);border-color:var(--bad)}
+.why{display:grid;gap:4px;color:var(--soft)}
+.bar{height:10px;background:var(--bg);border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--blue)}.bar.over i{background:var(--bad)}
+.parts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.part{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:8px;border:1px solid var(--line)}
+.part b{display:block}.part span{color:var(--soft);font-size:13px}
+.dot{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font:600 13px "IBM Plex Mono",monospace}
+.yes .dot{background:var(--goodbg);color:var(--good)}.no .dot{background:var(--badbg);color:var(--bad)}.opt .dot{background:var(--warnbg);color:var(--warn)}
+figure{margin:0}figcaption{color:var(--soft);font-size:13px;margin-top:6px}
+.flow{overflow-x:auto}.flow svg{display:block;min-width:620px;width:100%;height:auto;color:var(--ink)}
+.clauses{display:grid;gap:10px}
+.clauses{gap:6px}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.grp{display:grid;gap:6px;align-content:start;padding:12px;border-radius:8px;border:1px dashed var(--line);min-width:0}
+.grp.human{background:var(--warnbg)}
+.grp h3{margin:0;font:600 15px "IBM Plex Sans",sans-serif;display:flex;gap:8px;align-items:center}
+.grp h3 span{font:500 12px "IBM Plex Mono",monospace;color:var(--soft);border:1px solid var(--line);border-radius:10px;padding:0 7px}
+.grp .cl{background:var(--card)}.key{color:var(--soft);font-size:13px;margin-bottom:4px}.k{font-weight:600}.k.clear{color:var(--good)}.k.check{color:var(--warn)}.k.vague{color:var(--bad)}
+.cl{display:grid;grid-template-columns:auto auto 1fr auto;gap:10px;align-items:baseline;padding:8px 12px;border:1px solid var(--line);border-radius:8px;border-left-width:5px;font-size:14px;cursor:pointer}
+.cl input{margin:0;transform:translateY(2px)}
+.cl.clear{border-left-color:var(--good)}.cl.check{border-left-color:var(--warn)}.cl.vague,.cl.escape{border-left-color:var(--bad)}
+.n{font:500 13px "IBM Plex Mono",monospace;color:var(--soft)}
+.tag{font:600 12px "IBM Plex Sans",sans-serif;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.clear .tag{background:var(--goodbg);color:var(--good)}.check .tag{background:var(--warnbg);color:var(--warn)}.vague .tag,.escape .tag{background:var(--badbg);color:var(--bad)}
+.cl p{min-width:0;overflow-wrap:anywhere}.cl small{display:block;color:var(--soft);margin-top:4px}
+mark{background:var(--badbg);color:var(--bad);border-radius:3px;padding:0 2px}
+label.tick{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--soft);margin-top:8px;cursor:pointer}
+.lists{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.lists ul{margin:0;padding-left:18px;display:grid;gap:4px}
+.empty{color:var(--soft);font-style:italic}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Goal Review</h1>
+    <p class="sub">Paste a goal before you start it. This page shows whether someone else could tell, from the work alone, when it is done.</p>
+  </header>
+
+  <section class="card">
+    <h2>The goal</h2>
+    <textarea id="src" spellcheck="false" aria-label="Goal text"></textarea>
+    <div class="row" style="margin-top:10px">
+      <button class="main" id="go">Review</button>
+      <button id="ex">Load an example</button>
+      <button id="clr">Clear</button>
+    </div>
+  </section>
+
+  <section class="card verdict" aria-live="polite">
+    <div class="stamp no" id="stamp">Not Ready</div>
+    <div class="why" id="why"></div>
+  </section>
+
+  <section class="card">
+    <h2>Length</h2>
+    <p id="len"></p>
+    <div class="bar" id="lenbar"><i></i></div>
+  </section>
+
+  <section class="card">
+    <h2>Does it say all six things?</h2>
+    <div class="parts" id="parts"></div>
+  </section>
+
+  <section class="card">
+    <h2>How it ends</h2>
+    <figure class="flow" id="flow"></figure>
+  </section>
+
+  <section class="card">
+    <h2>Finish line: who can close each point</h2>
+    <div class="clauses" id="clauses"></div>
+  </section>
+
+  <section class="card lists">
+    <div><h2>Rules while working</h2><ul id="rules"></ul></div>
+    <div><h2>Never do</h2><ul id="never"></ul></div>
+  </section>
+</div>
+
+<script>
+const EXAMPLE = `/goal Make checkout pages load fast without breaking anything.
+DONE WHEN:
+1. The checkout benchmark shows p95 under 120 ms, and the result line is shown in the chat.
+2. The full test suite passes with 0 failed, and the summary line is shown in the chat.
+3. No public API response changes: the API compare test passes.
+4. The user signs off the new numbers in the chat.
+BLOCKED: if no change gets p95 under 120 ms after 5 tries, stop and report what was tried, the numbers, and what input would help.
+HOW: work only in the checkout service and its tests. After each try, record the number and pick the next idea from the slowest step.
+NEVER: change the benchmark, skip tests, or touch other services.`;
+
+const KEY = "goal-review-v2";
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let ticks = {};
+try { ticks = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { ticks = {}; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(ticks)); } catch (e) {} };
+
+const VAGUE = /(?<![\w./-])(better|improve[sd]?|good|nice|clean(er)?|robust|properly|works?|working|as needed|appropriate|reasonable|where possible|if possible|etc|follows? the|aligned|mostly|enough|fast(er)?|simple|simpler)(?![\w/-])/gi;
+const ESCAPE = /\b(or (a|the) reason|unless (it|you) (decide|think)|at (your|its) discretion|if (you|it) (think|judge|decide)s?|or skip|or defer|best effort|where it makes sense|if time allows)\b/gi;
+const COUNTED = /(\b\d+(\.\d+)?\s*(%|ms|s|gb|mb|kb|failed|open|blank|errors?|passed|rows?)?\b|rc=0|exits? 0|\bpass(es|ed)?\b|\bresult pass\b|\bshows?\b.+\bline\b|"[^"]+")/i;
+const HUMAN = /(?<![\w./-])(the user|users?|you|human|a person|approv\w*|sign[- ]?off|signs? off|sees?|saw|seen|decides?|ruling|manual(ly)?|by hand|physical|on site|webhook|access|log ?in|password|secret|production deploy|deploy to production|real slack)(?![\w/-])/i;
+const HEADS = [["done", /\bDONE WHEN\b\s*:?/i], ["blocked", /\bBLOCKED[A-Z ]*\b\s*:?/i], ["how", /\bHOW\b\s*:/], ["never", /\bNEVER\b\s*:/]];
+
+function parse(t) {
+  t = t.replace(/^\s*\/goal\s+/i, "").trim();
+  const hits = [];
+  for (const [k, re] of HEADS) { const m = re.exec(t); if (m) hits.push({k, i: m.index, j: m.index + m[0].length}); }
+  hits.sort((a, b) => a.i - b.i);
+  const out = {outcome: (hits.length ? t.slice(0, hits[0].i) : t).trim(), done: "", blocked: "", how: "", never: ""};
+  hits.forEach((h, n) => { out[h.k] = t.slice(h.j, n + 1 < hits.length ? hits[n + 1].i : t.length).trim(); });
+  let items = out.done.split(/(?:^|\s)\d+[.)]\s+/).map(s => s.trim()).filter(Boolean);
+  if (!items.length && out.done) items = [out.done];
+  out.items = items;
+  return out;
+}
+
+function judge(c) {
+  const e = c.match(ESCAPE), v = c.match(VAGUE);
+  if (e) return {cls: "escape", tag: "Way out", note: "Lets the worker decide it is done without you.", words: e};
+  if (v && !COUNTED.test(c)) return {cls: "vague", tag: "Vague", note: "Two people could disagree on whether this is true.", words: v};
+  if (COUNTED.test(c)) return {cls: "clear", tag: "Clear", note: "Ends in a number or an exact result.", words: []};
+  return {cls: "check", tag: "Check", note: "No number or exact result. Add one if you can.", words: []};
+}
+
+function hl(text, words) {
+  let h = esc(text);
+  [...new Set(words.map(w => w.toLowerCase()))].forEach(w => {
+    h = h.replace(new RegExp("(?<![\\w./-])(" + w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")(?![\\w/-])", "gi"), "<mark>$1</mark>");
+  });
+  return h;
+}
+
+function parts(g, all) {
+  const has = re => re.test(all);
+  return [
+    {ok: g.items.length > 0, name: "Finish line", say: "What must be true when the work is done."},
+    {ok: g.items.some(c => COUNTED.test(c)), name: "Proof", say: "A number, test or result that shows it is true."},
+    {ok: !!g.never || has(/\b(without|keep(ing)?|preserv|must not|do not|never)\b/i), name: "Must not break", say: "What has to stay working."},
+    {ok: !!g.how || has(/\b(only|limit(ed)? to|scope|within)\b/i), name: "Where it may work", say: "Which files, tools or places are allowed."},
+    {ok: has(/\b(after each|each (try|attempt)|next (try|idea|step)|retry|iterate|sweep)\b/i), name: "How it tries again", say: "How a failed try leads to the next one."},
+    {ok: !!g.blocked || has(/\b(stuck|stop and report|if blocked)\b/i), name: "When to stop and ask", say: "When to give up and what to report."},
+    {ok: has(/\b(shown|show|print(ed)?|report(ed)?|in the chat|line)\b/i), name: "Shown in the chat", say: "The checker only reads the chat, so proof must appear there."},
+    {ok: has(/\b(\d+ (turns|tries|attempts|hours)|stop after)\b/i), name: "A turn or try limit", say: "Optional. Stops a goal that never ends.", optional: true}
+  ];
+}
+
+function flow(g) {
+  const n = Math.max(Math.min(g.items.length, 12), 1), W = 760, gy = 56, gh = Math.max(n * 34 + 20, 110), H = gy + gh + 76;
+  const gates = g.items.slice(0, 12).map((c, i) => {
+    const j = judge(c), y = gy + 16 + i * 34;
+    const col = j.cls === "clear" ? "var(--good)" : j.cls === "check" ? "var(--warn)" : "var(--bad)";
+    return `<rect x="330" y="${y}" width="180" height="26" rx="5" fill="none" stroke="${col}" stroke-width="1.6"/><text x="342" y="${y + 17}" font-size="12" fill="currentColor">Point ${i + 1}${HUMAN.test(c) ? " · You" : ""}</text><text x="498" y="${y + 17}" font-size="11" text-anchor="end" fill="${col}">${j.tag}</text>`;
+  }).join("");
+  const mid = gy + gh / 2;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="The work loops until every finish line point is true, then ends as done. If stuck, it stops and reports.">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+<rect x="20" y="${mid - 22}" width="110" height="44" rx="22" fill="none" stroke="currentColor"/><text x="75" y="${mid + 5}" font-size="13" text-anchor="middle" fill="currentColor">Start</text>
+<line x1="130" y1="${mid}" x2="168" y2="${mid}" stroke="currentColor" marker-end="url(#ar)"/>
+<rect x="170" y="${mid - 30}" width="120" height="60" rx="8" fill="none" stroke="var(--blue)" stroke-width="1.6"/><text x="230" y="${mid - 3}" font-size="13" text-anchor="middle" fill="currentColor">Do the work</text><text x="230" y="${mid + 15}" font-size="11" text-anchor="middle" fill="var(--soft)">one try at a time</text>
+<line x1="290" y1="${mid}" x2="322" y2="${mid}" stroke="currentColor" marker-end="url(#ar)"/>
+<rect x="320" y="${gy}" width="200" height="${gh}" rx="8" fill="none" stroke="var(--line)" stroke-dasharray="4 4"/><text x="420" y="${gy - 8}" font-size="12" text-anchor="middle" fill="var(--soft)">Every point true?</text>${gates}
+<line x1="520" y1="${mid}" x2="608" y2="${mid}" stroke="var(--good)" marker-end="url(#ar)"/><text x="564" y="${mid - 8}" font-size="11" text-anchor="middle" fill="var(--good)">all yes</text>
+<rect x="610" y="${mid - 22}" width="120" height="44" rx="22" fill="var(--goodbg)" stroke="var(--good)"/><text x="670" y="${mid + 5}" font-size="14" text-anchor="middle" fill="var(--good)">Done</text>
+<path d="M380 ${gy + gh} V${gy + gh + 24} H230 V${mid + 34}" fill="none" stroke="var(--warn)" marker-end="url(#ar)"/><text x="305" y="${gy + gh + 42}" font-size="11" text-anchor="middle" fill="var(--warn)">not yet: try again</text>
+<path d="M470 ${gy + gh} V${gy + gh + 40} H608" fill="none" stroke="var(--bad)" stroke-dasharray="4 3" marker-end="url(#ar)"/><text x="540" y="${gy + gh + 34}" font-size="11" text-anchor="middle" fill="var(--bad)">out of ideas</text>
+<rect x="610" y="${gy + gh + 20}" width="120" height="40" rx="8" fill="var(--badbg)" stroke="var(--bad)"/><text x="670" y="${gy + gh + 45}" font-size="12" text-anchor="middle" fill="var(--bad)">${g.blocked ? "Stop and report" : "No stop rule"}</text>
+<text x="20" y="18" font-size="12" fill="${g.never ? "var(--soft)" : "var(--bad)"}">${g.never ? "The Never list applies to every try." : "No Never list: nothing fences the work."}</text>
+</svg><figcaption>The work repeats until every point is true. A red or amber point is a gate nobody can check cleanly.</figcaption>`;
+}
+
+function render() {
+  const raw = $("src").value, all = raw.trim();
+  if (!all) {
+    $("stamp").className = "stamp no"; $("stamp").textContent = "Empty";
+    $("why").innerHTML = "<p>Paste a goal, or load the example.</p>";
+    ["parts", "clauses", "rules", "never", "flow"].forEach(id => $(id).innerHTML = "");
+    $("len").textContent = ""; $("lenbar").firstElementChild.style.width = "0"; return;
+  }
+  const g = parse(all), len = all.length, ps = parts(g, all), js = g.items.map(judge);
+  $("len").textContent = `${len.toLocaleString()} of 4,000 characters` + (len > 4000 ? ". Too long: the goal tool cuts it off." : ".");
+  $("lenbar").className = "bar" + (len > 4000 ? " over" : "");
+  $("lenbar").firstElementChild.style.width = Math.min(100, len / 40) + "%";
+  $("parts").innerHTML = ps.map(p => `<div class="part ${p.ok ? "yes" : p.optional ? "opt" : "no"}"><div class="dot">${p.ok ? "✓" : p.optional ? "?" : "✕"}</div><div><b>${p.name}</b><span>${p.say}</span></div></div>`).join("");
+  $("flow").innerHTML = flow(g);
+  const sig = s => s.slice(0, 80);
+  const row = i => {
+    const c = g.items[i], j = js[i], k = sig(c);
+    return `<label class="cl ${j.cls}" title="${j.note}"><input type="checkbox" data-k="${esc(k)}" ${ticks[k] ? "checked" : ""}><span class="n">${i + 1}</span><p>${hl(c, j.words)}</p><span class="tag">${j.tag}</span></label>`;
+  };
+  const idx = g.items.map((_, i) => i), mine = idx.filter(i => !HUMAN.test(g.items[i])), yours = idx.filter(i => HUMAN.test(g.items[i]));
+  const group = (title, say, ids, cls) => `<div class="grp ${cls}"><h3>${title} <span>${ids.length}</span></h3><p class="key">${say}</p>${ids.length ? ids.map(row).join("") : `<p class="empty">None.</p>`}</div>`;
+  $("clauses").innerHTML = g.items.length
+    ? `<p class="key">Tick each point you could check yourself. <b class="k clear">Clear</b> has a number. <b class="k check">Check</b> has none. <b class="k vague">Vague</b> could be argued.</p><div class="split">`
+      + group("Claude can finish alone", "Claude does the work and shows the proof in the chat.", mine, "auto")
+      + group("Needs you", "Claude stops and asks you when only these are left.", yours, "human")
+      + `</div>`
+    : `<p class="empty">No finish line found. Add a "DONE WHEN:" list with numbered points.</p>`;
+  const list = (s, el) => { const xs = s.split(/(?<=\.)\s+(?=[A-Z])/).map(x => x.trim()).filter(Boolean); $(el).innerHTML = xs.length ? xs.map(x => `<li>${esc(x)}</li>`).join("") : `<li class="empty">None given.</li>`; };
+  list(g.how, "rules"); list(g.never, "never");
+  document.querySelectorAll("input[data-k]").forEach(b => b.onchange = () => { ticks[b.dataset.k] = b.checked; save(); verdict(g, ps, js, len); });
+  verdict(g, ps, js, len);
+}
+
+function verdict(g, ps, js, len) {
+  const why = [];
+  if (len > 4000) why.push("Shorten it to 4,000 characters or less.");
+  ps.filter(p => !p.ok && !p.optional).forEach(p => why.push(`Missing: ${p.name.toLowerCase()}.`));
+  const bad = js.filter(j => j.cls === "vague" || j.cls === "escape").length;
+  if (bad) why.push(`${bad} point${bad > 1 ? "s" : ""} marked Vague or Way out.`);
+  if (g.items.some(c => HUMAN.test(c)) && !g.blocked) why.push("Some points need you, but the goal never says when to stop and ask.");
+  const un = g.items.filter(c => !ticks[c.slice(0, 80)]).length;
+  if (un) why.push(`${un} point${un > 1 ? "s" : ""} not ticked yet.`);
+  const ok = !why.length;
+  $("stamp").className = "stamp " + (ok ? "ok" : "no");
+  $("stamp").textContent = ok ? "Ready To Start" : "Not Ready";
+  $("why").innerHTML = ok ? "<p>Every point is clear and ticked. Paste it into /goal.</p>" : why.map(w => `<p>${w}</p>`).join("");
+}
+
+$("go").onclick = render;
+$("ex").onclick = () => { $("src").value = EXAMPLE; render(); };
+$("clr").onclick = () => { $("src").value = ""; render(); };
+let t; $("src").addEventListener("input", () => { clearTimeout(t); t = setTimeout(render, 300); });
+$("src").value = EXAMPLE; render();
+</script>
