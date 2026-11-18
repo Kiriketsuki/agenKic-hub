@@ -6,8 +6,9 @@ description: >-
   turn a task into /goal, or invokes goal-writer.
   Produces a goal the user can paste, with evidence requirements and clear limits.
   Drafts only unless the user explicitly requests activation.
-  Subskill goal-review ("/goal-writer review", "review this goal") shows a goal
-  on a visual check page before the user starts it.
+  Subskill goal-review ("/goal-writer review", "review this goal") opens a session
+  page for the draft. People grill and tune it there, then Claude finalizes it.
+  A person always starts the goal.
 ---
 
 # Goal Writer
@@ -45,7 +46,7 @@ Claude Code `/goal` ([docs](https://code.claude.com/docs/en/goal), consulted on 
 
 | Subskill | Trigger | File |
 | --- | --- | --- |
-| goal-review | `/goal-writer review`, "review this goal", or a draft the user wants to check visually | [subskills/goal-review.md](subskills/goal-review.md) |
+| goal-review | `/goal-writer review`, "review this goal", "next round", "finalize", or a draft the user wants to grill with others | [subskills/goal-review.md](subskills/goal-review.md) |
 
 When a trigger matches, read the subskill file and follow it.
 
@@ -68,6 +69,8 @@ When a trigger matches, read the subskill file and follow it.
 6. Return one goal in a fenced text block.
    Follow it with only material assumptions or unresolved inputs.
    Save a file only when the user requests one or supplies an output path.
+7. Offer a goal-review session once. In a session, the draft becomes final only through
+   "finalize", and a person starts the goal.
 
 ## Draft template
 
