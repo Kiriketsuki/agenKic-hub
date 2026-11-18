@@ -150,6 +150,7 @@ Feel none of these? Install nothing.
 |:---|:---|
 | [adversarial-council](skills/council/adversarial-council/) | Adversarial debate over a decision or plan: advocates, critics, questioner, arbiter |
 | [agent-route](skills/core/agent-route/) | Recommend the right subagent type for a task |
+| [artifact-prune](skills/ops/artifact-prune/) | Triage stale and duplicate claude.ai artifacts, then delete or merge them with a saved copy |
 | [brainstorm](skills/core/brainstorm/) | Collaborative design exploration before implementation, one question at a time |
 | [brainstorm-grill](skills/core/brainstorm-grill/) | The relentless variant: interrogates a plan along the decision-tree frontier |
 | [grill-me](skills/core/grill-me/) | Grills a plan until every decision is settled, then writes a brief.md decision record and stops |
@@ -162,7 +163,7 @@ Feel none of these? Install nothing.
 | [critique-loop](skills/core/critique-loop/) | Build a rubric, run independent critique rounds, or do both |
 | [croc-send](skills/ops/croc-send/) | Send files between machines with croc over tailscale |
 | [feature-spec](skills/core/feature-spec/) | Interview-driven feature spec with Gherkin acceptance scenarios |
-| [goal-writer](skills/core/goal-writer/) | Draft verifiable Codex goals with evidence requirements and clear limits |
+| [goal-writer](skills/core/goal-writer/) | Draft verifiable goals, grill them with your team on a session page, then finalize |
 | [implement-spec](skills/core/implement-spec/) | Implement a written spec task by task |
 | [insights-to-vault](skills/ops/insights-to-vault/) | Archive a Claude Code Insights report into a notes vault |
 | [kilint](skills/writing/kilint/) | Prose linter for the STE house style |
