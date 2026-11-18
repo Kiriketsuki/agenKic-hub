@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>Goal Review</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,7 +29,25 @@ button.main{background:var(--blue);border-color:var(--blue);color:var(--bg)}
 .dot{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font:600 13px "IBM Plex Mono",monospace}
 .yes .dot{background:var(--goodbg);color:var(--good)}.no .dot{background:var(--badbg);color:var(--bad)}.opt .dot{background:var(--warnbg);color:var(--warn)}
 figure{margin:0}figcaption{color:var(--soft);font-size:13px;margin-top:6px}
-.flow{overflow-x:auto}.flow svg{display:block;min-width:620px;width:100%;height:auto;color:var(--ink)}
+.turn{display:grid;gap:0}
+.step{display:grid;grid-template-columns:30px 1fr;gap:12px;padding:8px 0;position:relative;min-width:0}
+.step:not(.last)::before{content:"";position:absolute;left:14px;top:38px;bottom:-8px;border-left:1.5px solid var(--line)}
+.step>div{min-width:0}
+.num{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--blue);color:var(--blue);background:var(--card);display:grid;place-items:center;font:600 13px "IBM Plex Mono",monospace;position:relative;z-index:1}
+.step b{display:block;font-weight:600}.step .d{color:var(--soft);font-size:13px;overflow-wrap:anywhere}.step .d.bad{color:var(--bad)}
+.cycle{position:relative;border:1.5px dashed var(--warn);border-radius:10px;padding:18px 12px 6px;margin:10px 0 4px}
+.cycle>.lbl{position:absolute;top:-10px;left:12px;background:var(--card);padding:0 6px;font:600 12px "IBM Plex Sans",sans-serif;color:var(--warn);letter-spacing:.04em;text-transform:uppercase}
+.pts{display:grid;gap:5px;margin-top:8px}
+.pt{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;padding:6px 10px;border:1px solid var(--line);border-left-width:4px;border-radius:6px;font-size:13px;background:var(--bg)}
+.pt.chat{border-left-color:var(--good)}.pt.you{border-left-color:var(--warn)}.pt.none{border-left-color:var(--bad)}
+.pt .t{flex:1 1 220px;min-width:0;overflow-wrap:anywhere}
+.chip{font:500 12px "IBM Plex Mono",monospace;padding:1px 8px;border-radius:10px;white-space:nowrap}
+.chip.chat{background:var(--goodbg);color:var(--good)}.chip.you{background:var(--warnbg);color:var(--warn)}.chip.none{background:var(--badbg);color:var(--bad)}
+.outs{display:grid;gap:5px;margin-top:8px}
+.out{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:center;font-size:13px;padding:6px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg)}
+.out .ar{color:var(--soft)}.out .r{font-weight:600}
+.out.good .r{color:var(--good)}.out.warn .r{color:var(--warn)}.out.bad .r{color:var(--bad)}.out.off{opacity:.55}.out.missing{border-color:var(--bad)}.out.missing .c{color:var(--bad)}
+@media (max-width:520px){.out{grid-template-columns:1fr}.out .ar{display:none}.cycle{padding-inline:6px}.step{gap:8px}.chip{white-space:normal}}
 .clauses{display:grid;gap:10px}
 .clauses{gap:6px}
 .split{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
@@ -49,6 +68,25 @@ label.tick{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--so
 .lists{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
 .lists ul{margin:0;padding-left:18px;display:grid;gap:4px}
 .empty{color:var(--soft);font-style:italic}
+.sess{display:grid;gap:14px}
+.steps{display:flex;flex-wrap:wrap;gap:6px;list-style:none;margin:0;padding:0}
+.steps li{font:500 12px "IBM Plex Mono",monospace;padding:3px 10px;border-radius:12px;border:1px solid var(--line);color:var(--soft)}
+.steps li.on{background:var(--blue);border-color:var(--blue);color:var(--bg)}.steps li.done{color:var(--good);border-color:var(--good)}
+.banner{padding:10px 12px;border-radius:8px;background:var(--warnbg);color:var(--warn);font-weight:500;display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.banner.good{background:var(--goodbg);color:var(--good)}.banner.bad{background:var(--badbg);color:var(--bad)}
+.qs{display:grid;gap:10px}
+.q{border:1px solid var(--line);border-radius:8px;padding:12px;display:grid;gap:8px;background:var(--bg);min-width:0}
+.q.done{border-left:4px solid var(--good)}.q.open{border-left:4px solid var(--warn)}
+.q b{overflow-wrap:anywhere}.qwhy{color:var(--soft);font-size:13px}
+.opt{display:flex;gap:8px;align-items:flex-start;font-size:14px;cursor:pointer;overflow-wrap:anywhere}.opt input{margin-top:4px}
+.rec{font:600 11px "IBM Plex Sans",sans-serif;color:var(--good);background:var(--goodbg);border-radius:10px;padding:1px 7px;margin-left:6px;white-space:nowrap}
+.q input[type=text],.prop textarea{width:100%;box-sizing:border-box;font:14px "IBM Plex Sans",sans-serif;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:7px 9px}
+.prop textarea{min-height:70px;resize:vertical}
+.ans{color:var(--good);font-size:14px;overflow-wrap:anywhere}.ans span{color:var(--soft);font-size:12px}
+pre.final{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.5 "IBM Plex Mono",monospace;background:var(--bg);border:1.5px solid var(--good);border-radius:8px;padding:12px;margin:0}
+.vers{margin:0;padding-left:18px;display:grid;gap:6px;font-size:13px}.vers small{color:var(--soft)}
+details summary{cursor:pointer;color:var(--soft);font-size:13px}
+.err{color:var(--bad);font-size:13px}
 </style>
 
 <div class="wrap">
@@ -57,8 +95,10 @@ label.tick{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--so
     <p class="sub">Paste a goal before you start it. This page shows whether someone else could tell, from the work alone, when it is done.</p>
   </header>
 
+  <section class="card sess" id="sess" hidden aria-live="polite"></section>
+
   <section class="card">
-    <h2>The goal</h2>
+    <h2 id="srch">The goal</h2>
     <textarea id="src" spellcheck="false" aria-label="Goal text"></textarea>
     <div class="row" style="margin-top:10px">
       <button class="main" id="go">Review</button>
@@ -166,28 +206,47 @@ function parts(g, all) {
   ];
 }
 
+// Finds the proof a point promises to put in the chat. The /goal checker reads only the chat.
+const PROOF = /\b(?:the|a|its)\s+((?:[\w%<>=.-]+\s+){0,3}?(?:line|result|summary|output|table|count|number|list)s?(?:\s+(?:line|summary|table|output)s?)?)\b(?=[^.]*\b(?:shown|printed|posted|pasted|in the chat))/i;
+function proof(c) {
+  if (HUMAN.test(c)) return {who: "you", txt: "you: your reply in the chat"};
+  const m = c.match(PROOF);
+  if (m) return {who: "chat", txt: "needs: " + m[1].toLowerCase()};
+  if (/\bin the chat\b/i.test(c)) return {who: "chat", txt: "needs: a line in the chat"};
+  return {who: "none", txt: "checker cannot see this"};
+}
+
+const short = (s, n) => s.length > n ? s.slice(0, n - 1).trimEnd() + "…" : s;
+
 function flow(g) {
-  const n = Math.max(Math.min(g.items.length, 12), 1), W = 760, gy = 56, gh = Math.max(n * 34 + 20, 110), H = gy + gh + 76;
-  const gates = g.items.slice(0, 12).map((c, i) => {
-    const j = judge(c), y = gy + 16 + i * 34;
-    const col = j.cls === "clear" ? "var(--good)" : j.cls === "check" ? "var(--warn)" : "var(--bad)";
-    return `<rect x="330" y="${y}" width="180" height="26" rx="5" fill="none" stroke="${col}" stroke-width="1.6"/><text x="342" y="${y + 17}" font-size="12" fill="currentColor">Point ${i + 1}${HUMAN.test(c) ? " · You" : ""}</text><text x="498" y="${y + 17}" font-size="11" text-anchor="end" fill="${col}">${j.tag}</text>`;
-  }).join("");
-  const mid = gy + gh / 2;
-  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="The work loops until every finish line point is true, then ends as done. If stuck, it stops and reports.">
-<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
-<rect x="20" y="${mid - 22}" width="110" height="44" rx="22" fill="none" stroke="currentColor"/><text x="75" y="${mid + 5}" font-size="13" text-anchor="middle" fill="currentColor">Start</text>
-<line x1="130" y1="${mid}" x2="168" y2="${mid}" stroke="currentColor" marker-end="url(#ar)"/>
-<rect x="170" y="${mid - 30}" width="120" height="60" rx="8" fill="none" stroke="var(--blue)" stroke-width="1.6"/><text x="230" y="${mid - 3}" font-size="13" text-anchor="middle" fill="currentColor">Do the work</text><text x="230" y="${mid + 15}" font-size="11" text-anchor="middle" fill="var(--soft)">one try at a time</text>
-<line x1="290" y1="${mid}" x2="322" y2="${mid}" stroke="currentColor" marker-end="url(#ar)"/>
-<rect x="320" y="${gy}" width="200" height="${gh}" rx="8" fill="none" stroke="var(--line)" stroke-dasharray="4 4"/><text x="420" y="${gy - 8}" font-size="12" text-anchor="middle" fill="var(--soft)">Every point true?</text>${gates}
-<line x1="520" y1="${mid}" x2="608" y2="${mid}" stroke="var(--good)" marker-end="url(#ar)"/><text x="564" y="${mid - 8}" font-size="11" text-anchor="middle" fill="var(--good)">all yes</text>
-<rect x="610" y="${mid - 22}" width="120" height="44" rx="22" fill="var(--goodbg)" stroke="var(--good)"/><text x="670" y="${mid + 5}" font-size="14" text-anchor="middle" fill="var(--good)">Done</text>
-<path d="M380 ${gy + gh} V${gy + gh + 24} H230 V${mid + 34}" fill="none" stroke="var(--warn)" marker-end="url(#ar)"/><text x="305" y="${gy + gh + 42}" font-size="11" text-anchor="middle" fill="var(--warn)">not yet: try again</text>
-<path d="M470 ${gy + gh} V${gy + gh + 40} H608" fill="none" stroke="var(--bad)" stroke-dasharray="4 3" marker-end="url(#ar)"/><text x="540" y="${gy + gh + 34}" font-size="11" text-anchor="middle" fill="var(--bad)">out of ideas</text>
-<rect x="610" y="${gy + gh + 20}" width="120" height="40" rx="8" fill="var(--badbg)" stroke="var(--bad)"/><text x="670" y="${gy + gh + 45}" font-size="12" text-anchor="middle" fill="var(--bad)">${g.blocked ? "Stop and report" : "No stop rule"}</text>
-<text x="20" y="18" font-size="12" fill="${g.never ? "var(--soft)" : "var(--bad)"}">${g.never ? "The Never list applies to every try." : "No Never list: nothing fences the work."}</text>
-</svg><figcaption>The work repeats until every point is true. A red or amber point is a gate nobody can check cleanly.</figcaption>`;
+  const pr = g.items.map(proof);
+  const yours = pr.filter(p => p.who === "you").length;
+  const nNever = g.never ? g.never.split(/[,.;]\s*|\bor\b/).filter(x => x.trim()).length : 0;
+  const how = g.how ? short(g.how.split(/(?<=\.)\s+/)[0], 110) : "";
+  const blockTrig = g.blocked ? short(g.blocked.split(/,\s*(?=stop)|\bstop\b/i)[0].trim(), 70) : "";
+  const lim = (g.outcome + " " + g.done + " " + g.how + " " + g.blocked).match(/\b(?:stop after|after|within|at most)\s+(\d+)\s+(turns?|hours?)\b/i);
+  const step = (n, title, detail, cls = "", extra = "", last = false) =>
+    `<div class="step${last ? " last" : ""}"><div class="num">${n}</div><div><b>${title}</b>${detail ? `<div class="d ${cls}">${detail}</div>` : ""}${extra}</div></div>`;
+  const pts = g.items.length
+    ? `<div class="pts">${g.items.map((c, i) => `<div class="pt ${pr[i].who}"><span class="n">${i + 1}</span><span class="t">${esc(short(c, 90))}</span><span class="chip ${pr[i].who}">${pr[i].who === "chat" ? "✓ " : pr[i].who === "none" ? "✕ " : ""}${esc(pr[i].txt)}</span></div>`).join("")}</div>`
+    : `<p class="empty">No DONE WHEN points, so the checker has nothing to check.</p>`;
+  const out = (cls, cond, res) => `<div class="out ${cls}"><span class="c">${cond}</span><span class="ar">→</span><span class="r">${res}</span></div>`;
+  const outs = `<div class="outs">
+    ${out("good", "Every point has its proof in the chat", "Done. The goal clears.")}
+    ${yours ? out("warn", `Only your ${yours === 1 ? "point is" : yours + " points are"} left`, "Claude asks you and waits. Your reply starts the next turn.") : out("off", "No point needs you", "Claude never has to wait for you.")}
+    ${out("warn", "Claude's points are still open", "Next turn. Back to step 2.")}
+    ${g.blocked ? out("bad", "BLOCKED: " + esc(blockTrig), "Stop. Report what was tried.") : out("bad missing", "No BLOCKED rule", "Claude never stops on its own.")}
+    ${lim ? out("bad", `Limit: ${lim[1]} ${esc(lim[2])}`, "Stop.") : out("off", "No turn or try limit (optional)", "Only the rules above end it.")}
+  </div>`;
+  return `<div class="turn" role="img" aria-label="Order of one goal run: Claude takes the goal, tries an idea, prints proof in the chat, the checker reads the chat, then one of five outcomes follows.">
+  ${step("1", "You start the goal", g.never ? `Claude holds ${g.items.length} point${g.items.length === 1 ? "" : "s"} and ${nNever} Never rule${nNever === 1 ? "" : "s"}. The Never rules apply to every turn.` : "No Never list: nothing fences the work.", g.never ? "" : "bad")}
+  <div class="cycle"><span class="lbl">Each turn, repeats</span>
+  ${step("2", "Claude tries the next idea", how ? "Inside the HOW rules: " + esc(how) : "No HOW rules: the scope is open.", how ? "" : "bad")}
+  ${step("3", "Claude prints the proof in the chat", "A file or a passing run that is not printed in the chat does not count.")}
+  ${step("4", "The turn ends. A small model reads the chat only", "It does not run commands or read files. It checks each point against what the chat shows.", "", pts)}
+  ${step("5", "What happens next", "", "", outs, true)}
+  </div></div>
+  <figcaption>Green: the point names a line Claude prints. Amber: you close it. Red: the checker has nothing in the chat to read, so that point can never close.</figcaption>`;
 }
 
 function render() {
@@ -230,6 +289,8 @@ function verdict(g, ps, js, len) {
   const bad = js.filter(j => j.cls === "vague" || j.cls === "escape").length;
   if (bad) why.push(`${bad} point${bad > 1 ? "s" : ""} marked Vague or Way out.`);
   if (g.items.some(c => HUMAN.test(c)) && !g.blocked) why.push("Some points need you, but the goal never says when to stop and ask.");
+  const blind = g.items.filter(c => proof(c).who === "none").length;
+  if (blind) why.push(`${blind} point${blind > 1 ? "s" : ""} put no proof in the chat, so the checker cannot close ${blind > 1 ? "them" : "it"}.`);
   const un = g.items.filter(c => !ticks[c.slice(0, 80)]).length;
   if (un) why.push(`${un} point${un > 1 ? "s" : ""} not ticked yet.`);
   const ok = !why.length;
@@ -243,4 +304,134 @@ $("ex").onclick = () => { $("src").value = EXAMPLE; render(); };
 $("clr").onclick = () => { $("src").value = ""; render(); };
 let t; $("src").addEventListener("input", () => { clearTimeout(t); t = setTimeout(render, 300); });
 $("src").value = EXAMPLE; render();
+
+// Session mode. A per-goal copy of this page keeps the goal in its db store. Claude writes the
+// goal, the grill questions and the versions. People answer, propose changes and lock it here.
+const S = {db: null, user: null, me: null, goal: null, qs: [], vs: [], props: [], names: {}, draft: {}, entered: false, err: ""};
+const iso = () => new Date().toISOString();
+const byKey = k => (a, b) => (a[k] ?? 0) - (b[k] ?? 0);
+const who = id => id ? (S.names[id] || "Someone") : "Someone";
+const canWrite = () => !S.user || !S.user.can || S.user.can("data.write") !== false;
+
+async function boot() {
+  if (!window.claude || typeof claude.use !== "function") return;
+  let db = null, user = null;
+  try { [db, user] = await Promise.all([claude.use("db"), claude.use("user")]); } catch (e) { return; }
+  if (!db) return;
+  S.db = db; S.user = user;
+  try { S.me = user ? await user.id() : null; } catch (e) { S.me = null; }
+  const fail = e => { S.err = "The goal store did not answer: " + (e && e.code || "unknown") + "."; drawSession(); };
+  db.doc("goal/current").onSnapshot(snap => {
+    if (!snap.exists) return;
+    S.goal = snap.data(); enterSession(); drawSession(); names();
+  }, fail);
+  db.collection("questions").onSnapshot(s => { S.qs = s.docs.map(d => ({id: d.id, ...d.data()})).sort((a, b) => (a.round - b.round) || (a.n - b.n)); drawSession(); names(); }, fail);
+  db.collection("versions").onSnapshot(s => { S.vs = s.docs.map(d => ({id: d.id, ...d.data()})).sort(byKey("version")).reverse(); drawSession(); }, fail);
+  db.collection("proposals").onSnapshot(s => { S.props = s.docs.map(d => ({id: d.id, ...d.data()})).sort((a, b) => String(a.at).localeCompare(String(b.at))); drawSession(); names(); }, fail);
+}
+
+async function names() {
+  if (!S.user || !S.user.profiles) return;
+  const ids = [...new Set([...S.qs.map(q => q.answeredBy), ...S.props.map(p => p.by), S.goal && S.goal.lockedBy].filter(Boolean))].filter(id => !(id in S.names));
+  if (!ids.length) return;
+  try { const ps = await S.user.profiles(ids); ids.forEach(id => { S.names[id] = (ps[id] && ps[id].name) || ""; }); drawSession(); } catch (e) {}
+}
+
+function enterSession() {
+  if (S.entered) return;
+  S.entered = true;
+  $("sess").hidden = false;
+  ["go", "ex", "clr"].forEach(id => { $(id).hidden = true; });
+  $("src").readOnly = true;
+}
+
+function stepsHtml(st) {
+  const order = ["grilling", "locked", "final", "go"], at = order.indexOf(st);
+  const label = {grilling: "1 Grill and tune", locked: "2 Locked", final: "3 Final", go: "4 You start it"};
+  return `<ol class="steps">${order.map((k, i) => `<li class="${i < at ? "done" : i === at ? "on" : ""}">${label[k]}</li>`).join("")}</ol>`;
+}
+
+function qHtml(q, live) {
+  const head = `<b>${q.n}. ${esc(q.text || "")}</b>${q.why ? `<p class="qwhy">${esc(q.why)}</p>` : ""}`;
+  if (q.answer) {
+    const by = q.answeredVia === "chat" ? "answered in the chat" : "answered by " + esc(who(q.answeredBy));
+    return `<div class="q done">${head}<p class="ans">✓ ${esc(q.answer)} <span>· ${by}</span></p>${live && canWrite() ? `<div><button data-reopen="${q.id}">Change answer</button></div>` : ""}</div>`;
+  }
+  if (!live) return `<div class="q open">${head}<p class="empty">Not answered.</p></div>`;
+  const opts = [q.recommended, ...(q.options || []).filter(o => o !== q.recommended)].filter(Boolean);
+  const d = S.draft[q.id] || {};
+  const radios = opts.map((o, i) => `<label class="opt"><input type="radio" name="q-${q.id}" value="${i}" ${String(d.pick) === String(i) ? "checked" : ""}><span>${esc(o)}${o === q.recommended ? `<span class="rec">Recommended</span>` : ""}</span></label>`).join("");
+  return `<div class="q open" data-q="${q.id}">${head}${radios}
+    <label class="opt"><input type="radio" name="q-${q.id}" value="other" ${d.pick === "other" ? "checked" : ""}><span>Other</span></label>
+    <input type="text" data-other="${q.id}" placeholder="Your answer" value="${esc(d.other || "")}">
+    <div class="row">${canWrite() ? `<button class="main" data-save="${q.id}">Save answer</button>` : `<span class="empty">You can read this page but not answer.</span>`}</div></div>`;
+}
+
+function drawSession() {
+  if (!S.entered || !S.goal) { if (S.err) { $("sess").hidden = false; $("sess").innerHTML = `<p class="err">${esc(S.err)}</p>`; } return; }
+  const g = S.goal, st = g.status || "grilling", round = g.round || 0;
+  if (g.work) { document.querySelector("h1").textContent = g.title || g.work; document.querySelector(".sub").textContent = "Goal session for " + g.work + ". Grill and tune the goal here. A person starts it."; }
+  const text = st === "final" && g.finalText ? g.finalText : (g.text || "");
+  if ($("src").value !== text) { $("src").value = text; render(); }
+  $("srch").textContent = st === "final" ? "The final goal" : `The goal, version ${g.version || 1}`;
+  const cur = S.qs.filter(q => q.round === round), open = cur.filter(q => !q.answer).length;
+  const earlier = S.qs.filter(q => q.round < round), pending = S.props.filter(p => !p.applied);
+  let banner;
+  if (st === "final") banner = `<div class="banner good"><span>Final. Copy it and paste it into /goal yourself. Claude does not start the goal.</span></div>`;
+  else if (st === "locked") banner = `<div class="banner"><span>Locked by ${esc(who(g.lockedBy))}. Tell Claude "finalize" in the chat.</span>${canWrite() ? `<button data-unlock>Unlock</button>` : ""}</div>`;
+  else if (open) banner = `<div class="banner"><span>Round ${round}: ${open} question${open > 1 ? "s" : ""} open. Answer here or in the chat.</span></div>`;
+  else if (cur.length || pending.length) banner = `<div class="banner"><span>Round ${round} is answered. Tell Claude "next round" in the chat, or lock the goal if nothing is left.</span>${canWrite() ? `<button data-lock>Lock the goal</button>` : ""}</div>`;
+  else banner = `<div class="banner good"><span>No open questions. Lock the goal, or propose a change below.</span>${canWrite() ? `<button class="main" data-lock>Lock the goal</button>` : ""}</div>`;
+  const live = st === "grilling";
+  const qsec = cur.length ? `<h2>Round ${round} questions</h2><div class="qs">${cur.map(q => qHtml(q, live)).join("")}</div>` : "";
+  const old = earlier.length ? `<details><summary>Earlier rounds (${earlier.length} questions)</summary><div class="qs" style="margin-top:8px">${earlier.map(q => qHtml(q, false)).join("")}</div></details>` : "";
+  const props = live ? `<div class="prop"><h2>Propose a change</h2>
+    ${pending.length ? `<ul class="vers">${pending.map(p => `<li>${esc(p.text || "")} <small>· ${esc(who(p.by))}, waits for the next round</small></li>`).join("")}</ul>` : ""}
+    ${canWrite() ? `<textarea id="ptext" placeholder="What should the goal say differently?">${esc(S.draft.prop || "")}</textarea><div class="row" style="margin-top:8px"><button data-propose>Add proposal</button></div>` : ""}</div>` : "";
+  const fin = st === "final" && g.finalText ? `<h2>Copy and start</h2><pre class="final" id="fintext">${esc(g.finalText)}</pre>
+    <div class="row"><button class="main" data-copy>Copy goal</button><span class="empty">${(g.finalText.length).toLocaleString()} of 4,000 characters</span></div>` : "";
+  const vers = S.vs.length ? `<details><summary>Versions (${S.vs.length})</summary><ul class="vers" style="margin-top:8px">${S.vs.map(v => `<li><b>v${v.version}</b> <small>round ${v.round ?? "?"}</small><br>${esc((v.changes || []).join(" ") || "First draft.")}</li>`).join("")}</ul></details>` : "";
+  $("sess").innerHTML = `<h2>Goal session</h2>${stepsHtml(st)}${banner}${S.err ? `<p class="err">${esc(S.err)}</p>` : ""}${fin}${qsec}${props}${old}${vers}`;
+}
+
+async function write(fn) {
+  S.err = "";
+  try { await fn(); } catch (e) { S.err = e && e.code === "not_granted" ? "You do not have write access to this page." : "The save failed. Try again."; drawSession(); }
+}
+
+$("sess").addEventListener("input", e => {
+  const t = e.target;
+  if (t.dataset.other) { const d = S.draft[t.dataset.other] = S.draft[t.dataset.other] || {}; d.other = t.value; d.pick = "other"; const r = document.querySelector(`input[name="q-${t.dataset.other}"][value="other"]`); if (r) r.checked = true; }
+  else if (t.type === "radio" && t.name.startsWith("q-")) { const id = t.name.slice(2); (S.draft[id] = S.draft[id] || {}).pick = t.value; }
+  else if (t.id === "ptext") S.draft.prop = t.value;
+});
+
+$("sess").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b || !S.db) return;
+  const d = b.dataset;
+  if (d.save) {
+    const q = S.qs.find(x => x.id === d.save), dr = S.draft[d.save] || {};
+    const opts = [q.recommended, ...(q.options || []).filter(o => o !== q.recommended)].filter(Boolean);
+    const answer = dr.pick === "other" ? (dr.other || "").trim() : opts[Number(dr.pick)];
+    if (!answer) { S.err = "Pick an answer, or type one under Other."; drawSession(); return; }
+    write(() => S.db.doc("questions/" + d.save).update({answer, answeredBy: S.me, answeredVia: "page", answeredAt: iso()})).then(() => { delete S.draft[d.save]; });
+  } else if (d.reopen) {
+    write(() => S.db.doc("questions/" + d.reopen).update({answer: "", answeredBy: null, answeredVia: null, answeredAt: null}));
+  } else if ("propose" in d) {
+    const text = (S.draft.prop || "").trim();
+    if (!text) return;
+    write(() => S.db.collection("proposals").add({text, by: S.me, at: iso(), round: S.goal.round || 0, applied: false})).then(() => { S.draft.prop = ""; drawSession(); });
+  } else if ("lock" in d) {
+    write(() => S.db.doc("goal/current").update({status: "locked", lockedBy: S.me, lockedAt: iso()}));
+  } else if ("unlock" in d) {
+    write(() => S.db.doc("goal/current").update({status: "grilling", lockedBy: null, lockedAt: null}));
+  } else if ("copy" in d) {
+    const txt = S.goal.finalText || "";
+    const done = () => { b.textContent = "Copied"; setTimeout(() => { b.textContent = "Copy goal"; }, 1500); };
+    (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(done, () => { const r = document.createRange(); r.selectNodeContents($("fintext")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Selected: press copy"; });
+  }
+});
+
+boot();
 </script>
