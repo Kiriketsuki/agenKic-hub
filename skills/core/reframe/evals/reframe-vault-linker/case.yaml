@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: reframe-vault-linker
+expected_outcome: |
+  Names the problem family (semantic similarity, entity linking, record linkage or topic modelling), ranks terms with confirmed citations, borrows from neighbouring fields such as library science or information retrieval, names blind spots like evaluation and false positives, and rewrites the description.
