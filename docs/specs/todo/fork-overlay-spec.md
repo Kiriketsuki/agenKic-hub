@@ -133,7 +133,7 @@ in each repo on 2026-10-19. The hub had 254 tracked files and the fork had
 | `skills/core/**` | Four hub core skills are new to the fork. The other eight differ from the fork copies |
 | `skills/council/**` | Replaces fork `skills/core/adversarial-council` |
 | `skills/writing/**` except `cover-letter` | Replaces fork `skills/core/kilint` and `skills/core/ste-writing` |
-| `skills/ops/**` except `croc-send`, `insights-to-vault` and the shadowed `release-notes-enricher` | `continuous-learning-v2`, `repo-hooks`, `security-scan` |
+| `skills/ops/**` except `croc-send`, `insights-to-vault` and the shadowed `release-notes-enricher` | `repo-hooks`, `security-scan` |
 | `docs/patterns/**` | Generic articles. Links point at the public hub |
 | `tools/stream-launcher/**`, `docs/tools/stream-launcher.md` | Identical today except two links |
 | `tools/fork-sync/**` | The fork CI job runs `verify` from this copy |

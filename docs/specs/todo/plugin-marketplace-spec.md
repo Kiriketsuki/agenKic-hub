@@ -2,6 +2,8 @@
 
 ## Overview
 
+> **Note (2026-11-25):** The hub removed `continuous-learning-v2`. Drop every row and toggle in this spec that names it, the next time someone revises the spec.
+
 **User Story**: As a user of the hub, I want one install command and
 marketplace updates. Hooks and workflows then wire themselves, and CI proves
 the package loads.

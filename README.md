@@ -156,7 +156,6 @@ Feel none of these? Install nothing.
 | [grill-me](skills/core/grill-me/) | Grills a plan until every decision is settled, then writes a brief.md decision record and stops |
 | [reframe](skills/core/reframe/) | Teaches the expert terms for an idea, borrows terms from neighbouring fields, then rewrites the description (from pstack) |
 | [sharpen](skills/core/sharpen/) | Makes a task deeper, not bigger, then rewrites the prompt (from pstack) |
-| [continuous-learning-v2](skills/ops/continuous-learning-v2/) | Instinct-based learning system that observes sessions via hooks and evolves instincts into skills |
 | [context-handoff](skills/core/context-handoff/) | Write a session handoff before context runs out |
 | [context-resume](skills/core/context-resume/) | Resume work from a previous session handoff |
 | [council-fix](skills/council/council-fix/) | One-command council review pipeline that ends in a prioritized fix plan |
