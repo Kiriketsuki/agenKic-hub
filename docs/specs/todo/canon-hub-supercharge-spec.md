@@ -42,7 +42,7 @@ repos stay sources of truth). A Chrysaki restyle of the onboarding deck.
     parallel-fix
   - `writing/`: ste-writing, kilint, visual-explainer, cover-letter
   - `ops/`: repo-hooks, security-scan, croc-send, release-notes-enricher,
-    insights-to-vault, continuous-learning-v2
+    insights-to-vault
 - Per-group component manifests (`skills-core.conf`, `skills-council.conf`,
   `skills-writing.conf`, `skills-ops.conf`) replace `skills.conf`.
   Acceptance: the installer picker lists the four groups, and the skills step
