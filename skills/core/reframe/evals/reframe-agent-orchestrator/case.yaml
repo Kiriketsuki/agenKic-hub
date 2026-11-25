@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: reframe-agent-orchestrator
+expected_outcome: |
+  Disambiguates if needed, gives 8-12 ranked expert terms (for example supervision tree, lease, heartbeat failure detector, work stealing, idempotency) each with a meaning, the part of the description it names, a confirmed real citation, and what it lets the user ask for; 2-3 neighbouring fields with carry-over and limits; blind spots; and a rewritten description.

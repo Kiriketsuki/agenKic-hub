@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: sharpen-flaky-test
+expected_outcome: |
+  Answers the four questions (what a top professional does, the rawest material such as CI logs and -race and -count runs, specific methods and tools, an outside check such as a stress run passing N times), then gives one pasteable rewritten prompt that asks to prototype experiment-settled choices and leaves preference choices to the user, without adding unrelated scope.
