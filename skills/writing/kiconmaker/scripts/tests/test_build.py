@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 import pytest
 from conftest import write_source
 
-import iconsmith
+import kiconmaker
 from iconkit import config, source, style
 
 
@@ -41,16 +41,16 @@ def test_part_expands_with_transform(project):
 def test_build_is_deterministic(project, capsys):
     write_source(project.source_dir, "house", '<path d="M4 10 L12 4 L20 10 V20 H4 Z"/>')
     args = ["--config", str(project.root / "icons.toml"), "build"]
-    assert iconsmith.main(args) == 0
+    assert kiconmaker.main(args) == 0
     first = (project.build_dir / "house.svg").read_bytes()
-    assert iconsmith.main(args + ["--check"]) == 0
+    assert kiconmaker.main(args + ["--check"]) == 0
     assert (project.build_dir / "house.svg").read_bytes() == first
 
 
 @pytest.mark.skipif(not (shutil.which("resvg") or shutil.which("rsvg-convert")), reason="no renderer")
 def test_render_writes_png_outside_project(project, tmp_path, capsys):
     write_source(project.source_dir, "house", '<path d="M4 10 L12 4 L20 10 V20 H4 Z"/>')
-    assert iconsmith.main(["--config", str(project.root / "icons.toml"), "render", "house"]) == 0
+    assert kiconmaker.main(["--config", str(project.root / "icons.toml"), "render", "house"]) == 0
     png = capsys.readouterr().out.strip().splitlines()[-1]
     assert png.startswith(str(tmp_path / "cache"))
     with open(png, "rb") as fh:
@@ -59,10 +59,10 @@ def test_render_writes_png_outside_project(project, tmp_path, capsys):
 
 def test_default_cache_is_outside_project(project, tmp_path, monkeypatch):
     from iconkit import renderer
-    monkeypatch.delenv("ICONSMITH_CACHE")
+    monkeypatch.delenv("KICONMAKER_CACHE")
     monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path / "xdg"))
     folder = renderer.cache_dir(project.root)
-    assert folder.parent == tmp_path / "xdg" / "iconsmith"
+    assert folder.parent == tmp_path / "xdg" / "kiconmaker"
     assert project.root not in folder.parents
 
 

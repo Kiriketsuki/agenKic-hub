@@ -1,9 +1,9 @@
 ---
-name: iconsmith
+name: kiconmaker
 description: "Design, check and ship a consistent set of custom SVG icons for a product, static or with hover motion. Sets up an icons.toml style file, draws geometry-only sources, lints them, renders PNGs and motion frames to look at, builds currentColor SVGs with optional hover CSS, and wires them into the UI. Use this whenever the user asks for an icon set, custom icons, sidebar or toolbar or nav icons, animated or moving icons, hover icons, icons that animate on hover, 'draw an icon for X', 'make icons that match', 'make these icons move', 'redraw the icons', 'our icons look inconsistent', or mentions icons.toml. Use it even when the user asks for one icon, because a single icon still has to match the rest of the product."
 ---
 
-# iconsmith
+# kiconmaker
 
 Design a set of custom SVG icons that follow one style, check each icon by eye, and wire the set into the product. An icon can also move on hover. The motion is optional, and it follows the same loop: describe it, lint it, render its frames, look at them.
 
@@ -11,14 +11,14 @@ Coordinates and rules are easy for Claude. Seeing the result is not, because Cla
 
 ## Resolve the CLI
 
-The CLI is `scripts/iconsmith.py` next to this file. It needs Python 3.11 or later and the `resvg` binary. It falls back to `rsvg-convert` when `resvg` is missing.
+The CLI is `scripts/kiconmaker.py` next to this file. It needs Python 3.11 or later and the `resvg` binary. It falls back to `rsvg-convert` when `resvg` is missing.
 
 ```bash
-ICONSMITH="<folder of this SKILL.md>/scripts/iconsmith.py"
-if [ ! -f "$ICONSMITH" ]; then
-  ICONSMITH="${AGENKIC_SKILLS_ROOT:-$HOME/.claude/skills/agenKic-hub}/skills/writing/iconsmith/scripts/iconsmith.py"
+KICONMAKER="<folder of this SKILL.md>/scripts/kiconmaker.py"
+if [ ! -f "$KICONMAKER" ]; then
+  KICONMAKER="${AGENKIC_SKILLS_ROOT:-$HOME/.claude/skills/agenKic-hub}/skills/writing/kiconmaker/scripts/kiconmaker.py"
 fi
-python3 "$ICONSMITH" --help
+python3 "$KICONMAKER" --help
 command -v resvg || command -v rsvg-convert
 ```
 
@@ -41,7 +41,7 @@ Run the CLI from the product's root, or pass `--config path/to/icons.toml`.
 
 Most commands take `--with "section.key=value, ..."` to try a style change without an edit to the file.
 
-Render output goes to a cache folder outside the project: `$XDG_CACHE_HOME/iconsmith/<project>-<hash>/`. Set `ICONSMITH_CACHE` to move it. Never copy renders into the product repository.
+Render output goes to a cache folder outside the project: `$XDG_CACHE_HOME/kiconmaker/<project>-<hash>/`. Set `KICONMAKER_CACHE` to move it. Never copy renders into the product repository.
 
 ## Reference files
 
@@ -63,7 +63,7 @@ Skip this step when `icons.toml` already exists. Read it instead, and follow it.
 3. **Show the options in the real UI.** Draw two or three icons that the screen needs. Copy a small piece of the product's markup and CSS into a snippet file in the cache folder, and put `{{icon:name}}` or `{{icon:name:20}}` where the icons go. Then run:
 
    ```bash
-   python3 "$ICONSMITH" preview snippet.html \
+   python3 "$KICONMAKER" preview snippet.html \
      --option "A Outline 1.5: style.kind=outline, stroke.width=1.5" \
      --option "B Duotone 2: style.kind=duotone, stroke.width=2"
    ```

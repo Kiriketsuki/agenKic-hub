@@ -1,4 +1,4 @@
-"""iconkit: the library behind the iconsmith CLI.
+"""iconkit: the library behind the kiconmaker CLI.
 
 The package reads an icons.toml style file and geometry-only source SVGs.
 It lints the geometry, builds styled SVGs, and composes render sheets.

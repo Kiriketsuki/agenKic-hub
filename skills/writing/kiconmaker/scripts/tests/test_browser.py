@@ -40,10 +40,10 @@ TIMES = (0, 45, 60, 150, 220, 290, 330, 400)
 
 SCRIPT = """
 const out = {};
-document.querySelectorAll('.icon-trigger svg [class^="ism-"]').forEach(el => getComputedStyle(el).transform);
+document.querySelectorAll('.icon-trigger svg [class^="kim-"]').forEach(el => getComputedStyle(el).transform);
 for (const b of document.querySelectorAll('.icon-trigger')) {
   b.classList.add('forced');
-  getComputedStyle(b.querySelector('svg [class^="ism-"]')).transform;
+  getComputedStyle(b.querySelector('svg [class^="kim-"]')).transform;
   const svg = b.querySelector('svg');
   const probe = svg.querySelector('[data-probe]');
   const anims = svg.getAnimations({subtree: true});
@@ -106,7 +106,7 @@ def test_chromium_moves_icons_like_the_model(project, tmp_path):
 SOLID_SCRIPT = """
 const b = document.querySelector('.icon-trigger');
 const svg = b.querySelector('svg');
-const movers = [...svg.querySelectorAll('[class^="ism-"]')];
+const movers = [...svg.querySelectorAll('[class^="kim-"]')];
 // Compute the rest style first. A focus before that leaves no change to animate.
 movers.forEach(el => getComputedStyle(el).transform);
 b.classList.add('forced');
