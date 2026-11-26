@@ -48,8 +48,8 @@ Stroke width, padding, grid and minimum gap set the geometry that every icon fol
 Most commands take `--with "section.key=value, section.key=value"`. Values use TOML syntax. A bare word becomes a string.
 
 ```bash
-python3 "$ICONSMITH" sheet --with "style.kind=solid"
-python3 "$ICONSMITH" lint --with "stroke.width=1.5"
+python3 "$KICONMAKER" sheet --with "style.kind=solid"
+python3 "$KICONMAKER" lint --with "stroke.width=1.5"
 ```
 
 ## Source files
@@ -133,7 +133,7 @@ Build expands each `<use>` into a `<g>` that holds the part geometry. The same o
 
 Parts can nest up to 4 levels.
 
-`iconsmith new <name> --part` writes an empty part.
+`kiconmaker new <name> --part` writes an empty part.
 
 A `<use>` can carry motion attributes. The part then moves as one piece in that icon only.
 
@@ -145,7 +145,7 @@ A waiver records a rule that one icon breaks on purpose. Rotated teeth on a gear
 <svg ... data-waive="off-grid" data-waive-why="rotated teeth cannot sit on the grid">
 ```
 
-Lint still prints the finding, marked `waived`, and does not count it. `iconsmith report` lists every waiver with its reason. Put each waiver in the final report to the user.
+Lint still prints the finding, marked `waived`, and does not count it. `kiconmaker report` lists every waiver with its reason. Put each waiver in the final report to the user.
 
 ## Built files
 
@@ -157,6 +157,6 @@ Build writes one SVG per source into `output.build_dir`:
      stroke-linecap="round" stroke-linejoin="round">...</svg>
 ```
 
-A moving group becomes `<g class="ism-<icon>-<n>">` around the group. With `motion.delivery = "inline"`, the SVG also holds a `<style>` with the motion CSS. With `"stylesheet"`, build writes the CSS of the whole set to `motion.css` in the build folder, and `build --check` checks that file too.
+A moving group becomes `<g class="kim-<icon>-<n>">` around the group. With `motion.delivery = "inline"`, the SVG also holds a `<style>` with the motion CSS. With `"stylesheet"`, build writes the CSS of the whole set to `motion.css` in the build folder, and `build --check` checks that file too.
 
 The icon paints with `currentColor`, so it takes the text colour of its parent. Build writes the same bytes for the same input, so a diff shows only real changes. `build --check` reports out-of-date files without a write. Build never deletes a built file. It warns when a built file has no source.

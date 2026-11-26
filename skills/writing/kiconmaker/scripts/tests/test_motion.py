@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 import pytest
 from conftest import write_source
 
-import iconsmith
+import kiconmaker
 from iconkit import config, lint, motion, source, style, transform
 
 GOLDEN_SOLID = (
@@ -111,7 +111,7 @@ def test_nested_moving_groups_are_an_error(project):
 def test_part_use_carries_motion(project):
     write_source(project.parts_dir, "lid", '<path d="M5 6 H19"/>')
     text = _icon(project, '<use data-part="lid" data-motion="translate(0 -2)"/>').file_text()
-    assert 'class="ism-probe-0"' in text
+    assert 'class="kim-probe-0"' in text
 
 
 # Build
@@ -130,11 +130,11 @@ def test_moving_group_gets_wrapper_style_and_keeps_transform(project):
     ns = "{http://www.w3.org/2000/svg}"
     assert root.find(f"{ns}style") is not None
     wrapper = root.find(f"{ns}g")
-    assert wrapper.get("class") == "ism-probe-0" and wrapper.get("transform") is None
+    assert wrapper.get("class") == "kim-probe-0" and wrapper.get("transform") is None
     assert wrapper.find(f"{ns}g").get("transform") == "translate(1 0)"
     css = root.find(f"{ns}style").text
     assert "prefers-reduced-motion:no-preference" in css and "@media (hover:hover)" in css
-    assert ".icon-trigger:focus-visible .ism-probe-0" in css
+    assert ".icon-trigger:focus-visible .kim-probe-0" in css
 
 
 def test_delivery_off_and_frozen_rest_equal_a_static_build(project):
@@ -155,17 +155,17 @@ def test_solid_cut_moves_with_its_body(project):
     text = _icon(cfg, '<g data-motion="translate(0 -2)"><rect data-role="body" x="4" y="6" width="16" height="12"/>'
                       '<path data-role="cut" d="M8 12 H16"/></g>').file_text()
     mask = text[text.index("<mask"):text.index("</mask>")]
-    assert 'class="ism-probe-0"' in mask
+    assert 'class="kim-probe-0"' in mask
 
 
 def test_stylesheet_delivery_writes_motion_css(project, capsys):
     cfg_path = project.root / "icons.toml"
     cfg_path.write_text(cfg_path.read_text() + '\n[motion]\ndelivery = "stylesheet"\n', encoding="utf-8")
     write_source(project.source_dir, "bell", '<g data-motion="rotate(15 12 4)"><path d="M6 16 H18"/></g>')
-    assert iconsmith.main(["--config", str(cfg_path), "build"]) == 0
+    assert kiconmaker.main(["--config", str(cfg_path), "build"]) == 0
     assert "<style>" not in (project.build_dir / "bell.svg").read_text()
-    assert ".ism-bell-0" in (project.build_dir / "motion.css").read_text()
-    assert iconsmith.main(["--config", str(cfg_path), "build", "--check"]) == 0
+    assert ".kim-bell-0" in (project.build_dir / "motion.css").read_text()
+    assert kiconmaker.main(["--config", str(cfg_path), "build", "--check"]) == 0
 
 
 # Lint
@@ -200,7 +200,7 @@ def test_frames_command_renders_png(project, capsys):
         pytest.skip("no renderer")
     write_source(project.source_dir, "bell", '<g data-motion="rotate(15 12 4)" data-motion-kind="pulse">'
                                              '<path d="M6 16 H18"/></g>')
-    assert iconsmith.main(["--config", str(project.root / "icons.toml"), "frames", "bell", "--count", "4"]) == 0
+    assert kiconmaker.main(["--config", str(project.root / "icons.toml"), "frames", "bell", "--count", "4"]) == 0
     png = capsys.readouterr().out.strip().splitlines()[-1]
     with open(png, "rb") as fh:
         assert fh.read(4) == b"\x89PNG"

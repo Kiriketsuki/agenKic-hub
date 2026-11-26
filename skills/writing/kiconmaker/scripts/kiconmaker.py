@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""iconsmith: design, check and build a custom SVG icon set.
+"""kiconmaker: design, check and build a custom SVG icon set.
 
-Run 'iconsmith.py <command> --help' for the options of one command.
+Run 'kiconmaker.py <command> --help' for the options of one command.
 Exit codes: 0 means clean, 1 means findings or failed checks, 2 means a
 usage, style file or renderer error.
 """
@@ -226,7 +226,7 @@ def cmd_build(args: argparse.Namespace) -> int:
     wanted = {f"{i.name}.svg": i.file_text() for i in icons}
     sheet = "".join(i.css for i in icons)
     if cfg.motion_delivery == "stylesheet" and sheet:
-        wanted = {**wanted, MOTION_CSS: f"/* Built by iconsmith from icons.toml. Do not edit. */\n{sheet}\n"}
+        wanted = {**wanted, MOTION_CSS: f"/* Built by kiconmaker from icons.toml. Do not edit. */\n{sheet}\n"}
     stale = sorted(p.name for p in cfg.build_dir.glob("*.svg") if p.name not in wanted) \
         if cfg.build_dir.is_dir() else []
     changed = [n for n, text in wanted.items()
@@ -291,7 +291,7 @@ def cmd_report(args: argparse.Namespace) -> int:
 
 
 def parser() -> argparse.ArgumentParser:
-    top = argparse.ArgumentParser(prog="iconsmith", description=__doc__.split("\n")[0])
+    top = argparse.ArgumentParser(prog="kiconmaker", description=__doc__.split("\n")[0])
     top.add_argument("--config", help="path to icons.toml. Default: search up from the current folder.")
     sub = top.add_subparsers(dest="command", required=True)
 
@@ -338,10 +338,10 @@ def main(argv: list[str] | None = None) -> int:
     try:
         return args.func(args)
     except (Fail, config.ConfigError, renderer.RenderError) as exc:
-        print(f"iconsmith: {exc}", file=sys.stderr)
+        print(f"kiconmaker: {exc}", file=sys.stderr)
         return 2
     except KeyError as exc:
-        print(f"iconsmith: the snippet asks for icon {exc}, which has no source", file=sys.stderr)
+        print(f"kiconmaker: the snippet asks for icon {exc}, which has no source", file=sys.stderr)
         return 2
 
 

@@ -66,7 +66,7 @@ Lint helps with questions 3 and 4. It checks 25 even frames plus the start, peak
 
 ## How the build moves an icon
 
-Build wraps each moving group in a `<g class="ism-<icon>-<n>">`. CSS moves the wrapper, and the group keeps its own `transform` attribute inside it. A CSS `transform` replaces a `transform` attribute, so the two cannot sit on one element.
+Build wraps each moving group in a `<g class="kim-<icon>-<n>">`. CSS moves the wrapper, and the group keeps its own `transform` attribute inside it. A CSS `transform` replaces a `transform` attribute, so the two cannot sit on one element.
 
 The rest pose uses the same CSS functions as the hover pose with neutral values, for example `rotate(0deg)`. The browser then moves each function on its own, and the pivot stays fixed through every frame.
 

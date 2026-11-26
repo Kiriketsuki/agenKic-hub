@@ -109,7 +109,7 @@ def _emit(el, ctx: _Ctx, matrix: tuple, mover: tuple | None) -> str:
             return inner
         return f'<g transform="{_fmt(moved)}">{inner}</g>'
     if moving is not None:
-        cls = f"ism-{ctx.name}-{len(ctx.entries)}"
+        cls = f"kim-{ctx.name}-{len(ctx.entries)}"
         ctx.entries.append((cls, moving))
         inner = _emit_plain(el, ctx, own, (cls, matrix))
         return f'<g class="{cls}">{inner}</g>' if inner else ""
