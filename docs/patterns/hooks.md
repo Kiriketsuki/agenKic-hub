@@ -54,8 +54,6 @@ The hooks in this repo fall into three families.
 
 **`agent-route-suggest.sh`** (PreToolUse, matcher `Agent`) fires when Claude spawns a subagent without an explicit `subagent_type` or `model`. It suggests the routing skills that pick a specialist and a model tier. When both fields are set, it stays silent: the caller made a deliberate choice.
 
-**`context7-suggest.sh`** (PostToolUse, matcher `Read`) fires when Claude reads a dependency manifest: `package.json`, `requirements.txt`, `pyproject.toml`, `go.mod`, or `Cargo.toml`. It extracts the top dependencies and hints at a docs lookup before writing code against an unfamiliar library.
-
 ### Correctness checks (PostToolUse, matcher `Edit|Write`)
 
 **`python-syntax-check.sh`** parses any edited `.py` file with `ast`. A syntax error exits 2 with the line and message on stderr, which forces the model to fix the file before it moves on.

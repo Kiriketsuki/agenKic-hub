@@ -324,7 +324,6 @@ Placement:
 | `large-file-check.sh` | PreToolUse Bash, `if: Bash(git commit *)` | `agenkic-ops` | `large_file_check` | `true` |
 | `preflight-check.sh` | SessionStart | `agenkic-ops` | None | Always on. It only warns |
 | `python-syntax-check.sh` | PostToolUse Edit, Write | `agenkic-ops` | None | Always on. It only reports |
-| `context7-suggest.sh` | PostToolUse Read | `agenkic-ops` | None | Always on. It only nudges |
 | `stop-verify-gate.sh` | Stop | `agenkic-ops` | `stop_verify_gate` | `true` |
 | `continuous-learning-v2/hooks/observe.sh` | PreToolUse and PostToolUse, matcher `*` | `agenkic-ops` | `observe_sessions` | `false`. It fires on every tool call |
 | `agent-route-suggest.sh` | PreToolUse Agent, TeamCreate | `agenkic-core` | None | Always on. It only nudges |
