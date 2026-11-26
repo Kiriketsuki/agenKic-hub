@@ -23,7 +23,6 @@ Ported hooks:
 | `agent-route-suggest.sh` | PreToolUse (Agent) | Adds a soft `additionalContext` note about subagent type and model. Cooldown file lives in `$XDG_RUNTIME_DIR` |
 | `preflight-check.sh` | SessionStart | Environment health report: package-manager locks, node path, git locks. Prints warnings only |
 | `python-syntax-check.sh` | PostToolUse (Edit\|Write) | Parses edited `.py` files with `ast`. Writes no `__pycache__`. Reports syntax errors on stderr |
-| `context7-suggest.sh` | PostToolUse (Read) | Adds an `additionalContext` note about Context7 docs lookup when Claude reads a dependency manifest |
 | `stop-verify-gate.sh` | Stop | Runs the executable `.claude/verify.sh` of the project, if one exists. On failure it blocks the stop and returns the tail of the output. On the second try (`stop_hook_active`) it allows the stop and adds a `systemMessage`. With no `verify.sh` it does nothing |
 | `playwright-reaper.sh` | PostToolUse (`mcp__.*playwright.*`), Stop, SessionStart | `mark` records the last Playwright call of the session. `sweep` starts one background pass, at most once a minute. The pass ends orphan Playwright MCP servers and closes a browser that its session has not used for 10 minutes. The server stays up and opens a new browser on the next call. Log: `$XDG_RUNTIME_DIR/pw-reaper/reaper.log` |
 
