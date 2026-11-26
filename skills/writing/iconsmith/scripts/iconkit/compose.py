@@ -127,3 +127,50 @@ def contact_sheet(icons: list[Icon], cfg: Config, blur: bool = False) -> str:
     return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{width:g}" height="{height:g}">'
             f'<defs>{defs}</defs><rect width="{width:g}" height="{height:g}" fill="#f6f6f8"/>'
             f'{_text(8, 18, title)}{names}{rows}</svg>')
+
+
+FRAME = 160
+
+
+def _frame_tile(icon: Icon, cfg: Config, x: float, y: float, uid: str) -> str:
+    scale = FRAME / cfg.size
+    pad, live = cfg.padding * scale, (cfg.size - 2 * cfg.padding) * scale
+    return (f'<rect x="{x:g}" y="{y:g}" width="{FRAME}" height="{FRAME}" fill="{BG_LIGHT}" stroke="#d8d8de"/>'
+            f'<rect x="{x + pad:g}" y="{y + pad:g}" width="{live:g}" height="{live:g}" fill="none" '
+            f'stroke="#e0566b" stroke-dasharray="4 4" stroke-width="0.75"/>'
+            + icon.nested(x, y, FRAME, INK_LIGHT, uid))
+
+
+def frames_panel(name: str, metaphor: str, frames: list, cfg: Config) -> str:
+    """Return SVG text for one icon over its hover timeline.
+
+    frames holds (time in ms, Icon) pairs, from hover start to the end of the
+    last move. Row one shows each frame large. The trail tile stacks every
+    frame faintly, so the path of each moving part shows in one view. Row two
+    shows each frame at the smallest ship size and at twice that size.
+    """
+    x0, y0, gap = 16, 40, 12
+    out = [_text(x0, 24, f"{name}: {metaphor or 'no metaphor recorded'}. Hover timeline, rest to end.")]
+    for i, (t, icon) in enumerate(frames):
+        x = x0 + i * (FRAME + gap)
+        out.append(_text(x, y0 + FRAME + 16, f"{t:.0f} ms"))
+        out.append(_frame_tile(icon, cfg, x, y0, f"-f{i}"))
+    tx = x0 + len(frames) * (FRAME + gap) + gap
+    out.append(_text(tx, y0 + FRAME + 16, "trail: all frames"))
+    out.append(f'<rect x="{tx}" y="{y0}" width="{FRAME}" height="{FRAME}" fill="{BG_LIGHT}" stroke="#d8d8de"/>')
+    for i, (_, icon) in enumerate(frames):
+        last = i == len(frames) - 1
+        out.append(f'<g opacity="{1 if last else 0.22}">{icon.nested(tx, y0, FRAME, INK_LIGHT, f"-t{i}")}</g>')
+    small = min(cfg.sizes)
+    y1 = y0 + FRAME + 40
+    for row, px in enumerate((small, small * 2)):
+        out.append(_text(x0, y1 + 12, f"{px}px"))
+        for i, (_, icon) in enumerate(frames):
+            x = x0 + 40 + i * (px + 16)
+            out.append(f'<rect x="{x:g}" y="{y1:g}" width="{px + 8}" height="{px + 8}" fill="{BG_LIGHT}"/>')
+            out.append(icon.nested(x + 4, y1 + 4, px, INK_LIGHT, f"-s{row}{i}"))
+        y1 += px + 20
+    width = tx + FRAME + 16
+    height = y1 + 10
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{width:g}" height="{height:g}">'
+            f'<rect width="{width:g}" height="{height:g}" fill="#f6f6f8"/>{"".join(out)}</svg>')

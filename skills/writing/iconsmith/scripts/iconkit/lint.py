@@ -9,6 +9,16 @@ Rules:
 - detail: the count of subpaths stays within the style.detail limit.
 - metaphor: each source names its metaphor and avoids the banned list.
 - ink: each icon carries about the same ink as the set median.
+- motion-time: each moving group ends within motion.max_ms.
+- motion-clip: no ink leaves the canvas at any sampled frame.
+- motion-pad: ink that leaves the live area during motion. A warning only,
+  because a lid or a hand can rise into the padding on purpose.
+- motion-small: the largest move is at least motion.min_px at the smallest
+  ship size. A smaller move reads as a flicker, not as motion.
+- motion-busy: more than 3 moving groups in one icon.
+- motion-stroke: a scale step that changes the stroke weight by more than
+  15 percent. CSS scales the stroke with the shape, so the moving part
+  looks heavier or lighter than the rest of the icon.
 """
 
 from __future__ import annotations
@@ -18,10 +28,14 @@ import statistics
 from collections import defaultdict
 from dataclasses import dataclass
 
+from . import motion, source
 from .config import Config
 from .source import Shape, Source
 
 STEP = 0.25
+MOTION_SAMPLES = 25
+MAX_MOVERS = 3
+MAX_STROKE_DRIFT = 0.15
 # Rounding slack in canvas units. Sampled curves land a few hundredths off.
 TOL = 0.05
 ERROR, WARN = "error", "warn"
@@ -237,3 +251,72 @@ def lint_icon(src: Source, shapes: list[Shape], cfg: Config) -> list[Finding]:
     return (check_metaphor(src, cfg) + check_padding(src, shapes, cfg) + check_grid(src, shapes, cfg)
             + check_gaps(src, shapes, cfg) + check_small_loops(src, shapes, cfg)
             + check_detail(src, shapes, cfg))
+
+
+def _ink_box(shapes: list[Shape], half: float) -> tuple:
+    pts = [p for s in shapes for line, _ in s.polylines(STEP) for p in line]
+    return (min(x for x, _ in pts) - half, min(y for _, y in pts) - half,
+            max(x for x, _ in pts) + half, max(y for _, y in pts) + half)
+
+
+def posed_shapes(src: Source, cfg: Config, t_ms: float) -> list[Shape]:
+    """Return the shapes of src with every moving group posed at t_ms after hover starts."""
+    curve = motion.parse_easing(cfg.motion_easing)
+
+    def pose(el):
+        found = motion.from_element(el, cfg.size, cfg.motion_duration)
+        return found.matrix(found.progress(t_ms, curve)) if found else None
+
+    shapes, _ = source.shapes(src, cfg.corner_radius, pose)
+    return shapes
+
+
+def lint_motion(src: Source, cfg: Config) -> list[Finding]:
+    """Check the motion of one icon over its whole hover timeline."""
+    movers = motion.groups(src.children, cfg.size, cfg.motion_duration)
+    if not movers:
+        return []
+    found = [_finding(src, "motion-time", ERROR,
+                      f"a moving group ends at {m.end:g} ms. motion.max_ms allows {cfg.motion_max_ms:g} ms.")
+             for m in movers if m.end > cfg.motion_max_ms + TOL]
+    if len(movers) > MAX_MOVERS:
+        found.append(_finding(src, "motion-busy", WARN,
+                              f"{len(movers)} moving groups. Keep {MAX_MOVERS} or fewer, so the eye can follow."))
+    for m in movers:
+        drift = max((abs(v - 1) for step in m.steps if step[0] == "scale" for v in step[1:3]), default=0.0)
+        if drift > MAX_STROKE_DRIFT:
+            found.append(_finding(src, "motion-stroke", WARN,
+                                  f"a scale step changes the stroke weight by {drift:.0%}. "
+                                  "Move the part with translate or rotate, or keep the scale near 1."))
+    rest = posed_shapes(src, cfg, 0.0)
+    rest_pts = [p for s in rest for line, _ in s.polylines(STEP) for p in line]
+    if not rest_pts:
+        return found
+    half, edge, lo, hi = cfg.stroke_width / 2, cfg.size, cfg.padding, cfg.size - cfg.padding
+    clip = pad = None
+    move = 0.0
+    for t in motion.sample_times(movers, MOTION_SAMPLES):
+        shapes = posed_shapes(src, cfg, t)
+        pts = [p for s in shapes for line, _ in s.polylines(STEP) for p in line]
+        move = max([move] + [math.dist(a, b) for a, b in zip(rest_pts, pts)])
+        box = _ink_box(shapes, half)
+        if clip is None and (box[0] < -TOL or box[1] < -TOL or box[2] > edge + TOL or box[3] > edge + TOL):
+            clip = (t, box)
+        if pad is None and (box[0] < lo - TOL or box[1] < lo - TOL or box[2] > hi + TOL or box[3] > hi + TOL):
+            pad = (t, box)
+    if clip:
+        shown = ", ".join(f"{v:.2f}" for v in clip[1])
+        found.append(_finding(src, "motion-clip", ERROR,
+                              f"at {clip[0]:.0f} ms the ink box ({shown}) leaves the canvas 0..{edge:g}. "
+                              "The browser cuts it off."))
+    elif pad:
+        shown = ", ".join(f"{v:.2f}" for v in pad[1])
+        found.append(_finding(src, "motion-pad", WARN,
+                              f"at {pad[0]:.0f} ms the ink box ({shown}) enters the padding. "
+                              "Waive it if the move is meant to rise past the live area."))
+    smallest = min(cfg.sizes) * move / cfg.size
+    if smallest < cfg.motion_min_px:
+        found.append(_finding(src, "motion-small", WARN,
+                              f"the largest move is {smallest:.2f} px at {min(cfg.sizes)} px. "
+                              f"motion.min_px asks for {cfg.motion_min_px:g}. Move further, or drop the motion."))
+    return found
