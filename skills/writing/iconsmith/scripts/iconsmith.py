@@ -15,7 +15,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from iconkit import compose, config, lint, preview, renderer, source, style  # noqa: E402
+from iconkit import compose, config, lint, motion, preview, renderer, source, style  # noqa: E402
 
 STARTER = """# Style file for the product icon set. Every icon follows these rules.
 # A change to a global rule means a redraw of the whole set.
@@ -51,6 +51,15 @@ avoid = []
 
 [lint]
 ink_tolerance = 0.25 # allowed drift from the set median ink share
+
+# Hover motion. It applies only to groups that carry data-motion.
+[motion]
+duration = 360       # ms for one move. data-motion-duration overrides it per group.
+easing = "ease-out"  # CSS easing name or cubic-bezier(x1, y1, x2, y2)
+max_ms = 800         # lint error when a group ends later than this
+min_px = 1.0         # lint warning when the move is smaller at the smallest size
+trigger = "icon-trigger" # class of the button or link whose hover moves the icon
+delivery = "inline"  # inline <style> | stylesheet (motion.css) | off
 """
 
 
@@ -69,7 +78,7 @@ def _config(args: argparse.Namespace) -> config.Config:
 
 def _load(cfg: config.Config, names: list[str] | None = None) -> tuple[list, dict, list[str]]:
     """Load sources and their shapes. Return (sources, shapes_by_name, errors)."""
-    sources, errors = source.load_all(cfg.source_dir, cfg.parts_dir, cfg.size)
+    sources, errors = source.load_all(cfg.source_dir, cfg.parts_dir, cfg.size, cfg.motion_duration)
     if names:
         missing = sorted(set(names) - {s.name for s in sources})
         errors += [f"no source named '{n}' in {cfg.source_dir}" for n in missing]
@@ -130,6 +139,7 @@ def _lint_all(cfg: config.Config, sources: list, shapes: dict) -> tuple[list, di
     ratios = {}
     for src in sources:
         findings += lint.lint_icon(src, shapes[src.name], cfg)
+        findings += lint.lint_motion(src, cfg)
         ratios[src.name] = lint.ink_ratio(shapes[src.name], cfg)
     findings += lint.check_ink(ratios, {s.name: s for s in sources}, cfg)
     return findings, ratios
@@ -165,7 +175,7 @@ def cmd_render(args: argparse.Namespace) -> int:
         return _print_errors(errors)
     out = renderer.cache_dir(cfg.root) / "render"
     for src in sources:
-        icon = style.build_icon(src, cfg)
+        icon = style.build_icon(src, cfg, at=0.0)
         svg = compose.icon_panel(icon, shapes[src.name], cfg, src.metaphor)
         print(renderer.render(svg, out / f"{src.name}.png"))
     return 0
@@ -178,7 +188,7 @@ def cmd_sheet(args: argparse.Namespace) -> int:
         return _print_errors(errors)
     if not sources:
         raise Fail(f"no sources in {cfg.source_dir}")
-    icons = [style.build_icon(s, cfg) for s in sources]
+    icons = [style.build_icon(s, cfg, at=0.0) for s in sources]
     out = renderer.cache_dir(cfg.root) / "sheet"
     tag = f"-{cfg.kind}"
     print(renderer.render(compose.contact_sheet(icons, cfg), out / f"sheet{tag}.png"))
@@ -186,12 +196,37 @@ def cmd_sheet(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_frames(args: argparse.Namespace) -> int:
+    cfg = _config(args)
+    sources, _, errors = _load(cfg, args.names)
+    if errors:
+        return _print_errors(errors)
+    if args.count < 2:
+        raise Fail("--count must be 2 or more")
+    out = renderer.cache_dir(cfg.root) / "frames"
+    for src in sources:
+        movers = motion.groups(src.children, cfg.size, cfg.motion_duration)
+        if not movers:
+            print(f"{src.name}: no data-motion groups, nothing to animate")
+            continue
+        frames = [(t, style.build_icon(src, cfg, at=t)) for t in motion.sample_times(movers, args.count)]
+        print(renderer.render(compose.frames_panel(src.name, src.metaphor, frames, cfg), out / f"{src.name}.png"))
+    return 0
+
+
+MOTION_CSS = "motion.css"
+
+
 def cmd_build(args: argparse.Namespace) -> int:
     cfg = _config(args)
     sources, _, errors = _load(cfg)
     if errors:
         return _print_errors(errors)
-    wanted = {f"{s.name}.svg": style.build_icon(s, cfg).file_text() for s in sources}
+    icons = [style.build_icon(s, cfg) for s in sources]
+    wanted = {f"{i.name}.svg": i.file_text() for i in icons}
+    sheet = "".join(i.css for i in icons)
+    if cfg.motion_delivery == "stylesheet" and sheet:
+        wanted = {**wanted, MOTION_CSS: f"/* Built by iconsmith from icons.toml. Do not edit. */\n{sheet}\n"}
     stale = sorted(p.name for p in cfg.build_dir.glob("*.svg") if p.name not in wanted) \
         if cfg.build_dir.is_dir() else []
     changed = [n for n, text in wanted.items()
@@ -203,7 +238,9 @@ def cmd_build(args: argparse.Namespace) -> int:
     cfg.build_dir.mkdir(parents=True, exist_ok=True)
     for name in changed:
         (cfg.build_dir / name).write_text(wanted[name], encoding="utf-8")
-    print(f"built {len(wanted)} icon(s) into {cfg.build_dir}, {len(changed)} changed")
+    if (cfg.build_dir / MOTION_CSS).is_file() and MOTION_CSS not in wanted:
+        print(f"warning: {cfg.build_dir / MOTION_CSS} is left from an earlier build. Remove it if no icon moves.")
+    print(f"built {len(icons)} icon(s) into {cfg.build_dir}, {len(changed)} changed")
     for name in stale:
         print(f"warning: {cfg.build_dir / name} has no source. Remove it if the icon is gone.")
     return 0
@@ -244,6 +281,9 @@ def cmd_report(args: argparse.Namespace) -> int:
     for src in sources:
         built = (cfg.build_dir / f"{src.name}.svg").is_file()
         print(f"{src.name:<20} {'built' if built else 'not built':<10} {src.metaphor or '(no metaphor)'}")
+        for m in motion.groups(src.children, cfg.size, cfg.motion_duration):
+            steps = " ".join(f"{s[0]}({' '.join(f'{v:g}' for v in s[1:])})" for s in m.steps)
+            print(f"{'':<20} motion {m.kind}, {m.delay:g}+{m.duration:g} ms: {steps}")
         for f in (f for f in findings if f.icon == src.name and f.waived):
             print(f"{'':<20} waived {f.rule}: {src.waive_why or 'no reason recorded'}")
     print(f"sources: {cfg.source_dir}\nparts:   {cfg.parts_dir}\nbuild:   {cfg.build_dir}")
@@ -279,6 +319,9 @@ def parser() -> argparse.ArgumentParser:
     p.add_argument("names", nargs="+")
     p = add("sheet", cmd_sheet, "render the set side by side at real sizes, plus a blurred copy")
     p.add_argument("names", nargs="*", help="limit the sheet to these icons")
+    p = add("frames", cmd_frames, "render the hover timeline of moving icons to PNG, frame by frame")
+    p.add_argument("names", nargs="+")
+    p.add_argument("--count", type=int, default=6, help="frames from rest to the end. Default: 6.")
     p = add("build", cmd_build, "write styled SVGs that use currentColor into the build folder")
     p.add_argument("--check", action="store_true", help="only report built files that are out of date")
     p = add("preview", cmd_preview, "show style options inside a product UI snippet, as HTML")

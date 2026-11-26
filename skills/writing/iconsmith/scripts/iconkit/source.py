@@ -14,7 +14,7 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import SVG_NS, pathdata, transform
+from . import SVG_NS, motion, pathdata, transform
 
 NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 DRAW_TAGS = {"path", "line", "polyline", "polygon", "circle", "ellipse", "rect"}
@@ -130,6 +130,8 @@ def _check_attrs(el: ET.Element, where: str) -> list[str]:
     tag = local(el.tag)
     errors = []
     allowed = GEOMETRY.get(tag, set()) | COMMON
+    if tag in ("g", "use"):
+        allowed = allowed | set(motion.ATTRS)
     for key in el.attrib:
         name = local(key)
         if name not in allowed:
@@ -170,7 +172,8 @@ def _expand(el: ET.Element, parts_dir: Path, cache: dict, where: str, depth: int
         part, perr = _load_part(parts_dir, name, cache)
         if part is None:
             return None, errors + [f"{where}: {e}" for e in perr]
-        group = ET.Element("g", {k: v for k, v in el.attrib.items() if k == "transform"})
+        group = ET.Element("g", {k: v for k, v in el.attrib.items()
+                                 if k == "transform" or k.startswith("data-motion")})
         group.set("data-part", name)
         kids, kerr = _expand_children(part, parts_dir, cache, f"{where} > part {name}", depth + 1)
         group.extend(kids)
@@ -199,7 +202,8 @@ def _view_box(root: ET.Element) -> tuple:
     return nums
 
 
-def load_source(path: Path, parts_dir: Path, size: float, cache: dict) -> tuple[Source | None, list[str]]:
+def load_source(path: Path, parts_dir: Path, size: float, cache: dict,
+                motion_duration: float = 360.0) -> tuple[Source | None, list[str]]:
     """Load one source file. Return (source, errors). Source is None on a fatal error."""
     name = path.stem
     if not NAME_RE.match(name):
@@ -219,37 +223,48 @@ def load_source(path: Path, parts_dir: Path, size: float, cache: dict) -> tuple[
     if view_box != (0.0, 0.0, size, size):
         errors.append(f"{path.name}: viewBox must be '0 0 {size:g} {size:g}' to match canvas.size")
     kids, kerr = _expand_children(root, parts_dir, cache, path.name, 0)
+    kerr = kerr + motion.validate(kids, size, motion_duration, path.name)
     waive = frozenset(w.strip() for w in root.get("data-waive", "").replace(",", " ").split() if w.strip())
     source = Source(name, path, root.get("data-metaphor", "").strip(), waive,
                     root.get("data-waive-why", "").strip(), view_box, tuple(kids))
     return source, errors + kerr
 
 
-def load_all(source_dir: Path, parts_dir: Path, size: float) -> tuple[list[Source], list[str]]:
+def load_all(source_dir: Path, parts_dir: Path, size: float,
+             motion_duration: float = 360.0) -> tuple[list[Source], list[str]]:
     """Load every *.svg in source_dir, sorted by name."""
     if not source_dir.is_dir():
         return [], [f"source folder {source_dir} does not exist"]
     cache: dict = {}
     sources, errors = [], []
     for path in sorted(source_dir.glob("*.svg")):
-        src, errs = load_source(path, parts_dir, size, cache)
+        src, errs = load_source(path, parts_dir, size, cache, motion_duration)
         errors.extend(errs)
         if src is not None:
             sources.append(src)
     return sources, errors
 
 
-def shapes(src: Source, default_r: float) -> tuple[list[Shape], list[str]]:
-    """Flatten a source into shapes with absolute transforms."""
+def shapes(src: Source, default_r: float, pose=None) -> tuple[list[Shape], list[str]]:
+    """Flatten a source into shapes with absolute transforms.
+
+    pose is an optional callable. It takes a <g> element and returns the
+    motion matrix for that group at one moment, or None for no motion. The
+    motion applies in the frame of the group parent, outside the group own
+    transform. The built SVG nests the two groups in the same order.
+    """
     out, errors = [], []
 
     def walk(el, matrix, trail):
         tag = local(el.tag)
         try:
-            here = transform.multiply(matrix, transform.parse(el.get("transform")))
+            own = transform.parse(el.get("transform"))
         except ValueError as exc:
             errors.append(f"{src.name} {trail}: {exc}")
             return
+        moved = pose(el) if pose is not None and tag == "g" else None
+        outer = transform.multiply(matrix, moved) if moved is not None else matrix
+        here = transform.multiply(outer, own)
         if tag == "g":
             label = f"{trail} part {el.get('data-part')}" if el.get("data-part") else trail
             for i, child in enumerate(el):
