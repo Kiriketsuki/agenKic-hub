@@ -42,16 +42,6 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "Read",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$HOME/.claude/hooks/context7-suggest.sh\"",
-            "timeout": 5
-          }
-        ]
-      },
-      {
         "matcher": "Edit|Write",
         "hooks": [
           {
