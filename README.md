@@ -166,8 +166,8 @@ Feel none of these? Install nothing.
 | [feature-spec](skills/core/feature-spec/) | Interview-driven feature spec with Gherkin acceptance scenarios |
 | [goal-writer](skills/core/goal-writer/) | Draft verifiable goals, grill them with your team on a session page, then finalize |
 | [implement-spec](skills/core/implement-spec/) | Implement a written spec task by task |
-| [iconsmith](skills/writing/iconsmith/) | Designs a consistent custom SVG icon set, renders each icon to check it by eye, and wires the set into the UI |
 | [insights-to-vault](skills/ops/insights-to-vault/) | Archive a Claude Code Insights report into a notes vault |
+| [kiconmaker](skills/writing/kiconmaker/) | Designs a consistent custom SVG icon set, renders each icon and its hover motion to check it by eye, and wires the set into the UI |
 | [kilint](skills/writing/kilint/) | Prose linter for the STE house style |
 | [merge-next](skills/core/merge-next/) | Merge the current branch and advance to the next sibling |
 | [model-route](skills/core/model-route/) | Recommend the optimal model tier for a task |

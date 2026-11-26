@@ -1,6 +1,6 @@
 # Wire the Icons into the Product
 
-Read this file when the set is built and the user wants the icons in the UI.
+Read this file after the build, when the user wants the icons in the UI.
 
 ## Find how the project already uses icons
 
@@ -27,6 +27,18 @@ A built icon paints with `currentColor`. That works only when the SVG markup is 
 
 If the project only has `<img>` tags for icons, tell the user that `currentColor` needs inline markup, and ask before you change the pattern.
 
+## Moving icons
+
+Read this part when any built icon moves.
+
+- **Inline only.** Hover motion works only with inline SVG markup, the same as `currentColor`. An `<img>` shows the rest pose.
+- **Mark the trigger.** Add the `motion.trigger` class, `icon-trigger` by default, to the button or link that holds the icon. A hover anywhere on that control then moves the icon. A hover on the SVG itself also works, but the SVG is a small target.
+- **Keyboard focus moves it too.** The CSS uses `:focus-visible` on the trigger, so a keyboard user sees the same motion.
+- **Build honours reduced motion.** Every motion rule sits inside `prefers-reduced-motion: no-preference`. Hover rules also sit inside `(hover: hover)`, so a touch screen does not leave an icon stuck in its pose.
+- **Keep the CSS.** An SVG optimiser can drop `<style>` elements or rename classes. Check SVGO, SVGR and `vite-svg-loader` settings for `removeStyleElement`, `inlineStyles`, `minifyStyles` or `prefixIds`. If the project cannot keep the `<style>`, set `motion.delivery = "stylesheet"`, build again, and import `motion.css` once in the app entry.
+- **Content Security Policy.** A strict `style-src` without `'unsafe-inline'` blocks an inline `<style>` in an inlined SVG. Use `motion.delivery = "stylesheet"` in that case too.
+- **Check it in the browser.** Hover each changed control, then use the keyboard to focus it. Then turn on reduced motion in the browser or the OS, and confirm that the icon stays still.
+
 ## Change only what the user asked for
 
 Replace the icons the user named. Leave every other icon, label and layout as it is. A broad sweep makes the diff hard to review and can break screens nobody looked at.
@@ -37,7 +49,7 @@ Use the pixel sizes from `output.sizes`. Set `width` and `height` on the icon, o
 
 ## Keep accessibility
 
-- **Icon-only button:** the button gets an accessible name, and the icon is hidden from assistive technology.
+- **Icon-only button:** the button gets an accessible name, and `aria-hidden` hides the icon from assistive technology.
 
   ```html
   <button type="button" aria-label="Notifications">

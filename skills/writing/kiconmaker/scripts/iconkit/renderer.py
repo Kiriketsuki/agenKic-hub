@@ -1,8 +1,8 @@
 """Render SVG text to PNG through resvg, or rsvg-convert as a fall back.
 
 Renders go to a cache folder outside the user's project, so review images
-never land in the product repository. ICONSMITH_CACHE moves the cache.
-ICONSMITH_RENDERER forces one backend by name.
+never land in the product repository. KICONMAKER_CACHE moves the cache.
+KICONMAKER_RENDERER forces one backend by name.
 """
 
 from __future__ import annotations
@@ -22,12 +22,12 @@ class RenderError(RuntimeError):
 
 def cache_dir(project_root: Path) -> Path:
     """Return the per-project cache folder and create it."""
-    base = os.environ.get("ICONSMITH_CACHE")
+    base = os.environ.get("KICONMAKER_CACHE")
     if base:
         root = Path(base)
     else:
         xdg = os.environ.get("XDG_CACHE_HOME") or str(Path.home() / ".cache")
-        root = Path(xdg) / "iconsmith"
+        root = Path(xdg) / "kiconmaker"
     digest = hashlib.sha1(str(project_root.resolve()).encode()).hexdigest()[:8]
     folder = root / f"{project_root.resolve().name}-{digest}"
     folder.mkdir(parents=True, exist_ok=True)
@@ -36,11 +36,11 @@ def cache_dir(project_root: Path) -> Path:
 
 def pick_backend() -> tuple[str, str]:
     """Return (name, executable path) for the first available backend."""
-    forced = os.environ.get("ICONSMITH_RENDERER")
+    forced = os.environ.get("KICONMAKER_RENDERER")
     names = (forced,) if forced else BACKENDS
     for name in names:
         if name not in BACKENDS:
-            raise RenderError(f"ICONSMITH_RENDERER='{name}' is not one of {', '.join(BACKENDS)}")
+            raise RenderError(f"KICONMAKER_RENDERER='{name}' is not one of {', '.join(BACKENDS)}")
         exe = shutil.which(name)
         if exe:
             return name, exe

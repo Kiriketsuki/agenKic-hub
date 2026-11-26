@@ -6,6 +6,7 @@ loudly, because a silent default would change every icon in the set.
 
 from __future__ import annotations
 
+import re
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -15,6 +16,8 @@ CAPS = ("butt", "round", "square")
 JOINS = ("miter", "round", "bevel")
 KINDS = ("outline", "duotone", "solid")
 DETAIL_LIMITS = {"low": 6, "medium": 10, "high": 16}
+DELIVERIES = ("inline", "stylesheet", "off")
+CLASS_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_-]*$")
 
 # Each entry: section -> key -> (type, default). A default of None means required.
 SCHEMA = {
@@ -36,6 +39,14 @@ SCHEMA = {
     },
     "metaphors": {"avoid": (list, [])},
     "lint": {"ink_tolerance": (float, 0.25)},
+    "motion": {
+        "duration": (float, 360.0),
+        "easing": (str, "ease-out"),
+        "max_ms": (float, 800.0),
+        "min_px": (float, 1.0),
+        "trigger": (str, "icon-trigger"),
+        "delivery": (str, "inline"),
+    },
 }
 
 
@@ -64,6 +75,12 @@ class Config:
     build_dir: Path
     avoid: tuple[str, ...]
     ink_tolerance: float
+    motion_duration: float = 360.0
+    motion_easing: str = "ease-out"
+    motion_max_ms: float = 800.0
+    motion_min_px: float = 1.0
+    motion_trigger: str = "icon-trigger"
+    motion_delivery: str = "inline"
     raw: dict = field(repr=False, compare=False, default_factory=dict)
 
     @property
@@ -136,6 +153,22 @@ def _check(m: dict) -> None:
         raise ConfigError("output.sizes must be a non-empty list of positive whole pixel sizes")
     if not all(isinstance(a, str) for a in m["metaphors"]["avoid"]):
         raise ConfigError("metaphors.avoid must be a list of strings")
+    _check_motion(m["motion"])
+
+
+def _check_motion(mo: dict) -> None:
+    # Imported here because motion imports transform only, and config must stay light.
+    from .motion import MotionError, parse_easing
+    if mo["duration"] <= 0 or mo["max_ms"] <= 0 or mo["min_px"] < 0:
+        raise ConfigError("motion.duration and motion.max_ms must be greater than 0. motion.min_px must be 0 or more.")
+    if mo["delivery"] not in DELIVERIES:
+        raise ConfigError(f"motion.delivery is '{mo['delivery']}'. Use one of: {', '.join(DELIVERIES)}")
+    if not CLASS_RE.match(mo["trigger"]):
+        raise ConfigError(f"motion.trigger '{mo['trigger']}' must be a plain CSS class name, for example 'icon-trigger'")
+    try:
+        parse_easing(mo["easing"])
+    except MotionError as exc:
+        raise ConfigError(f"motion.easing: {exc}") from exc
 
 
 def from_dict(data: dict, root: Path) -> Config:
@@ -163,6 +196,12 @@ def from_dict(data: dict, root: Path) -> Config:
         build_dir=root / out["build_dir"],
         avoid=tuple(m["metaphors"]["avoid"]),
         ink_tolerance=m["lint"]["ink_tolerance"],
+        motion_duration=m["motion"]["duration"],
+        motion_easing=m["motion"]["easing"].strip(),
+        motion_max_ms=m["motion"]["max_ms"],
+        motion_min_px=m["motion"]["min_px"],
+        motion_trigger=m["motion"]["trigger"],
+        motion_delivery=m["motion"]["delivery"],
         raw=data,
     )
 

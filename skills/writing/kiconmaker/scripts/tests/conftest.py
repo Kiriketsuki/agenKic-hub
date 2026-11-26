@@ -34,7 +34,7 @@ def write_source(folder: Path, name: str, body: str, root_attrs: str = 'data-met
 @pytest.fixture
 def project(tmp_path, monkeypatch):
     """A temporary project with icons.toml and a cache outside the project."""
-    monkeypatch.setenv("ICONSMITH_CACHE", str(tmp_path / "cache"))
+    monkeypatch.setenv("KICONMAKER_CACHE", str(tmp_path / "cache"))
     (tmp_path / "proj").mkdir()
     (tmp_path / "proj" / "icons.toml").write_text(STYLE, encoding="utf-8")
     return config.load(tmp_path / "proj" / "icons.toml")
