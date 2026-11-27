@@ -129,3 +129,14 @@ jobs:
           print(f"Checked {len(paths)} skills, {errors} error(s)")
           sys.exit(1 if errors else 0)
           PY
+
+  internal-text:
+    # The hub is public. This job fails when a tracked file or a commit holds
+    # work-internal text. The deny patterns live in tools/internal-text.deny.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scan the tree and the history for internal text
+        run: tools/check-internal-text.sh --history
