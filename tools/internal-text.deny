@@ -1,0 +1,28 @@
+# Extended regular expressions, one per line. The hub is public.
+# A match in a tracked file or in a commit fails tools/check-internal-text.sh.
+# Each pattern describes a SHAPE of internal text. It does not name the text.
+# A bracket around one letter keeps a pattern from matching this file.
+#
+# Work paths and internal repo names
+[w]orkdev/Aurrigo
+AutoConnect-[A-Z]{3}-[A-Za-z]+
+[a]urrigo-software-dev
+[J]ovian-Aurrigo
+[a]urrigo-agentic-hub
+# Deploy tooling
+act-[d]eploy
+# Internal hosts, LAN addresses and work mail
+192\.168\.[0-9]+\.[0-9]+
+@[a]urrigo\.com
+[A-Za-z0-9-]+\.[a]urrigo\.(com|co\.uk|io)
+# Passwords on a command line
+sshpass -[p]
+# Personal pay line
+salary inflows \([A]urrigo\)
+# Secrets
+AKIA[0-9A-Z]{16}
+gh[pousr]_[A-Za-z0-9]{30,}
+github_pat_[A-Za-z0-9_]{30,}
+xox[abprs]-[A-Za-z0-9-]{10,}
+-----BEGIN [A-Z ]*PRIVATE KEY-----
+Bearer [A-Za-z0-9._~+/=-]{20,}
